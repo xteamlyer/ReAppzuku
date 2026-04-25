@@ -824,40 +824,24 @@ public class BatteryStatsManager {
         }
 
         // ── Period-wide battery normalization (same method as getStatsForPeriodBlocking) ──
-        // Compute total drainMah for the entire period by summing battery level drops.
-        // This is accurate even on MIUI/HyperOS where pwi values are not real mAh.
-        // Also compute total raw pwi for this package across the full period —
-        // used to distribute drainMah proportionally across hourly buckets.
+        // drainMah = real mAh drained over the full period (level drops × capacity).
+        // Per-bucket: appMah = (appBatRaw / totalRawPwiBatch) × bucketDrainMah
+        //   where totalRawPwiBatch = sum of ALL apps' pwi in that batch (stored per snapshot).
+        // This correctly gives each app its proportional share — same logic as the pie chart.
         double periodTotalDrainPct = 0;
-        double periodTotalBatRaw   = 0;
         {
             Integer prevLevel = null;
-            for (int i = 0; i < snaps.size(); i++) {
-                ResourceSnapshot s = snaps.get(i);
+            for (ResourceSnapshot s : snaps) {
                 if (s.batteryLevelPct > 0) {
                     if (prevLevel != null && s.batteryLevelPct < prevLevel) {
                         periodTotalDrainPct += prevLevel - s.batteryLevelPct;
                     }
                     prevLevel = s.batteryLevelPct;
                 }
-                if (i > 0) {
-                    ResourceSnapshot prev = snaps.get(i - 1);
-                    double dBat = s.batteryMah >= prev.batteryMah
-                            ? s.batteryMah - prev.batteryMah
-                            : s.batteryMah;
-                    periodTotalBatRaw += dBat;
-                }
             }
         }
-        // totalRawPwiBatch is the sum across ALL apps at snapshot time — use the last
-        // snapshot's value as the denominator (same across a batch, stable over the period).
-        double periodTotalRawPwiBatch = snaps.get(snaps.size() - 1).totalRawPwiBatch;
         double periodDrainMah = periodTotalDrainPct / 100.0 * getBatteryCapacityMah();
-        // pkg's share of total drain for the period — used to scale per-bucket values.
-        // If normalization is not valid (no level drop, no batch data), fall back to 0.
-        boolean batteryNormValid = periodTotalDrainPct > 0
-                && periodTotalBatRaw > 0
-                && periodTotalRawPwiBatch > 0;
+        boolean batteryNormValid = periodTotalDrainPct > 0;
 
         // ── Per-hour buckets ──────────────────────────────────────────────────
         for (int h = 0; h < hours; h++) {
@@ -869,6 +853,9 @@ public class BatteryStatsManager {
             int    bucketRamCount = 0;
             long   bucketJiffies = 0;
             long   bucketFirstTs = -1, bucketLastTs = -1;
+            double bucketDrainPct = 0;
+            double bucketTotalRawPwiBatch = 0;
+            int    bucketBatchCount = 0;
 
             for (int i = 1; i < snaps.size(); i++) {
                 ResourceSnapshot prev = snaps.get(i - 1);
@@ -884,16 +871,41 @@ public class BatteryStatsManager {
                 bucketRamSum  += curr.ramMb;
                 bucketRamCount++;
 
+                if (prev.batteryLevelPct > 0 && curr.batteryLevelPct > 0
+                        && curr.batteryLevelPct < prev.batteryLevelPct) {
+                    bucketDrainPct += prev.batteryLevelPct - curr.batteryLevelPct;
+                }
+                if (curr.totalRawPwiBatch > 0) {
+                    bucketTotalRawPwiBatch += curr.totalRawPwiBatch;
+                    bucketBatchCount++;
+                }
+
                 if (bucketFirstTs < 0) bucketFirstTs = prev.timestamp;
                 bucketLastTs = curr.timestamp;
             }
 
-            // Battery: distribute period drainMah proportionally by this bucket's pwi share.
-            // bucketBatRaw / periodTotalBatRaw = fraction of period drain in this hour.
-            // Multiply by periodDrainMah (real mAh) → honest per-hour battery value.
+            // Battery: appMah = (appBatRaw / avgTotalRawPwiBatch) × bucketDrainMah
+            // avgTotalRawPwiBatch = average sum of ALL apps' pwi in this bucket's snapshots.
+            // bucketDrainMah = real mAh drained in this hour (level drops × capacity).
+            // If no level drop occurred in this bucket, fall back to proportional share
+            // of the period drain based on this bucket's time fraction.
             double batteryMah = 0;
-            if (batteryNormValid && bucketBatRaw > 0) {
-                batteryMah = (bucketBatRaw / periodTotalBatRaw) * periodDrainMah;
+            if (batteryNormValid && bucketBatRaw > 0 && bucketBatchCount > 0) {
+                double avgBatch = bucketTotalRawPwiBatch / bucketBatchCount;
+                double bucketDrainMah;
+                if (bucketDrainPct > 0) {
+                    // Prefer direct measurement from this bucket's level drops.
+                    bucketDrainMah = bucketDrainPct / 100.0 * getBatteryCapacityMah();
+                } else {
+                    // No level drop in this bucket — interpolate from period drain
+                    // proportionally by time fraction of this bucket.
+                    long bucketDuration = bucketLastTs - bucketFirstTs;
+                    long periodDuration = snaps.get(snaps.size() - 1).timestamp - snaps.get(0).timestamp;
+                    bucketDrainMah = periodDuration > 0
+                            ? periodDrainMah * ((double) bucketDuration / periodDuration)
+                            : 0;
+                }
+                batteryMah = avgBatch > 0 ? (bucketBatRaw / avgBatch) * bucketDrainMah : 0;
             }
 
             // CPU: same per-bucket approach as before — accurate jiffy-based denominator.
