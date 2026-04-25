@@ -800,16 +800,12 @@ public class BatteryStatsManager {
 
         // Round current time DOWN to the nearest whole hour.
         // E.g. 0:10 → 0:00, 23:18 → 23:00.
-        // This is the fixed right boundary of the X axis shown to the user.
         java.util.Calendar endCal = java.util.Calendar.getInstance();
         endCal.setTimeInMillis(now);
         endCal.set(java.util.Calendar.MINUTE, 0);
         endCal.set(java.util.Calendar.SECOND, 0);
         endCal.set(java.util.Calendar.MILLISECOND, 0);
         long endAligned   = endCal.getTimeInMillis();
-
-        // Start is exactly `hours` hours before the rounded end.
-        // E.g. period=2h, end=00:00 → start=22:00.
         long startAligned = endAligned - (long) hours * 3600_000L;
 
         List<ResourceSnapshot> snaps =
@@ -827,62 +823,81 @@ public class BatteryStatsManager {
             return new HourlyResult(points, false);
         }
 
+        // ── Period-wide battery normalization (same method as getStatsForPeriodBlocking) ──
+        // Compute total drainMah for the entire period by summing battery level drops.
+        // This is accurate even on MIUI/HyperOS where pwi values are not real mAh.
+        // Also compute total raw pwi for this package across the full period —
+        // used to distribute drainMah proportionally across hourly buckets.
+        double periodTotalDrainPct = 0;
+        double periodTotalBatRaw   = 0;
+        {
+            Integer prevLevel = null;
+            for (int i = 0; i < snaps.size(); i++) {
+                ResourceSnapshot s = snaps.get(i);
+                if (s.batteryLevelPct > 0) {
+                    if (prevLevel != null && s.batteryLevelPct < prevLevel) {
+                        periodTotalDrainPct += prevLevel - s.batteryLevelPct;
+                    }
+                    prevLevel = s.batteryLevelPct;
+                }
+                if (i > 0) {
+                    ResourceSnapshot prev = snaps.get(i - 1);
+                    double dBat = s.batteryMah >= prev.batteryMah
+                            ? s.batteryMah - prev.batteryMah
+                            : s.batteryMah;
+                    periodTotalBatRaw += dBat;
+                }
+            }
+        }
+        // totalRawPwiBatch is the sum across ALL apps at snapshot time — use the last
+        // snapshot's value as the denominator (same across a batch, stable over the period).
+        double periodTotalRawPwiBatch = snaps.get(snaps.size() - 1).totalRawPwiBatch;
+        double periodDrainMah = periodTotalDrainPct / 100.0 * getBatteryCapacityMah();
+        // pkg's share of total drain for the period — used to scale per-bucket values.
+        // If normalization is not valid (no level drop, no batch data), fall back to 0.
+        boolean batteryNormValid = periodTotalDrainPct > 0
+                && periodTotalBatRaw > 0
+                && periodTotalRawPwiBatch > 0;
+
+        // ── Per-hour buckets ──────────────────────────────────────────────────
         for (int h = 0; h < hours; h++) {
             long bucketStart = startAligned + (long) h * 3600_000L;
-            long bucketEnd   = (h == hours - 1) ? endAligned : bucketStart + 3600_000L;
+            long bucketEnd   = bucketStart + 3600_000L;
 
-            // Accumulate deltas from all consecutive snapshot pairs that fall within
-            // this hour bucket. A pair (prev, curr) belongs to bucket h when curr
-            // falls inside [bucketStart, bucketEnd). This avoids the boundary-lookup
-            // bug where prev==null (first snapshot after bucketStart) caused the whole
-            // bucket to be skipped, eating the first and last hours of data.
             double bucketBatRaw = 0, bucketCpuMs = 0;
             double bucketRamSum = 0;
             int    bucketRamCount = 0;
             long   bucketJiffies = 0;
             long   bucketFirstTs = -1, bucketLastTs = -1;
-            double bucketDrainPct = 0;
-            double bucketFirstRawBatch = 0, bucketLastRawBatch = 0;
 
             for (int i = 1; i < snaps.size(); i++) {
                 ResourceSnapshot prev = snaps.get(i - 1);
                 ResourceSnapshot curr = snaps.get(i);
-                // Assign pair to the bucket containing curr.timestamp.
-                // Use strict < for lower bound so a snapshot exactly on the hour
-                // boundary (e.g. 19:00:00) is included in bucket [19:00, 20:00),
-                // not skipped because it equals bucketStart of the next bucket.
                 if (curr.timestamp < bucketStart || curr.timestamp > bucketEnd) continue;
 
                 double dBat = curr.batteryMah >= prev.batteryMah
                         ? curr.batteryMah - prev.batteryMah
                         : curr.batteryMah;
-                bucketBatRaw += dBat;
-                bucketCpuMs  += Math.max(0, curr.cpuTimeMs - prev.cpuTimeMs);
+                bucketBatRaw  += dBat;
+                bucketCpuMs   += Math.max(0, curr.cpuTimeMs - prev.cpuTimeMs);
                 bucketJiffies += Math.max(0, curr.totalCpuJiffies - prev.totalCpuJiffies);
                 bucketRamSum  += curr.ramMb;
                 bucketRamCount++;
 
-                // Accumulate only drain steps (level drops) for normalization —
-                // same approach as getStatsForPeriodBlocking to handle charge events.
-                if (prev.batteryLevelPct > 0 && curr.batteryLevelPct > 0
-                        && curr.batteryLevelPct < prev.batteryLevelPct) {
-                    bucketDrainPct += prev.batteryLevelPct - curr.batteryLevelPct;
-                }
-
-                if (bucketFirstTs < 0) {
-                    bucketFirstTs       = prev.timestamp;
-                    bucketFirstRawBatch = curr.totalRawPwiBatch;
-                }
-                bucketLastTs       = curr.timestamp;
-                bucketLastRawBatch = curr.totalRawPwiBatch;
+                if (bucketFirstTs < 0) bucketFirstTs = prev.timestamp;
+                bucketLastTs = curr.timestamp;
             }
 
-            // Always emit a point — even if no snapshots fell in this bucket.
-            // Empty buckets get zero values so the X axis always covers the full period.
-            double cpuPct = 0.0;
-            double batteryMah = 0.0;
-            double ram = 0.0;
+            // Battery: distribute period drainMah proportionally by this bucket's pwi share.
+            // bucketBatRaw / periodTotalBatRaw = fraction of period drain in this hour.
+            // Multiply by periodDrainMah (real mAh) → honest per-hour battery value.
+            double batteryMah = 0;
+            if (batteryNormValid && bucketBatRaw > 0) {
+                batteryMah = (bucketBatRaw / periodTotalBatRaw) * periodDrainMah;
+            }
 
+            // CPU: same per-bucket approach as before — accurate jiffy-based denominator.
+            double cpuPct = 0;
             if (bucketRamCount > 0) {
                 double cpuDenominatorMs = bucketJiffies > 0
                         ? (bucketJiffies * 10.0)
@@ -890,14 +905,9 @@ public class BatteryStatsManager {
                 cpuPct = Math.min(100.0, cpuDenominatorMs > 0
                         ? (bucketCpuMs / cpuDenominatorMs) * 100.0
                         : 0.0);
-
-                if (bucketBatRaw > 0 && bucketLastRawBatch > 0 && bucketDrainPct > 0) {
-                    batteryMah = (bucketBatRaw / bucketLastRawBatch)
-                            * (bucketDrainPct / 100.0 * getBatteryCapacityMah());
-                }
-
-                ram = bucketRamSum / bucketRamCount;
             }
+
+            double ram = bucketRamCount > 0 ? bucketRamSum / bucketRamCount : 0;
 
             java.util.Calendar labelCal = java.util.Calendar.getInstance();
             labelCal.setTimeInMillis(bucketStart);
@@ -907,11 +917,7 @@ public class BatteryStatsManager {
             points.add(new HourlyPoint(label, batteryMah, cpuPct, ram));
         }
 
-        // Add a terminal anchor point at endAligned (the rounded current hour).
-        // This is the right edge of the X axis — e.g. "00:00" or "23:00".
-        // Without it the last visible label is the START of the last bucket
-        // (e.g. "23:00"), making the chart look like it ends one hour early.
-        // Values are taken from actual current device time (now), not from bucket aggregates.
+        // Terminal anchor point at endAligned — right edge of the X axis.
         java.util.Calendar endLabelCal = java.util.Calendar.getInstance();
         endLabelCal.setTimeInMillis(endAligned);
         String endLabel = String.format(Locale.US, "%02d:%02d",
