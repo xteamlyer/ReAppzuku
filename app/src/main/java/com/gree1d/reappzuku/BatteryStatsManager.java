@@ -799,7 +799,8 @@ public class BatteryStatsManager {
         long now = System.currentTimeMillis();
 
         // Round current time DOWN to the nearest whole hour.
-        // E.g. 23:18 → 23:00. This is the fixed end boundary of the chart.
+        // E.g. 0:10 → 0:00, 23:18 → 23:00.
+        // This is the fixed right boundary of the X axis shown to the user.
         java.util.Calendar endCal = java.util.Calendar.getInstance();
         endCal.setTimeInMillis(now);
         endCal.set(java.util.Calendar.MINUTE, 0);
@@ -808,7 +809,7 @@ public class BatteryStatsManager {
         long endAligned   = endCal.getTimeInMillis();
 
         // Start is exactly `hours` hours before the rounded end.
-        // E.g. period=2h, end=23:00 → start=21:00.
+        // E.g. period=2h, end=00:00 → start=22:00.
         long startAligned = endAligned - (long) hours * 3600_000L;
 
         List<ResourceSnapshot> snaps =
@@ -876,9 +877,8 @@ public class BatteryStatsManager {
                 bucketLastRawBatch = curr.totalRawPwiBatch;
             }
 
-            // Always emit a point for this hour — even if no snapshots fell in it.
-            // This guarantees the X-axis always spans the full requested period,
-            // regardless of data gaps. Empty buckets get zero values.
+            // Always emit a point — even if no snapshots fell in this bucket.
+            // Empty buckets get zero values so the X axis always covers the full period.
             double cpuPct = 0.0;
             double batteryMah = 0.0;
             double ram = 0.0;
@@ -906,6 +906,19 @@ public class BatteryStatsManager {
                     labelCal.get(java.util.Calendar.MINUTE));
             points.add(new HourlyPoint(label, batteryMah, cpuPct, ram));
         }
+
+        // Add a terminal anchor point at endAligned (the rounded current hour).
+        // This is the right edge of the X axis — e.g. "00:00" or "23:00".
+        // Without it the last visible label is the START of the last bucket
+        // (e.g. "23:00"), making the chart look like it ends one hour early.
+        // Values are taken from actual current device time (now), not from bucket aggregates.
+        java.util.Calendar endLabelCal = java.util.Calendar.getInstance();
+        endLabelCal.setTimeInMillis(endAligned);
+        String endLabel = String.format(Locale.US, "%02d:%02d",
+                endLabelCal.get(java.util.Calendar.HOUR_OF_DAY),
+                endLabelCal.get(java.util.Calendar.MINUTE));
+        points.add(new HourlyPoint(endLabel, 0, 0, 0));
+
         return new HourlyResult(points, isPartialData);
     }
 
