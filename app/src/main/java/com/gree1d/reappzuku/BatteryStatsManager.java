@@ -796,15 +796,9 @@ public class BatteryStatsManager {
     @WorkerThread
     @NonNull
     private HourlyResult getHourlyStatsBlocking(String packageName, int hours) {
-        // Round current time DOWN to the nearest hour boundary so buckets are
-        // always aligned to clock hours: [19:00,20:00), [20:00,21:00), etc.
-        // 21:45 → endAligned = 21:00, so the incomplete current hour is excluded.
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.set(java.util.Calendar.MINUTE, 0);
-        cal.set(java.util.Calendar.SECOND, 0);
-        cal.set(java.util.Calendar.MILLISECOND, 0);
-        long endAligned   = cal.getTimeInMillis();                             // current full hour
-        long startAligned = endAligned - (long) hours * 3600_000L;
+        long now          = System.currentTimeMillis();
+        long startAligned = now - (long) hours * 3600_000L;
+        long endAligned   = now;
 
         List<ResourceSnapshot> snaps =
                 dao.getSnapshotsForPackageBetween(packageName, startAligned, endAligned);
@@ -823,7 +817,7 @@ public class BatteryStatsManager {
 
         for (int h = 0; h < hours; h++) {
             long bucketStart = startAligned + (long) h * 3600_000L;
-            long bucketEnd   = bucketStart + 3600_000L;
+            long bucketEnd   = (h == hours - 1) ? endAligned : bucketStart + 3600_000L;
 
             // Accumulate deltas from all consecutive snapshot pairs that fall within
             // this hour bucket. A pair (prev, curr) belongs to bucket h when curr
@@ -890,8 +884,9 @@ public class BatteryStatsManager {
 
             java.util.Calendar labelCal = java.util.Calendar.getInstance();
             labelCal.setTimeInMillis(bucketStart);
-            String label = String.format(Locale.US, "%02d:00",
-                    labelCal.get(java.util.Calendar.HOUR_OF_DAY));
+            String label = String.format(Locale.US, "%02d:%02d",
+                    labelCal.get(java.util.Calendar.HOUR_OF_DAY),
+                    labelCal.get(java.util.Calendar.MINUTE));
             points.add(new HourlyPoint(label, batteryMah, cpuPct, ram));
         }
         return new HourlyResult(points, isPartialData);
