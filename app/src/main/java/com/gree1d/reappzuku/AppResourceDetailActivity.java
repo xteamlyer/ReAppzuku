@@ -290,15 +290,45 @@ public class AppResourceDetailActivity extends BaseActivity {
             }
         });
 
+        boolean is24h = h == 24;
         binding.chartDetailActivity.getAxisRight().setEnabled(false);
         binding.chartDetailActivity.setData(new LineData(dataSet));
         binding.chartDetailActivity.getDescription().setEnabled(false);
         binding.chartDetailActivity.getLegend().setEnabled(false);
         binding.chartDetailActivity.setTouchEnabled(true);
-        binding.chartDetailActivity.setDragEnabled(true);
-        binding.chartDetailActivity.setScaleEnabled(false);
+        binding.chartDetailActivity.setDragEnabled(is24h);
+        binding.chartDetailActivity.setScaleXEnabled(is24h);
+        binding.chartDetailActivity.setScaleYEnabled(false);
         binding.chartDetailActivity.setPinchZoom(false);
-        binding.chartDetailActivity.setDrawBorders(false);
+        if (is24h) {
+            // Show ~6 hours worth of slots at a time (6h × 2 slots = 12 visible slots)
+            binding.chartDetailActivity.setVisibleXRangeMaximum(12f);
+            // Start from the rightmost data (most recent)
+            binding.chartDetailActivity.moveViewToX(entries.size());
+        } else {
+            binding.chartDetailActivity.fitScreen();
+        }
+        if (is24h) {
+            binding.chartDetailActivity.setOnChartGestureListener(
+                    new com.github.mikephil.charting.listener.OnChartGestureListener() {
+                @Override public void onChartGestureStart(android.view.MotionEvent me,
+                        com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture lg) {
+                    binding.chartDetailActivity.getParent().requestDisallowInterceptTouchEvent(true);
+                }
+                @Override public void onChartGestureEnd(android.view.MotionEvent me,
+                        com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture lg) {
+                    binding.chartDetailActivity.getParent().requestDisallowInterceptTouchEvent(false);
+                }
+                @Override public void onChartLongPressed(android.view.MotionEvent me) {}
+                @Override public void onChartDoubleTapped(android.view.MotionEvent me) {}
+                @Override public void onChartSingleTapped(android.view.MotionEvent me) {}
+                @Override public void onChartFling(android.view.MotionEvent me1, android.view.MotionEvent me2, float vx, float vy) {}
+                @Override public void onChartScale(android.view.MotionEvent me, float sx, float sy) {}
+                @Override public void onChartTranslate(android.view.MotionEvent me, float dx, float dy) {}
+            });
+        } else {
+            binding.chartDetailActivity.setOnChartGestureListener(null);
+        }
         binding.chartDetailActivity.setExtraBottomOffset(10f);
         binding.chartDetailActivity.setExtraLeftOffset(4f);
         binding.chartDetailActivity.animateX(600);
