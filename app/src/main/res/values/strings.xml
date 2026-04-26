@@ -539,4 +539,5 @@
     <string name="detail_avg_battery">Ср. %.2f mAh/ч</string>
     <string name="detail_avg_cpu">Ср. %.1f%%</string>
     <string name="detail_avg_ram">Ср. %.0f МБ</string>
+    <string name="battery_graph_explanation">Форма графика основана на активности CPU</string>
 </resources>
