@@ -234,34 +234,68 @@ public class BatteryStatsManager {
      * Returns per-hour breakdown for a single app (for the detail graph).
      * Callback is invoked on the main thread.
      */
-    public void getHourlyStatsAsync(String packageName, int hours,
-                                    @NonNull HourlyCallback callback) {
-        executor.execute(() -> {
-            HourlyResult result = getHourlyStatsBlocking(packageName, hours);
-            handler.post(() -> callback.onResult(result));
-        });
-    }
-
     public interface StatsCallback  { void onResult(PeriodStats stats); }
     public interface HourlyCallback { void onResult(HourlyResult result); }
 
-    /** Result of a per-app hourly query, including partial-data metadata. */
-    public static class HourlyResult {
-        public final List<HourlyPoint> points;
-        /**
-         * True when the 2h period is requested but actual data covers less than
-         * 90% of the window. The UI should show an "Incomplete data" warning.
-         * Always false for 6h / 12h / 24h (those return empty points if not full).
-         */
-        public final boolean isPartialData;
+    /** Activity level for a 30-minute slot. */
+    public enum ActivityLevel {
+        NONE,    // no data / app not running
+        LOW,     // below average vs all apps
+        MEDIUM,  // around average
+        HIGH     // significantly above average
+    }
 
-        HourlyResult(List<HourlyPoint> points, boolean isPartialData) {
-            this.points        = points;
-            this.isPartialData = isPartialData;
+    /** One 30-minute slot on the activity chart. */
+    public static class ActivitySlice {
+        public final String label;       // e.g. "23:00", "23:30"
+        public final ActivityLevel level;
+        public final double cpuPercent;
+        public final double ramMb;
+
+        ActivitySlice(String label, ActivityLevel level, double cpuPercent, double ramMb) {
+            this.label      = label;
+            this.level      = level;
+            this.cpuPercent = cpuPercent;
+            this.ramMb      = ramMb;
         }
     }
 
-    /** One data point on the per-app hourly graph. */
+    /** Aggregated min/avg/max stats for the full period (used in detail screen). */
+    public static class HourlyPeriodStats {
+        public final double minBatteryMah, avgBatteryMah, maxBatteryMah;
+        public final double minCpuPct,     avgCpuPct,     maxCpuPct;
+        public final double minRamMb,      avgRamMb,      maxRamMb;
+
+        HourlyPeriodStats(double minBat, double avgBat, double maxBat,
+                    double minCpu, double avgCpu, double maxCpu,
+                    double minRam, double avgRam, double maxRam) {
+            minBatteryMah = minBat; avgBatteryMah = avgBat; maxBatteryMah = maxBat;
+            minCpuPct     = minCpu; avgCpuPct     = avgCpu; maxCpuPct     = maxCpu;
+            minRamMb      = minRam; avgRamMb      = avgRam; maxRamMb      = maxRam;
+        }
+    }
+
+    /** Result of a per-app hourly query, including partial-data metadata. */
+    public static class HourlyResult {
+        public final List<ActivitySlice> slices;
+        public final HourlyPeriodStats stats;
+        public final boolean isPartialData;
+
+        HourlyResult(List<ActivitySlice> slices, HourlyPeriodStats stats, boolean isPartialData) {
+            this.slices        = slices;
+            this.stats         = stats;
+            this.isPartialData = isPartialData;
+        }
+
+        /** Convenience: empty result with no data. */
+        static HourlyResult empty(boolean isPartialData) {
+            return new HourlyResult(new ArrayList<>(), null, isPartialData);
+        }
+    }
+
+    // Keep HourlyPoint for backward compat — no longer used by UI but may exist elsewhere
+    /** @deprecated Use ActivitySlice + PeriodStats instead. */
+    @Deprecated
     public static class HourlyPoint {
         public final String hourLabel;
         public final double batteryMah;
@@ -793,13 +827,31 @@ public class BatteryStatsManager {
     // Private — hourly breakdown
     // ──────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Extended async entry point that accepts all-apps CPU and RAM totals for the period.
+     * These are used to compute relative ActivityLevel (LOW / MEDIUM / HIGH) per slot.
+     *
+     * @param totalAllAppsCpuPct  sum of cpuPct across ALL apps for this period (from PeriodStats)
+     * @param totalAllAppsRamMb   sum of ramMb  across ALL apps for this period (from PeriodStats)
+     */
+    public void getHourlyStatsAsync(String packageName, int hours,
+                                    double totalAllAppsCpuPct, double totalAllAppsRamMb,
+                                    @NonNull HourlyCallback callback) {
+        executor.execute(() -> {
+            HourlyResult result = getHourlyStatsBlocking(
+                    packageName, hours, totalAllAppsCpuPct, totalAllAppsRamMb);
+            handler.post(() -> callback.onResult(result));
+        });
+    }
+
     @WorkerThread
     @NonNull
-    private HourlyResult getHourlyStatsBlocking(String packageName, int hours) {
+    private HourlyResult getHourlyStatsBlocking(String packageName, int hours,
+                                                 double totalAllAppsCpuPct,
+                                                 double totalAllAppsRamMb) {
         long now = System.currentTimeMillis();
 
         // Round current time DOWN to the nearest whole hour.
-        // E.g. 0:10 → 0:00, 23:18 → 23:00.
         java.util.Calendar endCal = java.util.Calendar.getInstance();
         endCal.setTimeInMillis(now);
         endCal.set(java.util.Calendar.MINUTE, 0);
@@ -810,26 +862,17 @@ public class BatteryStatsManager {
 
         List<ResourceSnapshot> snaps =
                 dao.getSnapshotsForPackageBetween(packageName, startAligned, endAligned);
-        List<HourlyPoint> points = new ArrayList<>();
 
         ResourceSnapshot oldestForPkg = dao.getOldestSnapshotForPackage(packageName);
         long oldestPkgTime = oldestForPkg != null ? oldestForPkg.timestamp : endAligned;
         double pkgAgeHours = (endAligned - oldestPkgTime) / 3600_000.0;
         boolean isPartialData = (hours == 2) && (pkgAgeHours < hours * 0.9);
 
-        if (snaps.size() < 2) return new HourlyResult(points, isPartialData);
+        if (snaps.size() < 2) return HourlyResult.empty(isPartialData);
+        if (hours > 2 && pkgAgeHours < hours * 0.9) return HourlyResult.empty(false);
 
-        if (hours > 2 && pkgAgeHours < hours * 0.9) {
-            return new HourlyResult(points, false);
-        }
-
-        // ── Period-wide battery normalization (same method as getStatsForPeriodBlocking) ──
-        // drainMah = real mAh drained over the full period (level drops × capacity).
-        // Battery shape = CPU activity shape, scaled to periodAppBatteryMah.
-        // This gives each app a unique curve while keeping absolute values accurate.
-        double periodTotalDrainPct = 0;
-        double periodTotalBatRaw   = 0;
-        double periodTotalCpuMs    = 0;
+        // ── Period-wide battery normalization ─────────────────────────────────
+        double periodTotalDrainPct = 0, periodTotalBatRaw = 0, periodTotalCpuMs = 0;
         double periodTotalRawPwiBatch = 0;
         int    periodBatchCount = 0;
         {
@@ -837,98 +880,133 @@ public class BatteryStatsManager {
             for (int i = 0; i < snaps.size(); i++) {
                 ResourceSnapshot s = snaps.get(i);
                 if (s.batteryLevelPct > 0) {
-                    if (prevLevel != null && s.batteryLevelPct < prevLevel) {
+                    if (prevLevel != null && s.batteryLevelPct < prevLevel)
                         periodTotalDrainPct += prevLevel - s.batteryLevelPct;
-                    }
                     prevLevel = s.batteryLevelPct;
                 }
                 if (i > 0) {
-                    ResourceSnapshot prev = snaps.get(i - 1);
-                    double dBat = s.batteryMah >= prev.batteryMah
-                            ? s.batteryMah - prev.batteryMah
-                            : s.batteryMah;
+                    ResourceSnapshot p = snaps.get(i - 1);
+                    double dBat = s.batteryMah >= p.batteryMah
+                            ? s.batteryMah - p.batteryMah : s.batteryMah;
                     periodTotalBatRaw += dBat;
-                    periodTotalCpuMs  += Math.max(0, s.cpuTimeMs - prev.cpuTimeMs);
+                    periodTotalCpuMs  += Math.max(0, s.cpuTimeMs - p.cpuTimeMs);
                 }
-                if (s.totalRawPwiBatch > 0) {
-                    periodTotalRawPwiBatch += s.totalRawPwiBatch;
-                    periodBatchCount++;
-                }
+                if (s.totalRawPwiBatch > 0) { periodTotalRawPwiBatch += s.totalRawPwiBatch; periodBatchCount++; }
             }
         }
-        double periodDrainMah = periodTotalDrainPct / 100.0 * getBatteryCapacityMah();
-        // Real mAh attributed to this app for the full period —
-        // same formula as the pie chart: (appRaw / batchTotal) × realDrain.
-        double avgPeriodBatch = periodBatchCount > 0
-                ? periodTotalRawPwiBatch / periodBatchCount : 0;
-        double periodAppMah = (periodTotalDrainPct > 0 && avgPeriodBatch > 0 && periodTotalBatRaw > 0)
-                ? (periodTotalBatRaw / avgPeriodBatch) * periodDrainMah
-                : 0;
-        boolean batteryNormValid = periodAppMah > 0 && periodTotalCpuMs > 0;
+        double periodDrainMah  = periodTotalDrainPct / 100.0 * getBatteryCapacityMah();
+        double avgPeriodBatch  = periodBatchCount > 0 ? periodTotalRawPwiBatch / periodBatchCount : 0;
+        double periodAppMah    = (periodTotalDrainPct > 0 && avgPeriodBatch > 0 && periodTotalBatRaw > 0)
+                ? (periodTotalBatRaw / avgPeriodBatch) * periodDrainMah : 0;
+        boolean batValid       = periodAppMah > 0 && periodTotalCpuMs > 0;
 
-        // ── Per-hour buckets ──────────────────────────────────────────────────
-        for (int h = 0; h < hours; h++) {
-            long bucketStart = startAligned + (long) h * 3600_000L;
-            long bucketEnd   = bucketStart + 3600_000L;
+        // ── Average per-app CPU/RAM across all apps (for activity level comparison) ──
+        // avgAllCpu/avgAllRam = "what an average app consumes" over the period.
+        // We compare this app's 30-min slot against these averages.
+        int numSlots = hours * 2; // 30-min slots
+        double avgAllCpuPerSlot = totalAllAppsCpuPct > 0 ? totalAllAppsCpuPct / numSlots : 0;
+        double avgAllRamPerSlot = totalAllAppsRamMb  > 0 ? totalAllAppsRamMb  / numSlots : 0;
 
-            double bucketCpuMs = 0;
-            double bucketRamSum = 0;
-            int    bucketRamCount = 0;
-            long   bucketJiffies = 0;
-            long   bucketFirstTs = -1, bucketLastTs = -1;
+        // ── 30-minute buckets ─────────────────────────────────────────────────
+        final long SLOT_MS = 30 * 60 * 1000L;
+        List<ActivitySlice> slices = new ArrayList<>();
+
+        // For min/avg/max we track per-slot battery values.
+        List<Double> slotBatList = new ArrayList<>();
+        List<Double> slotCpuList = new ArrayList<>();
+        List<Double> slotRamList = new ArrayList<>();
+
+        for (int s = 0; s < numSlots; s++) {
+            long slotStart = startAligned + (long) s * SLOT_MS;
+            long slotEnd   = slotStart + SLOT_MS;
+
+            double slotCpuMs = 0, slotRamSum = 0;
+            int    slotRamCount = 0;
+            long   slotJiffies = 0, slotFirstTs = -1, slotLastTs = -1;
 
             for (int i = 1; i < snaps.size(); i++) {
                 ResourceSnapshot prev = snaps.get(i - 1);
                 ResourceSnapshot curr = snaps.get(i);
-                if (curr.timestamp < bucketStart || curr.timestamp > bucketEnd) continue;
+                if (curr.timestamp <= slotStart || curr.timestamp > slotEnd) continue;
 
-                bucketCpuMs   += Math.max(0, curr.cpuTimeMs - prev.cpuTimeMs);
-                bucketJiffies += Math.max(0, curr.totalCpuJiffies - prev.totalCpuJiffies);
-                bucketRamSum  += curr.ramMb;
-                bucketRamCount++;
-
-                if (bucketFirstTs < 0) bucketFirstTs = prev.timestamp;
-                bucketLastTs = curr.timestamp;
+                slotCpuMs    += Math.max(0, curr.cpuTimeMs - prev.cpuTimeMs);
+                slotJiffies  += Math.max(0, curr.totalCpuJiffies - prev.totalCpuJiffies);
+                slotRamSum   += curr.ramMb;
+                slotRamCount++;
+                if (slotFirstTs < 0) slotFirstTs = prev.timestamp;
+                slotLastTs = curr.timestamp;
             }
 
-            // Battery shape = CPU activity shape, scaled to periodAppMah.
-            // bucketCpuMs / periodTotalCpuMs = this bucket's fraction of total CPU activity.
-            // Multiply by periodAppMah (real mAh for this app) → unique per-app curve.
-            double batteryMah = 0;
-            if (batteryNormValid && bucketCpuMs > 0) {
-                batteryMah = (bucketCpuMs / periodTotalCpuMs) * periodAppMah;
+            // Battery for this slot = CPU-proportional share of periodAppMah
+            double slotBat = 0;
+            if (batValid && slotCpuMs > 0)
+                slotBat = (slotCpuMs / periodTotalCpuMs) * periodAppMah;
+
+            // CPU %
+            double slotCpuDenMs = slotJiffies > 0 ? slotJiffies * 10.0
+                    : (slotFirstTs >= 0 ? (double)(slotLastTs - slotFirstTs) : 0);
+            double slotCpu = (slotRamCount > 0 && slotCpuDenMs > 0)
+                    ? Math.min(100.0, slotCpuMs / slotCpuDenMs * 100.0) : 0;
+
+            double slotRam = slotRamCount > 0 ? slotRamSum / slotRamCount : 0;
+
+            // Determine activity level by comparing this slot's CPU+RAM to all-apps averages.
+            // Score: weighted sum of (cpu/avgCpu) and (ram/avgRam), then bucketed.
+            ActivityLevel level;
+            if (slotRamCount == 0) {
+                level = ActivityLevel.NONE;
+            } else {
+                double cpuRatio = avgAllCpuPerSlot > 0 ? slotCpu / avgAllCpuPerSlot : 0;
+                double ramRatio = avgAllRamPerSlot > 0 ? slotRam / avgAllRamPerSlot : 0;
+                double score = cpuRatio * 0.6 + ramRatio * 0.4; // CPU weighted more
+                if (score <= 0.0)       level = ActivityLevel.NONE;
+                else if (score < 0.5)   level = ActivityLevel.LOW;
+                else if (score < 1.5)   level = ActivityLevel.MEDIUM;
+                else                    level = ActivityLevel.HIGH;
             }
 
-            // CPU: same per-bucket approach as before — accurate jiffy-based denominator.
-            double cpuPct = 0;
-            if (bucketRamCount > 0) {
-                double cpuDenominatorMs = bucketJiffies > 0
-                        ? (bucketJiffies * 10.0)
-                        : (double)(bucketLastTs - bucketFirstTs);
-                cpuPct = Math.min(100.0, cpuDenominatorMs > 0
-                        ? (bucketCpuMs / cpuDenominatorMs) * 100.0
-                        : 0.0);
-            }
-
-            double ram = bucketRamCount > 0 ? bucketRamSum / bucketRamCount : 0;
-
-            java.util.Calendar labelCal = java.util.Calendar.getInstance();
-            labelCal.setTimeInMillis(bucketStart);
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.setTimeInMillis(slotStart);
             String label = String.format(Locale.US, "%02d:%02d",
-                    labelCal.get(java.util.Calendar.HOUR_OF_DAY),
-                    labelCal.get(java.util.Calendar.MINUTE));
-            points.add(new HourlyPoint(label, batteryMah, cpuPct, ram));
+                    cal.get(java.util.Calendar.HOUR_OF_DAY),
+                    cal.get(java.util.Calendar.MINUTE));
+
+            slices.add(new ActivitySlice(label, level, slotCpu, slotRam));
+            if (slotRamCount > 0) {
+                slotBatList.add(slotBat);
+                slotCpuList.add(slotCpu);
+                slotRamList.add(slotRam);
+            }
         }
 
-        // Terminal anchor point at endAligned — right edge of the X axis.
+        // Terminal anchor label at endAligned
         java.util.Calendar endLabelCal = java.util.Calendar.getInstance();
         endLabelCal.setTimeInMillis(endAligned);
         String endLabel = String.format(Locale.US, "%02d:%02d",
                 endLabelCal.get(java.util.Calendar.HOUR_OF_DAY),
                 endLabelCal.get(java.util.Calendar.MINUTE));
-        points.add(new HourlyPoint(endLabel, 0, 0, 0));
+        slices.add(new ActivitySlice(endLabel, ActivityLevel.NONE, 0, 0));
 
-        return new HourlyResult(points, isPartialData);
+        // ── Compute min/avg/max ───────────────────────────────────────────────
+        HourlyPeriodStats periodStats = null;
+        if (!slotBatList.isEmpty()) {
+            double minBat = Double.MAX_VALUE, maxBat = 0, sumBat = 0;
+            double minCpu = Double.MAX_VALUE, maxCpu = 0, sumCpu = 0;
+            double minRam = Double.MAX_VALUE, maxRam = 0, sumRam = 0;
+            int n = slotBatList.size();
+            for (int i = 0; i < n; i++) {
+                double bat = slotBatList.get(i), cpu = slotCpuList.get(i), ram = slotRamList.get(i);
+                minBat = Math.min(minBat, bat); maxBat = Math.max(maxBat, bat); sumBat += bat;
+                minCpu = Math.min(minCpu, cpu); maxCpu = Math.max(maxCpu, cpu); sumCpu += cpu;
+                minRam = Math.min(minRam, ram); maxRam = Math.max(maxRam, ram); sumRam += ram;
+            }
+            periodStats = new HourlyPeriodStats(
+                    minBat, sumBat / n, maxBat,
+                    minCpu, sumCpu / n, maxCpu,
+                    minRam, sumRam / n, maxRam);
+        }
+
+        return new HourlyResult(slices, periodStats, isPartialData);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
