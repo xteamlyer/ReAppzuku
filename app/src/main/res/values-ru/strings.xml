@@ -191,7 +191,7 @@
     <string name="settings_sleep_mode_subtitle">Замораживать приложения в режиме сна</string>
     <string name="settings_sleep_mode_apps_title">Список приложений для режима сна</string>
     <string name="settings_sleep_mode_apps_subtitle">Выберите приложения для заморозки в режиме сна</string>
-    <string name="settings_sleep_mode_delay_title">Таймер заморозки</string>
+    <string name="settings_sleep_mode_delay_title">Таймер до заморозки</string>
     <string name="settings_sleep_mode_delay_subtitle">Продолжительность периода бездействия до заморозки</string>
     <string name="settings_sleep_mode_delay_fallback">После %1$d минут</string>
 
