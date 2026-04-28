@@ -398,6 +398,8 @@ public class StatisticsActivity extends BaseActivity {
         chart.getDescription().setEnabled(false);
         chart.getLegend().setEnabled(false);
         chart.setRotationEnabled(false);
+        // Remove internal padding so chart aligns flush with the top of legend
+        chart.setExtraOffsets(0f, 0f, 0f, 0f);
         // Clicks handled by legend rows — disable tap on slices
         chart.setHighlightPerTapEnabled(false);
         chart.setOnChartValueSelectedListener(null);
@@ -436,9 +438,9 @@ public class StatisticsActivity extends BaseActivity {
         legend.removeAllViews();
 
         LayoutInflater inflater = LayoutInflater.from(this);
-        int dotSizePx = (int)(8 * getResources().getDisplayMetrics().density);
-        int marginEndPx = (int)(6 * getResources().getDisplayMetrics().density);
-        int rowMarginBottomPx = (int)(5 * getResources().getDisplayMetrics().density);
+        int dotSizePx = (int)(10 * getResources().getDisplayMetrics().density);
+        int marginEndPx = (int)(7 * getResources().getDisplayMetrics().density);
+        int rowMarginBottomPx = (int)(7 * getResources().getDisplayMetrics().density);
 
         for (int i = 0; i < entries.size(); i++) {
             PieEntry pe = entries.get(i);
@@ -502,7 +504,7 @@ public class StatisticsActivity extends BaseActivity {
             label.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                     0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             label.setText(String.format(Locale.US, "%.1f%% — %s", pct, name));
-            label.setTextSize(11f);
+            label.setTextSize(13f);
             label.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
             label.setMaxLines(2);
             label.setEllipsize(android.text.TextUtils.TruncateAt.END);
