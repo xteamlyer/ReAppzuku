@@ -419,6 +419,22 @@ public class StatisticsActivity extends BaseActivity {
         // Populate legend panel only for the currently visible chart
         if (chartIdx == currentChartIdx) {
             buildChartLegend(entries, byCurrent, othersList, colors, metric, total);
+            // After layout pass: align legend top to actual pie circle top inside the chart view
+            chart.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override public void onGlobalLayout() {
+                    chart.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    com.github.mikephil.charting.utils.MPPointF center = chart.getCenterCircleBox();
+                    float radius = chart.getRadius();
+                    // Top of the pie circle in chart-local px
+                    float circleTopPx = center.y - radius;
+                    android.widget.LinearLayout.LayoutParams lp =
+                            (android.widget.LinearLayout.LayoutParams)
+                                    binding.scrollChartLegend.getLayoutParams();
+                    lp.topMargin = Math.max(0, Math.round(circleTopPx));
+                    binding.scrollChartLegend.setLayoutParams(lp);
+                }
+            });
         }
     }
 
