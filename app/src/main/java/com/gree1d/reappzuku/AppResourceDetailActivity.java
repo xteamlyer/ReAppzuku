@@ -52,6 +52,7 @@ public class AppResourceDetailActivity extends BaseActivity {
     public static final String EXTRA_APP_NAME      = "extra_app_name";
     public static final String EXTRA_TOTAL_CPU_PCT = "extra_total_cpu_pct";
     public static final String EXTRA_TOTAL_RAM_MB  = "extra_total_ram_mb";
+    public static final String EXTRA_PERIOD_IDX    = "extra_period_idx";
 
     private static final int[]    PERIODS_HOURS  = { 2, 6, 12, 24 };
     private static final String[] PERIOD_LABELS  = { "2ч", "6ч", "12ч", "24ч" };
@@ -86,6 +87,8 @@ public class AppResourceDetailActivity extends BaseActivity {
         appName            = getIntent().getStringExtra(EXTRA_APP_NAME);
         totalAllAppsCpuPct = getIntent().getDoubleExtra(EXTRA_TOTAL_CPU_PCT, 0);
         totalAllAppsRamMb  = getIntent().getDoubleExtra(EXTRA_TOTAL_RAM_MB, 0);
+        // Inherit the period that was active on the charts screen (default 0 = 2h)
+        selectedPeriodIdx  = getIntent().getIntExtra(EXTRA_PERIOD_IDX, 0);
         if (packageName == null) { finish(); return; }
 
         shellManager        = new ShellManager(getApplicationContext(), handler, executor);
