@@ -494,8 +494,7 @@
     <string name="stats_chart_total_ram">Ср. %s</string>
     <string name="stats_self_overhead_label">Потребление ReAppzuku:</string>
     <string name="stats_self_overhead">Потребление ReAppzuku: %1$s · %2$s · %3$s</string>
-    <string name="chart_nav_prev">Предыдущая диаграмма</string>
-    <string name="chart_nav_next">Следующая диаграмма</string>
+    <string name="stats_service_inactive_hint">Статистика собирается только при активном фоновом сервисе. Включите сервис в настройках приложения.</string>
     
     <!-- Stats — no data hints -->
     <string name="stats_no_data_hint_no_snapshot">Данные ещё не собраны. Подождите ~30 минут.</string>
