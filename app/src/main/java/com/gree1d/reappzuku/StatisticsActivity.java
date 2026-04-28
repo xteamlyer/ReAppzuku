@@ -93,7 +93,7 @@ public class StatisticsActivity extends BaseActivity {
 
     private String[] topOffenderFilterLabels;
     private String[] chartPeriodLabels;
-    private int selectedPeriodIdx = 1;
+    private int selectedPeriodIdx = 0; // default 2h
     private int currentChartIdx = CHART_BATTERY;
 
     // Current period data — kept to reuse when switching charts
@@ -188,11 +188,29 @@ public class StatisticsActivity extends BaseActivity {
         updateChartPagerUI();
     }
 
+    // Per-chart legend data — populated in buildPieChart, reused when switching
+    private List<PieEntry>[] chartEntries   = new List[CHART_COUNT];
+    private List<BatteryStatsManager.AppResourceStats>[] chartSortedByMetric = new List[CHART_COUNT];
+    private List<BatteryStatsManager.AppResourceStats>[] chartOthers = new List[CHART_COUNT];
+    private List<Integer>[] chartColors     = new List[CHART_COUNT];
+    private ChartMetric[]   chartMetrics    = { ChartMetric.BATTERY, ChartMetric.CPU, ChartMetric.RAM };
+    private double[]        chartTotals     = new double[CHART_COUNT];
+
     private void navigateChart(int direction) {
         currentChartIdx = (currentChartIdx + direction + CHART_COUNT) % CHART_COUNT;
         updateChartPagerUI();
         if (currentSorted != null) {
             showActiveChart(currentSorted, currentTotalHours);
+        }
+        // Rebuild legend for newly visible chart
+        if (chartEntries[currentChartIdx] != null) {
+            buildChartLegend(
+                    chartEntries[currentChartIdx],
+                    chartSortedByMetric[currentChartIdx],
+                    chartOthers[currentChartIdx],
+                    chartColors[currentChartIdx],
+                    chartMetrics[currentChartIdx],
+                    chartTotals[currentChartIdx]);
         }
     }
 
@@ -253,36 +271,11 @@ public class StatisticsActivity extends BaseActivity {
             currentSorted = sorted;
             currentTotalHours = periodStats.actualHours;
 
-            // ── Info cards (period-aware) ──────────────────────────────────
-
-            // Battery saved: sum mAh of all non-self apps killed (approximated as total
-            // consumed by background apps) → converted to % of assumed capacity.
-            double totalBatteryMah = 0;
-            double totalRamMb = 0;
-            double totalCpuFraction = 0;
+            // ── Compute totals for self-overhead row ──────────────────────
             BatteryStatsManager.AppResourceStats selfStats = null;
-
             for (BatteryStatsManager.AppResourceStats s : sorted) {
-                if (s.isSelf) { selfStats = s; continue; }
-                totalBatteryMah  += s.batteryMah;
-                totalRamMb       += s.ramMb;
-                totalCpuFraction += s.cpuPct;
+                if (s.isSelf) { selfStats = s; break; }
             }
-
-            // Battery saved tile: show as % of assumed capacity, floored at 0.1
-            final double finalBatMah = totalBatteryMah;
-            double batPct = (totalBatteryMah / batteryCapacityMah) * 100.0;
-            String batText = batPct >= 0.1
-                    ? String.format(Locale.US, "%.1f%%", batPct)
-                    : getString(R.string.stats_battery_trace);
-            binding.infoBatterySavedValue.setText(batText);
-
-            // RAM freed tile: sum of background RAM (already period-aware via PSS snapshots)
-            binding.infoRamRecoveredValue.setText(formatRamMb(totalRamMb));
-
-            // CPU reduced tile: sum cpu fraction × 100 → show as %
-            String cpuText = String.format(Locale.US, "%.1f%%", totalCpuFraction);
-            binding.infoCpuReducedValue.setText(cpuText);
 
             // ── Self overhead row ─────────────────────────────────────────
             if (selfStats != null) {
@@ -297,11 +290,11 @@ public class StatisticsActivity extends BaseActivity {
 
             // ── Build all 3 charts ─────────────────────────────────────────
             buildPieChart(binding.chartBattery, binding.layoutBatteryOthers,
-                    sorted, ChartMetric.BATTERY);
+                    sorted, ChartMetric.BATTERY, CHART_BATTERY);
             buildPieChart(binding.chartCpu, binding.layoutCpuOthers,
-                    sorted, ChartMetric.CPU);
+                    sorted, ChartMetric.CPU, CHART_CPU);
             buildPieChart(binding.chartRam, binding.layoutRamOthers,
-                    sorted, ChartMetric.RAM);
+                    sorted, ChartMetric.RAM, CHART_RAM);
 
             // Update total label for current chart
             showActiveChart(sorted, periodStats.actualHours);
@@ -355,7 +348,8 @@ public class StatisticsActivity extends BaseActivity {
     private void buildPieChart(PieChart chart,
                                 android.view.ViewGroup othersContainer,
                                 List<BatteryStatsManager.AppResourceStats> sorted,
-                                ChartMetric metric) {
+                                ChartMetric metric,
+                                int chartIdx) {
         double total = 0;
         for (BatteryStatsManager.AppResourceStats s : sorted) total += metricValue(s, metric);
         if (total <= 0) return;
@@ -373,7 +367,8 @@ public class StatisticsActivity extends BaseActivity {
             float pct = (float)(val / total * 100);
             boolean forceShow = i < BatteryStatsManager.MIN_TOP_SLICES;
             if (forceShow || pct > BatteryStatsManager.OTHERS_THRESHOLD_PCT) {
-                entries.add(new PieEntry((float) val, s.appName, s.packageName));
+                // Store package name as data tag; label left empty — shown only in legend panel
+                entries.add(new PieEntry((float) val, "", s.packageName));
             } else {
                 othersValue += val;
                 othersList.add(s);
@@ -426,6 +421,93 @@ public class StatisticsActivity extends BaseActivity {
         chart.invalidate();
         // Others list hidden in new design — shown via dialog on tap
         if (othersContainer != null) othersContainer.setVisibility(View.GONE);
+
+        // Save legend data for this chart index (used when switching charts)
+        chartEntries[chartIdx]        = entries;
+        chartSortedByMetric[chartIdx] = byCurrent;
+        chartOthers[chartIdx]         = othersList;
+        chartColors[chartIdx]         = colors;
+        chartTotals[chartIdx]         = total;
+
+        // Populate legend panel only for the currently visible chart
+        if (chartIdx == currentChartIdx) {
+            buildChartLegend(entries, byCurrent, othersList, colors, metric, total);
+        }
+    }
+
+    /**
+     * Fills layout_chart_legend with one row per slice:
+     *   [colored dot]  XX.X% — App Name
+     */
+    private void buildChartLegend(
+            List<PieEntry> entries,
+            List<BatteryStatsManager.AppResourceStats> byCurrent,
+            List<BatteryStatsManager.AppResourceStats> othersList,
+            List<Integer> colors,
+            ChartMetric metric,
+            double total) {
+
+        android.widget.LinearLayout legend = binding.layoutChartLegend;
+        legend.removeAllViews();
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        int dotSizePx = (int)(8 * getResources().getDisplayMetrics().density);
+        int marginEndPx = (int)(6 * getResources().getDisplayMetrics().density);
+        int rowMarginBottomPx = (int)(5 * getResources().getDisplayMetrics().density);
+
+        for (int i = 0; i < entries.size(); i++) {
+            PieEntry pe = entries.get(i);
+            int color = colors.get(i);
+            float pct = total > 0 ? (float)(pe.getValue() / total * 100) : 0f;
+
+            // Determine app name
+            String name;
+            Object tag = pe.getData();
+            if ("__others__".equals(tag)) {
+                name = getString(R.string.chart_others_label);
+            } else {
+                String pkg = tag != null ? tag.toString() : "";
+                BatteryStatsManager.AppResourceStats found = findByPkg(byCurrent, pkg);
+                name = (found != null && found.appName != null) ? found.appName : pkg;
+            }
+
+            // Row container
+            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+            android.widget.LinearLayout.LayoutParams rowLp =
+                    new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            rowLp.bottomMargin = rowMarginBottomPx;
+            row.setLayoutParams(rowLp);
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+            // Colored dot
+            android.widget.TextView dot = new android.widget.TextView(this);
+            android.widget.LinearLayout.LayoutParams dotLp =
+                    new android.widget.LinearLayout.LayoutParams(dotSizePx, dotSizePx);
+            dotLp.rightMargin = marginEndPx;
+            dot.setLayoutParams(dotLp);
+            android.graphics.drawable.GradientDrawable circle =
+                    new android.graphics.drawable.GradientDrawable();
+            circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            circle.setColor(color);
+            dot.setBackground(circle);
+
+            // Label: "XX.X% — Name"
+            android.widget.TextView label = new android.widget.TextView(this);
+            label.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            label.setText(String.format(Locale.US, "%.1f%% — %s", pct, name));
+            label.setTextSize(11f);
+            label.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            label.setMaxLines(2);
+            label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+
+            row.addView(dot);
+            row.addView(label);
+            legend.addView(row);
+        }
     }
 
     private List<Integer> buildMultiColors(int count) {
@@ -470,6 +552,7 @@ public class StatisticsActivity extends BaseActivity {
         intent.putExtra(AppResourceDetailActivity.EXTRA_APP_NAME, appName);
         intent.putExtra(AppResourceDetailActivity.EXTRA_TOTAL_CPU_PCT, totalCpuPct);
         intent.putExtra(AppResourceDetailActivity.EXTRA_TOTAL_RAM_MB, totalRamMb);
+        intent.putExtra(AppResourceDetailActivity.EXTRA_PERIOD_IDX, selectedPeriodIdx);
         startActivity(intent);
     }
 
@@ -531,10 +614,6 @@ public class StatisticsActivity extends BaseActivity {
                 List<String> detailParts = new ArrayList<>();
                 if (stats.killCount > 0) {
                     String killDetail = getString(R.string.stats_kill_detail, stats.killCount);
-                    if (stats.lastKillTime > 0) {
-                        killDetail += getString(R.string.stats_last_kill_time,
-                                timeFormat.format(new java.util.Date(stats.lastKillTime)));
-                    }
                     detailParts.add(killDetail);
                 }
                 if (stats.relaunchCount > 0) {
