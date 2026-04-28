@@ -512,13 +512,17 @@
     <string name="triggers_bindings_gms_note"> Google Play Services (GMS) — частый источник: держит push-соединения и синхронизацию аккаунтов.</string>
     <string name="triggers_bindings_push_note"> Обнаружен push/FCM-биндинг: приложение ждёт входящих уведомлений в реальном времени.</string>
     <string name="triggers_bindings_overflow"> и ещё %1$d</string>
+
+    <!-- Time units -->
+    <string name="time_unit_sec">с</string>
+    <string name="time_unit_min">мин</string>
+    <string name="time_unit_hour">ч</string>
     
     <!-- Stats Graphics Info -->
 
     <string name="chart_others_label">Прочие</string>
     <string name="chart_others_expand">Экономичные приложения (%1$d)</string>
     <string name="chart_others_dialog_title">Экономичные приложения</string>
-
     <string name="info_card_kills">Убито процессов</string>
     <string name="info_card_relaunches">Перезапусков</string>
     <string name="info_card_ram_recovered">Освобождено ОЗУ</string>
