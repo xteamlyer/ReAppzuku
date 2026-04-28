@@ -351,15 +351,15 @@
                             android:layout_weight="5"
                             android:visibility="gone" />
 
-                        <!-- Legend panel (scrollable), aligned top, shifted right -->
+                        <!-- Legend panel (scrollable), aligned to chart top -->
                         <androidx.core.widget.NestedScrollView
                             android:id="@+id/scroll_chart_legend"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="4"
+                            android:layout_gravity="top"
                             android:paddingStart="12dp"
                             android:paddingEnd="4dp"
-                            android:paddingTop="2dp"
                             android:clipToPadding="false">
 
                             <LinearLayout
