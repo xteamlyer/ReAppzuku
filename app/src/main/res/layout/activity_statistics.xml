@@ -39,7 +39,7 @@
             android:orientation="vertical">
 
             <!-- ═══════════════════════════════════════════════════════════════
-                 SECTION 1 — INFO CARDS (3 tiles in one row, period-aware)
+                 SECTION 1 — SELF OVERHEAD + DISCLAIMER
             ════════════════════════════════════════════════════════════════ -->
 
             <LinearLayout
@@ -48,139 +48,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp">
-
-                <!-- Row: 3 tiles in one line -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="96dp"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="10dp">
-
-                    <!-- Card: Battery saved -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1.5dp"
-                        app:strokeColor="?attr/colorPrimary"
-                        app:cardBackgroundColor="#18808080">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
-
-                            <TextView
-                                android:id="@+id/info_battery_saved_value"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="—"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:textColor="?android:attr/textColorPrimary" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/info_card_battery_saved"
-                                android:textSize="10sp"
-                                android:gravity="center"
-                                android:textColor="@color/text_secondary"
-                                android:layout_marginTop="3dp" />
-
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Card: RAM freed -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1.5dp"
-                        app:strokeColor="?attr/colorPrimary"
-                        app:cardBackgroundColor="#18808080">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
-
-                            <TextView
-                                android:id="@+id/info_ram_recovered_value"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="—"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:textColor="?android:attr/textColorPrimary" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/info_card_ram_recovered"
-                                android:textSize="10sp"
-                                android:gravity="center"
-                                android:textColor="@color/text_secondary"
-                                android:layout_marginTop="3dp" />
-
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Card: CPU reduced -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1.5dp"
-                        app:strokeColor="?attr/colorPrimary"
-                        app:cardBackgroundColor="#18808080">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
-
-                            <TextView
-                                android:id="@+id/info_cpu_reduced_value"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="—"
-                                android:textSize="20sp"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:textColor="?android:attr/textColorPrimary" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/info_card_cpu_reduced"
-                                android:textSize="10sp"
-                                android:gravity="center"
-                                android:textColor="@color/text_secondary"
-                                android:layout_marginTop="3dp" />
-
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                </LinearLayout>
 
                 <!-- ReAppzuku own overhead row with icons -->
                 <LinearLayout
@@ -450,26 +317,57 @@
 
                     </LinearLayout>
 
-                    <!-- Battery chart -->
-                    <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/chart_battery"
+                    <!-- Chart row: pie chart left + legend right -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="240dp"
-                        android:visibility="visible" />
+                        android:orientation="horizontal">
 
-                    <!-- CPU chart -->
-                    <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/chart_cpu"
-                        android:layout_width="match_parent"
-                        android:layout_height="240dp"
-                        android:visibility="gone" />
+                        <!-- Battery chart -->
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/chart_battery"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:visibility="visible" />
 
-                    <!-- RAM chart -->
-                    <com.github.mikephil.charting.charts.PieChart
-                        android:id="@+id/chart_ram"
-                        android:layout_width="match_parent"
-                        android:layout_height="240dp"
-                        android:visibility="gone" />
+                        <!-- CPU chart -->
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/chart_cpu"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:visibility="gone" />
+
+                        <!-- RAM chart -->
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/chart_ram"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:visibility="gone" />
+
+                        <!-- Legend panel (scrollable) -->
+                        <androidx.core.widget.NestedScrollView
+                            android:id="@+id/scroll_chart_legend"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:paddingStart="4dp"
+                            android:paddingEnd="4dp"
+                            android:paddingTop="4dp"
+                            android:clipToPadding="false">
+
+                            <LinearLayout
+                                android:id="@+id/layout_chart_legend"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="start" />
+
+                        </androidx.core.widget.NestedScrollView>
+
+                    </LinearLayout>
 
                     <!-- Total line (kept for data, hidden from charts area) -->
                     <TextView
