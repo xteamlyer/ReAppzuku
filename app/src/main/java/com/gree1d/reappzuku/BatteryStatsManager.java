@@ -102,6 +102,10 @@ public class BatteryStatsManager {
     /**
      * Extracts the average PSS value from a procstats TOTAL line.
      *
+     * Supports both dot and comma as decimal separator to handle all system locales.
+     * Samsung/One UI with Russian locale outputs commas: "2,8MB-9,9MB-..."
+     * Stock Android / English locale outputs dots: "2.8MB-9.9MB-..."
+     *
      * Real format:
      *   TOTAL: 100% (346MB-346MB-346MB/161MB-161MB-161MB/288MB-288MB-288MB over 1)
      *   Fields: PSS min-avg-max / USS min-avg-max / RSS min-avg-max
@@ -110,7 +114,9 @@ public class BatteryStatsManager {
      * Pattern captures the three PSS values; group(2) = avg PSS in MB.
      */
     private static final Pattern PROCSTATS_PSS =
-            Pattern.compile("(\\d+(?:\\.\\d+)?)MB-(\\d+(?:\\.\\d+)?)MB-(\\d+(?:\\.\\d+)?)MB");
+            Pattern.compile(
+                "(\\d+(?:[.,]\\d+)?)MB-(\\d+(?:[.,]\\d+)?)MB-(\\d+(?:[.,]\\d+)?)MB"
+            );
 
     // ──────────────────────────────────────────────────────────────────────────
     // Fields
@@ -318,64 +324,87 @@ public class BatteryStatsManager {
     private void takeSnapshotBlocking() {
         long now = System.currentTimeMillis();
 
-        // Throttle: skip if last snapshot was too recent
-        ResourceSnapshot last = dao.getLatestSnapshot();
-        if (last != null && (now - last.timestamp) < MIN_SNAPSHOT_INTERVAL_MS) {
-            Log.d(TAG, "Snapshot skipped — too soon after last one");
-            return;
+        try {
+            // Throttle: skip if last snapshot was too recent
+            ResourceSnapshot last = dao.getLatestSnapshot();
+            if (last != null && (now - last.timestamp) < MIN_SNAPSHOT_INTERVAL_MS) {
+                Log.d(TAG, "Snapshot skipped — too soon after last one");
+                return;
+            }
+
+            // 1. Battery (mAh) + CPU time (ms) — single batterystats --checkin call.
+            //    Each source is isolated: failure of one does not abort the others.
+            Map<String, Double> batteryMahByPkg = new HashMap<>();
+            Map<String, Long>   cpuMsByPkg      = new HashMap<>();
+            try {
+                collectCheckinStats(batteryMahByPkg, cpuMsByPkg);
+            } catch (Exception e) {
+                Log.e(TAG, "collectCheckinStats failed, battery/cpu data will be empty", e);
+            }
+
+            // 2. RAM (PSS MB) from procstats, with fallback to meminfo.
+            Map<String, Double> ramMbByPkg = new HashMap<>();
+            try {
+                collectProcStatsRam(24, ramMbByPkg);
+                if (ramMbByPkg.isEmpty()) {
+                    Log.d(TAG, "procstats returned no RAM data, trying meminfo fallback");
+                    collectMeminfoRam(ramMbByPkg);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "RAM collection failed, trying meminfo fallback", e);
+                try {
+                    collectMeminfoRam(ramMbByPkg);
+                } catch (Exception e2) {
+                    Log.e(TAG, "meminfo fallback also failed, RAM data will be empty", e2);
+                }
+            }
+
+            // 3. System-wide CPU baseline from /proc/stat (no root required).
+            long[] jiffies = readProcStatJiffies(); // [totalJiffies, activeJiffies]
+
+            // 4. Battery level (0-100) — no root required.
+            android.os.BatteryManager bm =
+                    (android.os.BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            int batteryLevel = bm != null
+                    ? bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                    : 50;
+
+            // 5. Merge into one snapshot row per package
+            java.util.Set<String> allPkgs = new java.util.HashSet<>();
+            allPkgs.addAll(batteryMahByPkg.keySet());
+            allPkgs.addAll(ramMbByPkg.keySet());
+            allPkgs.addAll(cpuMsByPkg.keySet());
+
+            // Pre-compute batch-wide sum of raw pwi values so hourly charts can
+            // normalize per-app batteryMah → real mAh without extra DB queries.
+            double totalRawPwiBatch = 0;
+            for (double v : batteryMahByPkg.values()) totalRawPwiBatch += v;
+
+            for (String pkg : allPkgs) {
+                ResourceSnapshot snap = new ResourceSnapshot();
+                snap.timestamp        = now;
+                snap.packageName      = pkg;
+                snap.batteryMah       = getOrZero(batteryMahByPkg, pkg);
+                snap.ramMb            = getOrZero(ramMbByPkg, pkg);
+                snap.cpuTimeMs        = cpuMsByPkg.containsKey(pkg) ? cpuMsByPkg.get(pkg) : 0L;
+                snap.totalCpuJiffies  = jiffies[0];
+                snap.activeCpuJiffies = jiffies[1];
+                snap.batteryLevelPct  = batteryLevel;
+                snap.totalRawPwiBatch = totalRawPwiBatch;
+                dao.insert(snap);
+            }
+
+            // Prune old snapshots (keep 24 hours)
+            dao.deleteOlderThan(now - 24 * 3600_000L);
+
+            Log.d(TAG, "Snapshot saved: " + allPkgs.size() + " apps"
+                    + "  battery=" + batteryMahByPkg.size()
+                    + "  ram=" + ramMbByPkg.size()
+                    + "  cpu=" + cpuMsByPkg.size());
+
+        } catch (Exception e) {
+            Log.e(TAG, "takeSnapshotBlocking: unexpected error, snapshot aborted", e);
         }
-
-        // 1. Battery (mAh) + CPU time (ms) — single batterystats --checkin call
-        Map<String, Double> batteryMahByPkg = new HashMap<>();
-        Map<String, Long>   cpuMsByPkg      = new HashMap<>();
-        collectCheckinStats(batteryMahByPkg, cpuMsByPkg);
-
-        // 2. RAM (PSS MB) from procstats
-        Map<String, Double> ramMbByPkg = new HashMap<>();
-        collectProcStatsRam(24, ramMbByPkg);
-
-        // 3. System-wide CPU baseline from /proc/stat (no root required).
-        long[] jiffies = readProcStatJiffies(); // [totalJiffies, activeJiffies]
-
-        // 4. Battery level (0-100) — no root required.
-        android.os.BatteryManager bm =
-                (android.os.BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
-        int batteryLevel = bm != null
-                ? bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
-                : 50;
-
-        // 5. Merge into one snapshot row per package
-        java.util.Set<String> allPkgs = new java.util.HashSet<>();
-        allPkgs.addAll(batteryMahByPkg.keySet());
-        allPkgs.addAll(ramMbByPkg.keySet());
-        allPkgs.addAll(cpuMsByPkg.keySet());
-
-        // Pre-compute batch-wide sum of raw pwi values so hourly charts can
-        // normalize per-app batteryMah → real mAh without extra DB queries.
-        double totalRawPwiBatch = 0;
-        for (double v : batteryMahByPkg.values()) totalRawPwiBatch += v;
-
-        for (String pkg : allPkgs) {
-            ResourceSnapshot snap = new ResourceSnapshot();
-            snap.timestamp        = now;
-            snap.packageName      = pkg;
-            snap.batteryMah       = getOrZero(batteryMahByPkg, pkg);
-            snap.ramMb            = getOrZero(ramMbByPkg, pkg);
-            snap.cpuTimeMs        = cpuMsByPkg.containsKey(pkg) ? cpuMsByPkg.get(pkg) : 0L;
-            snap.totalCpuJiffies  = jiffies[0];
-            snap.activeCpuJiffies = jiffies[1];
-            snap.batteryLevelPct  = batteryLevel;
-            snap.totalRawPwiBatch = totalRawPwiBatch;
-            dao.insert(snap);
-        }
-
-        // 5. Prune old snapshots (keep 24 hours)
-        dao.deleteOlderThan(now - 24 * 3600_000L);
-
-        Log.d(TAG, "Snapshot saved: " + allPkgs.size() + " apps"
-                + "  battery=" + batteryMahByPkg.size()
-                + "  ram=" + ramMbByPkg.size()
-                + "  cpu=" + cpuMsByPkg.size());
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -389,16 +418,19 @@ public class BatteryStatsManager {
      *   1. /sys/class/power_supply/battery/charge_full_design  (µAh → /1000)
      *   2. /sys/class/power_supply/battery/charge_full         (µAh → /1000)
      *   3. dumpsys batterystats | grep Capacity  ("Capacity: 5100, ...")
-     *   4. 4000 mAh fallback
+     *   4. BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER (µAh → /1000, real-time)
+     *   5. 4000 mAh fallback
      *
      * Note: on MIUI/HyperOS the sysfs path returns Permission denied,
      * so the dumpsys fallback is the real primary source on those devices.
+     * On some Huawei/Honor devices dumpsys is also blocked — BatteryManager API
+     * is the last resort before the hardcoded fallback.
      */
     @WorkerThread
     public double getBatteryCapacityMah() {
         if (cachedCapacityMah > 0) return cachedCapacityMah;
 
-        // 1 & 2: sysfs (works on stock Android, may be denied on MIUI)
+        // 1 & 2: sysfs (works on stock Android, may be denied on MIUI/HyperOS)
         String[] sysPaths = {
             "/sys/class/power_supply/battery/charge_full_design",
             "/sys/class/power_supply/battery/charge_full"
@@ -418,19 +450,50 @@ public class BatteryStatsManager {
         }
 
         // 3: dumpsys batterystats — "Capacity: 5100, Computed drain: ..."
-        String output = shellManager.runCommandAndGetOutput(
-                "dumpsys batterystats | grep -m1 'Capacity:'");
-        if (output != null) {
-            java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("Capacity:\\s*(\\d+)").matcher(output);
-            if (m.find()) {
-                double cap = Double.parseDouble(m.group(1));
-                if (cap > 100) {
-                    cachedCapacityMah = cap;
-                    Log.d(TAG, "Battery capacity from dumpsys: " + cachedCapacityMah + " mAh");
-                    return cachedCapacityMah;
+        try {
+            String output = shellManager.runCommandAndGetOutput(
+                    "dumpsys batterystats | grep -m1 'Capacity:'");
+            if (output != null) {
+                java.util.regex.Matcher m =
+                        java.util.regex.Pattern.compile("Capacity:\\s*(\\d+)").matcher(output);
+                if (m.find()) {
+                    double cap = parseLocaleDouble(m.group(1));
+                    if (cap > 100) {
+                        cachedCapacityMah = cap;
+                        Log.d(TAG, "Battery capacity from dumpsys: " + cachedCapacityMah + " mAh");
+                        return cachedCapacityMah;
+                    }
                 }
             }
+        } catch (Exception e) {
+            Log.w(TAG, "dumpsys batterystats capacity read failed", e);
+        }
+
+        // 4: BatteryManager API — CHARGE_COUNTER gives current charge in µAh.
+        //    Not design capacity, but better than hardcoded 4000 when above sources fail.
+        //    Only use if value is plausible (> 500 mAh).
+        try {
+            android.os.BatteryManager bm =
+                    (android.os.BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+            if (bm != null) {
+                int chargeUah = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER);
+                if (chargeUah > 500_000) { // > 500 mAh in µAh
+                    // charge_counter is current charge, not design capacity.
+                    // Estimate design capacity assuming current level.
+                    int levelPct = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                    if (levelPct > 5 && levelPct <= 100) {
+                        double estimatedCapacity = (chargeUah / 1000.0) / (levelPct / 100.0);
+                        if (estimatedCapacity > 500 && estimatedCapacity < 30_000) {
+                            cachedCapacityMah = estimatedCapacity;
+                            Log.d(TAG, "Battery capacity estimated from BatteryManager: "
+                                    + cachedCapacityMah + " mAh (level=" + levelPct + "%)");
+                            return cachedCapacityMah;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "BatteryManager capacity read failed", e);
         }
 
         Log.w(TAG, "Could not read battery capacity, using 4000 mAh fallback");
@@ -483,13 +546,32 @@ public class BatteryStatsManager {
      *
      * Both maps are populated with per-package values (UID split equally
      * across all packages sharing that UID).
+     *
+     * UID filtering:
+     *   UIDs >= 100000 belong to secondary users / Work Profiles (e.g. Samsung Knox
+     *   user 150 → UIDs 15000000+). Calling getPackagesForUid() on these throws
+     *   SecurityException without INTERACT_ACROSS_USERS permission. We skip them —
+     *   they are not relevant for the primary user's statistics.
+     *
+     * Fallback:
+     *   If --checkin returns empty output (Huawei/Honor block this flag), we fall
+     *   back to parsing the human-readable "dumpsys batterystats --charged" format.
      */
     @WorkerThread
     private void collectCheckinStats(@NonNull Map<String, Double> batteryMahOut,
                                      @NonNull Map<String, Long> cpuMsOut) {
         String cmd = "dumpsys batterystats --charged --checkin";
         String output = shellManager.runCommandAndGetOutput(cmd);
-        if (output == null || output.isEmpty()) return;
+
+        // Huawei/Honor and some other OEMs block --checkin or return empty output.
+        // Detect by checking if any pwi/cpu lines are present.
+        boolean hasCheckinData = output != null && (output.contains(",l,pwi,") || output.contains(",l,cpu,"));
+
+        if (!hasCheckinData) {
+            Log.d(TAG, "--checkin returned no usable data, trying human-readable fallback");
+            collectCheckinStatsFallback(batteryMahOut, cpuMsOut);
+            return;
+        }
 
         Map<Integer, Double> uidToMah   = new HashMap<>();
         Map<Integer, Long>   uidToCpuMs = new HashMap<>();
@@ -501,7 +583,10 @@ public class BatteryStatsManager {
                     String[] parts = line.split(",");
                     if (parts.length < 6) continue;
                     int uid    = Integer.parseInt(parts[1].trim());
-                    double mah = Double.parseDouble(parts[5].trim());
+                    // Skip UIDs from secondary users / Work Profiles (Samsung Knox etc.)
+                    // Primary user UIDs are always < 100000.
+                    if (uid >= 100_000) continue;
+                    double mah = parseLocaleDouble(parts[5].trim());
                     if (mah > 0) uidToMah.put(uid, mah);
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     Log.w(TAG, "pwi parse error: " + line, e);
@@ -511,9 +596,10 @@ public class BatteryStatsManager {
                 try {
                     String[] parts = line.split(",");
                     if (parts.length < 6) continue;
-                    int uid       = Integer.parseInt(parts[1].trim());
-                    long userMs   = Long.parseLong(parts[4].trim());
-                    long systemMs = Long.parseLong(parts[5].trim());
+                    int uid = Integer.parseInt(parts[1].trim());
+                    if (uid >= 100_000) continue;
+                    long userMs   = parseLocaleDoubleToLong(parts[4].trim());
+                    long systemMs = parseLocaleDoubleToLong(parts[5].trim());
                     long total    = userMs + systemMs;
                     if (total > 0) uidToCpuMs.put(uid, total);
                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
@@ -522,18 +608,101 @@ public class BatteryStatsManager {
             }
         }
 
-        // Map UID → package name(s), splitting value equally across shared UIDs
+        mapUidsToPkgs(uidToMah, uidToCpuMs, batteryMahOut, cpuMsOut);
+    }
+
+    /**
+     * Fallback battery/CPU parser for devices where --checkin is blocked (Huawei/Honor).
+     *
+     * Parses human-readable "dumpsys batterystats --charged" output.
+     * Looks for lines like:
+     *   Uid u0a123:
+     *     ...
+     *     Wifi Running: ...  (battery drain proxy — not mAh directly)
+     *
+     * Since human-readable format doesn't give per-app mAh directly, we extract
+     * CPU time from "u0a<N>: ... cpu=<user>ms usr + <sys>ms krn" lines and leave
+     * battery at 0 (will show CPU chart only, battery chart will be empty).
+     *
+     * Pattern: "    u0a<N>:" header, then "cpu=Xms usr + Yms krn" on next lines.
+     */
+    private static final Pattern HR_UID_HEADER =
+            Pattern.compile("^\\s+Uid\\s+u0a(\\d+):");
+    private static final Pattern HR_CPU_LINE =
+            Pattern.compile("cpu=(\\d+(?:[.,]\\d+)?)ms\\s+usr\\s*\\+\\s*(\\d+(?:[.,]\\d+)?)ms\\s+krn");
+
+    @WorkerThread
+    private void collectCheckinStatsFallback(@NonNull Map<String, Double> batteryMahOut,
+                                             @NonNull Map<String, Long> cpuMsOut) {
+        String output = shellManager.runCommandAndGetOutput("dumpsys batterystats --charged");
+        if (output == null || output.isEmpty()) {
+            Log.w(TAG, "batterystats fallback also returned empty output");
+            return;
+        }
+
+        Map<Integer, Long> uidToCpuMs = new HashMap<>();
+        int currentAppUid = -1;
+
+        for (String line : output.split("\n")) {
+            Matcher uidMatcher = HR_UID_HEADER.matcher(line);
+            if (uidMatcher.find()) {
+                try {
+                    currentAppUid = Integer.parseInt(uidMatcher.group(1)) + 10000; // u0a123 → uid 10123
+                } catch (NumberFormatException e) {
+                    currentAppUid = -1;
+                }
+                continue;
+            }
+            if (currentAppUid < 0) continue;
+
+            Matcher cpuMatcher = HR_CPU_LINE.matcher(line);
+            if (cpuMatcher.find()) {
+                long userMs   = parseLocaleDoubleToLong(cpuMatcher.group(1));
+                long systemMs = parseLocaleDoubleToLong(cpuMatcher.group(2));
+                long total    = userMs + systemMs;
+                if (total > 0) uidToCpuMs.merge(currentAppUid, total, Long::sum);
+            }
+        }
+
+        Log.d(TAG, "batterystats fallback: parsed cpu for " + uidToCpuMs.size() + " UIDs");
+        mapUidsToPkgs(new HashMap<>(), uidToCpuMs, batteryMahOut, cpuMsOut);
+    }
+
+    /**
+     * Maps UID→value maps to package name maps via PackageManager.
+     *
+     * Handles SecurityException per-entry — on devices with Work Profiles,
+     * some UIDs may still throw even after the >= 100000 filter (e.g. isolated
+     * processes, vendor UIDs). We log and skip them gracefully.
+     */
+    @WorkerThread
+    private void mapUidsToPkgs(@NonNull Map<Integer, Double> uidToMah,
+                                @NonNull Map<Integer, Long> uidToCpuMs,
+                                @NonNull Map<String, Double> batteryMahOut,
+                                @NonNull Map<String, Long> cpuMsOut) {
         android.content.pm.PackageManager pm = context.getPackageManager();
 
         for (Map.Entry<Integer, Double> e : uidToMah.entrySet()) {
-            String[] pkgs = pm.getPackagesForUid(e.getKey());
+            String[] pkgs;
+            try {
+                pkgs = pm.getPackagesForUid(e.getKey());
+            } catch (SecurityException ex) {
+                Log.d(TAG, "getPackagesForUid(" + e.getKey() + ") denied: " + ex.getMessage());
+                continue;
+            }
             if (pkgs == null || pkgs.length == 0) continue;
             double share = e.getValue() / pkgs.length;
             for (String pkg : pkgs) batteryMahOut.merge(pkg, share, Double::sum);
         }
 
         for (Map.Entry<Integer, Long> e : uidToCpuMs.entrySet()) {
-            String[] pkgs = pm.getPackagesForUid(e.getKey());
+            String[] pkgs;
+            try {
+                pkgs = pm.getPackagesForUid(e.getKey());
+            } catch (SecurityException ex) {
+                Log.d(TAG, "getPackagesForUid(" + e.getKey() + ") denied: " + ex.getMessage());
+                continue;
+            }
             if (pkgs == null || pkgs.length == 0) continue;
             long share = e.getValue() / pkgs.length;
             for (String pkg : pkgs) cpuMsOut.merge(pkg, share, Long::sum);
@@ -541,11 +710,14 @@ public class BatteryStatsManager {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Private — procstats RAM parsing  (FIX 3)
+    // Private — procstats RAM parsing
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
      * Parses average PSS RAM from "dumpsys procstats --hours N".
+     *
+     * Handles both dot and comma decimal separators (locale-dependent output).
+     * Samsung One UI with Russian/European locale outputs commas instead of dots.
      *
      * Real TOTAL line format:
      *   TOTAL: 100% (346MB-346MB-346MB/161MB-161MB-161MB/288MB-288MB-288MB over 1)
@@ -575,13 +747,54 @@ public class BatteryStatsManager {
             Matcher pssMatcher = PROCSTATS_PSS.matcher(line);
             if (pssMatcher.find()) {
                 try {
-                    // group(2) = avg PSS
-                    double avgPssMb = Double.parseDouble(pssMatcher.group(2));
+                    // group(2) = avg PSS — normalize locale before parsing
+                    double avgPssMb = parseLocaleDouble(pssMatcher.group(2));
                     // Keep max across multiple state rows for the same package
                     ramMbOut.merge(currentPkg, avgPssMb, Math::max);
                 } catch (NumberFormatException ignored) {}
             }
         }
+    }
+
+    /**
+     * Fallback RAM collection via "dumpsys meminfo" when procstats is unavailable.
+     *
+     * Used on Huawei/Honor where procstats may return empty output, and as a
+     * general fallback on any device where procstats yields no package data.
+     *
+     * Parses lines like:
+     *   12345 kB: com.example.app (pid 6789 / activities)
+     *
+     * PSS is the first numeric value on these lines (in kB → converted to MB).
+     * This gives a point-in-time snapshot rather than historical average,
+     * but it is far better than showing nothing.
+     */
+    private static final Pattern MEMINFO_PKG =
+            Pattern.compile("^\\s*(\\d+)\\s+kB:\\s+([\\w.:]+)\\s+\\(pid");
+
+    @WorkerThread
+    private void collectMeminfoRam(@NonNull Map<String, Double> ramMbOut) {
+        String output = shellManager.runCommandAndGetOutput("dumpsys meminfo -a");
+        if (output == null || output.isEmpty()) return;
+
+        int parsedCount = 0;
+        for (String line : output.split("\n")) {
+            Matcher m = MEMINFO_PKG.matcher(line);
+            if (!m.find()) continue;
+            try {
+                double pssKb = parseLocaleDouble(m.group(1));
+                String pkg   = m.group(2);
+                if (pkg == null || pkg.isEmpty() || pssKb <= 0) continue;
+                // Strip process suffix (e.g. com.example.app:service → com.example.app)
+                int colon = pkg.indexOf(':');
+                if (colon > 0) pkg = pkg.substring(0, colon);
+                double pssMb = pssKb / 1024.0;
+                ramMbOut.merge(pkg, pssMb, Math::max);
+                parsedCount++;
+            } catch (Exception ignored) {}
+        }
+        Log.d(TAG, "meminfo fallback: parsed RAM for " + parsedCount + " entries → "
+                + ramMbOut.size() + " packages");
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -678,8 +891,6 @@ public class BatteryStatsManager {
         }
 
         // For periods > 2h: data must cover at least 90% of the requested window.
-        // Showing a "6h" chart with 1h of data would be misleading.
-        // For the 2h period: always show whatever exists — even 30 min — with isPartialData=true.
         if (hours > 2 && actualHours < hours * 0.9) {
             return new PeriodStats(Collections.emptyList(), false, 0,
                     context.getString(R.string.stats_no_data_hint_no_history), false);
@@ -692,22 +903,7 @@ public class BatteryStatsManager {
         List<ResourceSnapshot> windowSnaps =
                 dao.getSnapshotsBetween(previous.timestamp, current.timestamp);
 
-        // ── Per-package delta accumulation ────────────────────────────────────
-        // batterystats --charged accumulates pwi since the last charge reset (≥90%).
-        // snap.batteryMah is the ABSOLUTE cumulative value at snapshot time.
-        //
-        // Per-app delta between two consecutive snapshots:
-        //   • Normal (no reset):  curr >= prev  →  delta = curr - prev
-        //   • After reset:        curr <  prev  →  counter was cleared (device charged
-        //                         to ≥90%); use curr directly — it already represents
-        //                         everything accumulated since the reset, exactly as
-        //                         the system battery screen does.
-        //
-        // This means a charge event in the middle of the window is handled correctly:
-        //   pre-reset steps  → normal deltas (accumulate drain before charge)
-        //   post-reset steps → curr value used directly (accumulate drain after charge)
-        //   both halves are summed → full window drain is captured.
-        Map<String, double[]> perPkg     = new HashMap<>(); // [batteryRaw, ramSum, cpuMs, peakRam, snapCount]
+        Map<String, double[]> perPkg     = new HashMap<>();
         Map<String, ResourceSnapshot> prevByPkg = new HashMap<>();
 
         for (ResourceSnapshot snap : windowSnaps) {
@@ -718,8 +914,8 @@ public class BatteryStatsManager {
             } else {
                 ResourceSnapshot prev = prevByPkg.get(pkg);
                 double dBat = snap.batteryMah >= prev.batteryMah
-                        ? snap.batteryMah - prev.batteryMah   // normal step
-                        : snap.batteryMah;                    // post-reset: use absolute value
+                        ? snap.batteryMah - prev.batteryMah
+                        : snap.batteryMah;
                 double dCpu = Math.max(0, snap.cpuTimeMs - prev.cpuTimeMs);
 
                 double[] acc = perPkg.get(pkg);
@@ -732,33 +928,12 @@ public class BatteryStatsManager {
             }
         }
 
-        // Resolve app names, normalize battery mAh, compute accurate CPU %.
         android.content.pm.PackageManager pm = context.getPackageManager();
         List<AppResourceStats> result = new ArrayList<>();
 
-        // ── Battery normalization ──────────────────────────────────────────────
-        // totalRawPwi = sum of all per-app deltas (vendor-unit, not mAh on MIUI).
-        // drainMah    = level drop × capacity → real mAh drained in the window.
-        // appMah      = (appDelta / totalRawPwi) × drainMah
-        //
-        // For the level drop we use the FULL window (previous → current), not
-        // just a post-charge slice. This is correct because:
-        //   • pre-reset pwi deltas  → represent pre-charge drain
-        //   • post-reset pwi deltas → represent post-charge drain
-        //   • their sum proportionally maps to the full window level drop
-        //
-        // If dLevel ≤ 0 (device was charging the whole window) battery chart
-        // shows 0 — there was no net drain to measure.
         double totalRawPwi = 0;
         for (double[] v : perPkg.values()) totalRawPwi += v[0];
 
-        // ── Real drain accumulation ────────────────────────────────────────────
-        // Instead of dLevel = previous.level - current.level (wrong when charged
-        // in the middle), sum only the drain steps where level actually fell.
-        // This correctly handles: charge events, partial charging, multiple cycles.
-        //
-        // windowSnaps is ordered by (packageName, timestamp) — extract unique
-        // timestamps and their batteryLevelPct to build a chronological level series.
         java.util.TreeMap<Long, Integer> levelByTime = new java.util.TreeMap<>();
         for (ResourceSnapshot s : windowSnaps) {
             if (s.batteryLevelPct > 0) {
@@ -776,7 +951,7 @@ public class BatteryStatsManager {
             Integer prevLevel = null;
             for (Integer lvl : levelByTime.values()) {
                 if (prevLevel != null && lvl < prevLevel) {
-                    totalDrainPct += prevLevel - lvl; // only count drops, skip charge steps
+                    totalDrainPct += prevLevel - lvl;
                 }
                 prevLevel = lvl;
             }
@@ -786,13 +961,6 @@ public class BatteryStatsManager {
             }
         }
 
-        // ── CPU denominator ──────────────────────────────────────────────────
-        // Denominator = total jiffies * 10ms (full all-cores capacity), no per-core
-        // division — so 100% = one full core equivalent consumed by this app.
-        // cpuTimeMs from batterystats is multi-thread sum so dividing by cores
-        // would produce values > 100% on heavily-threaded apps.
-        // Fallback: wall-clock elapsed ms (single-core equivalent).
-        // Declared here so the post-charge branch in normalization can override it.
         double cpuDenominatorMs = dTotalJiffies > 0
                 ? (dTotalJiffies * 10.0)
                 : actualHours * 3600_000.0;
@@ -802,16 +970,11 @@ public class BatteryStatsManager {
             double[] v = e.getValue();
             String name = resolveAppName(pm, pkg);
 
-            // v[1] = sum of PSS, v[3] = peak PSS, v[4] = snapshot count
             double avgRamMb  = v[4] > 0 ? v[1] / v[4] : 0;
             double peakRamMb = v[3];
             double batteryMah = batteryNormalizationValid && totalRawPwi > 0
                     ? (v[0] / totalRawPwi) * drainMah
                     : 0;
-            // cpuTimeMs from batterystats is user+system ms summed across all threads,
-            // so it can exceed wall-clock on multi-core devices.
-            // Denominator = total jiffies * 10ms (all-cores capacity) — no per-core division —
-            // so 100% means "this app consumed one full core equivalent". Clamp to 100.
             double cpuPct = Math.min(100.0,
                     cpuDenominatorMs > 0 ? v[2] / cpuDenominatorMs * 100.0 : 0);
 
@@ -829,10 +992,6 @@ public class BatteryStatsManager {
 
     /**
      * Extended async entry point that accepts all-apps CPU and RAM totals for the period.
-     * These are used to compute relative ActivityLevel (LOW / MEDIUM / HIGH) per slot.
-     *
-     * @param totalAllAppsCpuPct  sum of cpuPct across ALL apps for this period (from PeriodStats)
-     * @param totalAllAppsRamMb   sum of ramMb  across ALL apps for this period (from PeriodStats)
      */
     public void getHourlyStatsAsync(String packageName, int hours,
                                     double totalAllAppsCpuPct, double totalAllAppsRamMb,
@@ -851,7 +1010,6 @@ public class BatteryStatsManager {
                                                  double totalAllAppsRamMb) {
         long now = System.currentTimeMillis();
 
-        // Round current time DOWN to the nearest whole hour.
         java.util.Calendar endCal = java.util.Calendar.getInstance();
         endCal.setTimeInMillis(now);
         endCal.set(java.util.Calendar.MINUTE, 0);
@@ -871,7 +1029,6 @@ public class BatteryStatsManager {
         if (snaps.size() < 2) return HourlyResult.empty(isPartialData);
         if (hours > 2 && pkgAgeHours < hours * 0.9) return HourlyResult.empty(false);
 
-        // ── Period-wide battery normalization ─────────────────────────────────
         double periodTotalDrainPct = 0, periodTotalBatRaw = 0, periodTotalCpuMs = 0;
         double periodTotalRawPwiBatch = 0;
         int    periodBatchCount = 0;
@@ -900,18 +1057,13 @@ public class BatteryStatsManager {
                 ? (periodTotalBatRaw / avgPeriodBatch) * periodDrainMah : 0;
         boolean batValid       = periodAppMah > 0 && periodTotalCpuMs > 0;
 
-        // ── Average per-app CPU/RAM across all apps (for activity level comparison) ──
-        // avgAllCpu/avgAllRam = "what an average app consumes" over the period.
-        // We compare this app's 30-min slot against these averages.
-        int numSlots = hours * 2; // 30-min slots
+        int numSlots = hours * 2;
         double avgAllCpuPerSlot = totalAllAppsCpuPct > 0 ? totalAllAppsCpuPct / numSlots : 0;
         double avgAllRamPerSlot = totalAllAppsRamMb  > 0 ? totalAllAppsRamMb  / numSlots : 0;
 
-        // ── 30-minute buckets ─────────────────────────────────────────────────
         final long SLOT_MS = 30 * 60 * 1000L;
         List<ActivitySlice> slices = new ArrayList<>();
 
-        // For min/avg/max we track per-slot battery values.
         List<Double> slotBatList = new ArrayList<>();
         List<Double> slotCpuList = new ArrayList<>();
         List<Double> slotRamList = new ArrayList<>();
@@ -937,12 +1089,10 @@ public class BatteryStatsManager {
                 slotLastTs = curr.timestamp;
             }
 
-            // Battery for this slot = CPU-proportional share of periodAppMah
             double slotBat = 0;
             if (batValid && slotCpuMs > 0)
                 slotBat = (slotCpuMs / periodTotalCpuMs) * periodAppMah;
 
-            // CPU %
             double slotCpuDenMs = slotJiffies > 0 ? slotJiffies * 10.0
                     : (slotFirstTs >= 0 ? (double)(slotLastTs - slotFirstTs) : 0);
             double slotCpu = (slotRamCount > 0 && slotCpuDenMs > 0)
@@ -950,15 +1100,13 @@ public class BatteryStatsManager {
 
             double slotRam = slotRamCount > 0 ? slotRamSum / slotRamCount : 0;
 
-            // Determine activity level by comparing this slot's CPU+RAM to all-apps averages.
-            // Score: weighted sum of (cpu/avgCpu) and (ram/avgRam), then bucketed.
             ActivityLevel level;
             if (slotRamCount == 0) {
                 level = ActivityLevel.NONE;
             } else {
                 double cpuRatio = avgAllCpuPerSlot > 0 ? slotCpu / avgAllCpuPerSlot : 0;
                 double ramRatio = avgAllRamPerSlot > 0 ? slotRam / avgAllRamPerSlot : 0;
-                double score = cpuRatio * 0.6 + ramRatio * 0.4; // CPU weighted more
+                double score = cpuRatio * 0.6 + ramRatio * 0.4;
                 if (score <= 0.0)       level = ActivityLevel.NONE;
                 else if (score < 0.5)   level = ActivityLevel.LOW;
                 else if (score < 1.5)   level = ActivityLevel.MEDIUM;
@@ -979,7 +1127,6 @@ public class BatteryStatsManager {
             }
         }
 
-        // Terminal anchor label at endAligned
         java.util.Calendar endLabelCal = java.util.Calendar.getInstance();
         endLabelCal.setTimeInMillis(endAligned);
         String endLabel = String.format(Locale.US, "%02d:%02d",
@@ -987,7 +1134,6 @@ public class BatteryStatsManager {
                 endLabelCal.get(java.util.Calendar.MINUTE));
         slices.add(new ActivitySlice(endLabel, ActivityLevel.NONE, 0, 0));
 
-        // ── Compute min/avg/max ───────────────────────────────────────────────
         HourlyPeriodStats periodStats = null;
         if (!slotBatList.isEmpty()) {
             double minBat = Double.MAX_VALUE, maxBat = 0, sumBat = 0;
@@ -1012,6 +1158,43 @@ public class BatteryStatsManager {
     // ──────────────────────────────────────────────────────────────────────────
     // Utility helpers
     // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Parses a double from a string that may use either dot or comma as decimal separator.
+     *
+     * This is necessary because dumpsys output is locale-dependent:
+     * - English locale → "2.8MB"
+     * - Russian/European locale (Samsung One UI, etc.) → "2,8MB"
+     *
+     * @param s the string to parse (e.g. "2,8" or "2.8")
+     * @return parsed double value, or 0.0 on failure
+     */
+    private static double parseLocaleDouble(@Nullable String s) {
+        if (s == null || s.isEmpty()) return 0.0;
+        try {
+            return Double.parseDouble(s.trim().replace(',', '.'));
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Parses a long from a string that may contain a decimal separator (locale-dependent).
+     * Truncates fractional part — safe for millisecond values from dumpsys.
+     *
+     * @param s the string to parse (e.g. "12345" or "12345,0")
+     * @return parsed long value (integer part only), or 0 on failure
+     */
+    private static long parseLocaleDoubleToLong(@Nullable String s) {
+        if (s == null || s.isEmpty()) return 0L;
+        try {
+            // Normalize and truncate to integer part
+            String normalized = s.trim().replace(',', '.');
+            return (long) Double.parseDouble(normalized);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
 
     private static double getOrZero(Map<String, Double> map, String key) {
         Double v = map.get(key);
