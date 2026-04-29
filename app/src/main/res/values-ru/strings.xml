@@ -487,7 +487,7 @@
 
     <!-- App Standby Bucket -->
     <string name="triggers_cat_bucket">App Standby Bucket</string>
-    <string name="triggers_bucket_active_explanation">Приложение находится в bucket ACTIVE — система не накладывает никаких ограничений на его фоновую активность. Если вы недавно не пользовались им, это подозрительно: что-то держит его в активном состоянии.</string>
+    <string name="triggers_bucket_active_explanation">Приложение находится в bucket ACTIVE — система не накладывает никаких ограничений на его фоновую активность. Если вы давно не пользовались им, это подозрительно: что-то держит его в активном состоянии.</string>
     <string name="triggers_bucket_working_set_explanation">Bucket WORKING_SET — приложение часто используется или система считает его важным. Ограничения минимальны, jobs и алармы выполняются в штатном режиме.</string>
     <string name="triggers_bucket_frequent_explanation">Bucket FREQUENT — приложение используется регулярно. Некоторые ограничения на редкие фоновые операции применяются.</string>
     <string name="triggers_bucket_rare_explanation">Bucket RARE или RESTRICTED — система сама ограничила фоновую активность этого приложения. Jobs и алармы сильно задерживаются или блокируются.</string>
