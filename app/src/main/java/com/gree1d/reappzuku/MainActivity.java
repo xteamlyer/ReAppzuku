@@ -210,15 +210,15 @@ public class MainActivity extends BaseActivity {
 
         if (app.isProtected()) {
             Menu menu = popup.getMenu();
-            menu.findItem(R.id.action_whitelist).setVisible(false);
-            menu.findItem(R.id.action_blacklist).setVisible(false);
-            menu.findItem(R.id.action_hidden).setVisible(false);
+            menu.findItem(R.id.action_add_to_list).setVisible(false);
             menu.findItem(R.id.action_uninstall).setVisible(false);
-            menu.findItem(R.id.action_app_triggers).setVisible(false);
-            menu.findItem(R.id.action_background_restriction).setVisible(false);
             popup.setOnMenuItemClickListener(item -> {
-                if (item.getItemId() == R.id.action_app_info) {
+                int id = item.getItemId();
+                if (id == R.id.action_app_info) {
                     openAppInfo(app.getPackageName());
+                    return true;
+                } else if (id == R.id.action_app_triggers) {
+                    showAppTriggersDialog(app);
                     return true;
                 }
                 return false;
