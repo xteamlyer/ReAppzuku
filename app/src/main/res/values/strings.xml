@@ -402,7 +402,6 @@
     <string name="triggers_none_explanation">The app may be in memory but is not actively keeping itself alive.</string>
 
     <!-- Category names -->
-    <string name="triggers_cat_caller">Launched by another app</string>
     <string name="triggers_cat_fg_service">Foreground Service</string>
     <string name="triggers_cat_receivers">Broadcast Receivers (%1$d)</string>
     <string name="triggers_cat_alarms">Alarms</string>
@@ -412,9 +411,6 @@
     <string name="triggers_cat_sticky">Sticky Service</string>
     <string name="triggers_cat_provider">Content Provider</string>
     <string name="triggers_cat_sync">Sync Adapter</string>
-
-    <!-- Caller app -->
-    <string name="triggers_caller_explanation">%1$s triggered this app to start. This is a chain launch — the app was not started by the user directly.</string>
 
     <!-- Foreground Service -->
     <string name="triggers_fg_service_explanation">The app launched a background service with a persistent notification. This is the most reliable way to avoid being killed — Android won\'t touch such processes while the notification is visible.</string>
@@ -433,6 +429,20 @@
     <string name="triggers_alarms_interval_sec">every %1$d sec</string>
     <string name="triggers_alarms_interval_min">every %1$d min</string>
     <string name="triggers_alarms_interval_hour">every %1$d h</string>
+    
+    <!-- Category — one for both subtypes -->
+<string name="triggers_cat_chain_launch">Chain Launch</string>
+
+    <!-- Direct call -->
+    <string name="triggers_chain_direct_detail">Direct call from %s</string>
+    <string name="triggers_chain_direct_explanation">Application %1$s directly launched this process via a service or activity call (callingPackage / clientPackage).</string>
+    
+    <!-- Broadcast -->
+    <string name="triggers_chain_broadcast_detail">Broadcast from %1$s → %2$s</string>
+    <string name="triggers_chain_broadcast_explanation">Application %1$s sent a broadcast with action %2$s, which started this process.</string>
+    
+    <!-- Overflow when there are more than 3 callers -->
+    <string name="triggers_chain_overflow">\n…and %d more</string>
     <!-- Alarms — explanation -->
     <string name="triggers_alarms_wakeup_explanation">Wake-up alarms (RTC_WAKEUP) pull the device out of sleep mode, even when the screen is off.</string>
     <string name="triggers_alarms_wakeup_aggressive"> Interval under 1 minute — very aggressive, heavy battery impact.</string>
@@ -473,11 +483,6 @@
     <!-- Sync Adapter -->
     <string name="triggers_sync_detail">%1$d account(s)</string>
     <string name="triggers_sync_explanation">The app has a Sync Adapter registered with the system. Android periodically launches it to synchronize account data, even if the app itself is not running.</string>
-
-    <!-- Broadcast History -->
-    <string name="triggers_cat_broadcast_history">Chain launch (history)</string>
-    <string name="triggers_broadcast_history_explanation">The broadcast history shows that third-party apps have triggered this package via Intent. The chain is displayed as: who sent it → which event.</string>
-    <string name="triggers_broadcast_history_overflow">\nand %1$d more source(s)</string>
 
     <!-- PendingIntents -->
     <string name="triggers_cat_pending_intents">PendingIntent (%1$d)</string>
