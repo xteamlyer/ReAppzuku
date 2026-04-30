@@ -582,34 +582,34 @@
     <string name="stats_service_inactive_hint">Statistics are only collected while the background service is active. Enable the service in the app settings.</string>
 
     <!-- Предупреждение о неполных данных (период 2ч, данных меньше ~2ч) -->
-    <string name="stats_partial_data_warning">⚠ Неполные данные: история ещё накапливается</string>
+    <string name="stats_partial_data_warning">⚠ Incomplete data: history is still accumulating</string>
 
     <!-- Единицы измерения для графиков (detail activity) -->
     <string name="unit_mah">mAh</string>
     <string name="unit_percent">%</string>
-    <string name="unit_mb_short">МБ</string>
+    <string name="unit_mb_short">MB</string>
 
     <!-- Средние значения для detail activity -->
-    <string name="detail_avg_battery">Ср. %.2f mAh/ч</string>
-    <string name="detail_avg_cpu">Ср. %.1f%%</string>
-    <string name="detail_avg_ram">Ср. %.0f МБ</string>
+    <string name="detail_avg_battery">Avg. %.2f mAh/h</string>
+    <string name="detail_avg_cpu">Avg. %.1f%%</string>
+    <string name="detail_avg_ram">Avg. %.0f MB</string>
 
     <!-- Заголовки строк в карточке мин/сред/макс -->
-    <string name="detail_stat_min">мин</string>
-    <string name="detail_stat_avg">сред</string>
-    <string name="detail_stat_max">макс</string>
+    <string name="detail_stat_min">min</string>
+    <string name="detail_stat_avg">avg</string>
+    <string name="detail_stat_max">max</string>
     
-    <string name="detail_row_battery">Батарея</string>
+    <string name="detail_row_battery">Battery</string>
     <string name="detail_row_cpu">CPU</string>
-    <string name="detail_row_ram">ОЗУ</string>
+    <string name="detail_row_ram">RAM</string>
     
     <!-- Заголовок графика активности -->
-    <string name="detail_chart_activity">Активность приложения</string>
+    <string name="detail_chart_activity">App activity</string>
     
     <!-- Уровни активности на оси Y графика -->
     <string name="detail_activity_none">—</string>
-    <string name="detail_activity_low">мин</string>
-    <string name="detail_activity_medium">сред</string>
-    <string name="detail_activity_high">выс</string>
-    <string name="hint_12_24_scroll">График можно прокручивать влево/вправо</string>
+    <string name="detail_activity_low">low</string>
+    <string name="detail_activity_medium">med</string>
+    <string name="detail_activity_high">high</string>
+    <string name="hint_12_24_scroll">Chart can be scrolled left/right</string>
 </resources>
