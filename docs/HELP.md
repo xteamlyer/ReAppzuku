@@ -386,6 +386,25 @@ Export and import all settings to a JSON file. Saves the whitelist, blacklist, h
 
 ### 📊 Statistics and Logs
 
+Statistics and Logs are now available as a **separate screen** with detailed usage data for all monitored apps.
+
+#### App consumption
+
+At the top of the screen, ReAppzuku's **own resource usage** is shown — RAM, CPU, and battery — so you can always assess the app's footprint on your device.
+
+#### Resource usage charts
+
+Interactive charts showing RAM, CPU, and battery consumption across all tracked apps. Switch between chart types using the **arrow buttons**.
+
+| Period | Available |
+|---|---|
+| 2 hours | Last 2 hours |
+| 6 hours | Last 6 hours |
+| 12 hours | Last 12 hours |
+| 24 hours | Last 24 hours |
+
+> 💡 Tap on any **app in the chart legend** to open its **personal activity graph** — an individual breakdown of RAM, CPU, or battery usage for the same selectable time periods.
+
 #### Auto-Kill log
 
 Shows activity over the last **12 hours**: number of Auto-Kills, restarts, freed RAM, and the time of the last event for each app.
