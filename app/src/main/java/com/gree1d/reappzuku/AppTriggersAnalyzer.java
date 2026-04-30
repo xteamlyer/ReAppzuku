@@ -52,8 +52,8 @@ public class AppTriggersAnalyzer {
         List<TriggerInfo> results = new ArrayList<>();
 
         // --- Existing ---
-        results.addAll(analyzeCallerApp(packageName));
-        results.addAll(analyzeServicesAndBindings(packageName)); // объединяет fg + sticky + bindings
+        results.addAll(analyzeChainLaunch(packageName));         // direct call + broadcast history
+        results.addAll(analyzeServicesAndBindings(packageName)); // fg + sticky + bindings
         results.addAll(analyzeBroadcastReceivers(packageName));
         results.addAll(analyzeContentProviders(packageName));
         results.addAll(analyzeSyncAdapters(packageName));
@@ -63,7 +63,6 @@ public class AppTriggersAnalyzer {
         results.addAll(analyzeWakelocks(packageName));
 
         // --- New ---
-        results.addAll(analyzeBroadcastHistory(packageName));
         results.addAll(analyzePendingIntents(packageName));
         results.addAll(analyzeBootReceivers(packageName));
         results.addAll(analyzeStandbyBucket(packageName));
@@ -82,46 +81,135 @@ public class AppTriggersAnalyzer {
     }
 
     // -------------------------------------------------------------------------
-    // 0. Caller app
+    // 0. Chain Launch — кто и каким методом запустил наш процесс
+    //
+    // Объединяет два источника:
+    //   a) dumpsys activity processes — прямой вызов (callingPackage / clientPackage)
+    //   b) dumpsys activity broadcasts history — запуск через broadcast
+    //
+    // Каждая найденная причина возвращается отдельным TriggerInfo с категорией
+    // «Цепной запуск» и объяснением конкретного механизма.
     // -------------------------------------------------------------------------
 
-    private List<TriggerInfo> analyzeCallerApp(String packageName) {
+    private List<TriggerInfo> analyzeChainLaunch(String packageName) {
         List<TriggerInfo> list = new ArrayList<>();
-        String output = shellManager.runShellCommandAndGetFullOutput("dumpsys activity processes");
-        if (output == null || output.trim().isEmpty()) return list;
 
-        boolean inTargetProcess = false;
-        String callerPkg = null;
+        // --- a) Прямой вызов ---
+        String procOutput = shellManager.runShellCommandAndGetFullOutput("dumpsys activity processes");
+        if (procOutput != null && !procOutput.trim().isEmpty()) {
+            boolean inTargetProcess = false;
+            String callerPkg = null;
 
-        for (String line : output.split("\n")) {
-            if (line.contains("ProcessRecord") && line.contains(packageName)) {
-                inTargetProcess = true;
-                callerPkg = null;
+            for (String line : procOutput.split("\n")) {
+                if (line.contains("ProcessRecord") && line.contains(packageName)) {
+                    inTargetProcess = true;
+                    callerPkg = null;
+                }
+                if (inTargetProcess && line.contains("ProcessRecord") && !line.contains(packageName)) {
+                    break;
+                }
+                if (!inTargetProcess) continue;
+
+                Matcher m = Pattern.compile("clientPackage=([\\w.]+)").matcher(line);
+                if (m.find()) { callerPkg = m.group(1); break; }
+
+                Matcher m2 = Pattern.compile("callingPackage=([\\w.]+)").matcher(line);
+                if (m2.find()) { callerPkg = m2.group(1); break; }
             }
-            if (inTargetProcess && line.contains("ProcessRecord") && !line.contains(packageName)) {
-                break;
+
+            if (callerPkg != null && !callerPkg.equals(packageName) && !callerPkg.equals("android")) {
+                String callerName = resolveAppName(callerPkg);
+                list.add(new TriggerInfo(
+                        context.getString(R.string.triggers_cat_chain_launch),
+                        context.getString(R.string.triggers_chain_direct_detail, callerName + " (" + callerPkg + ")"),
+                        context.getString(R.string.triggers_chain_direct_explanation, callerName),
+                        TriggerInfo.Severity.HIGH));
             }
-            if (!inTargetProcess) continue;
-
-            Matcher m = Pattern.compile("clientPackage=([\\w.]+)").matcher(line);
-            if (m.find()) { callerPkg = m.group(1); break; }
-
-            Matcher m2 = Pattern.compile("callingPackage=([\\w.]+)").matcher(line);
-            if (m2.find()) { callerPkg = m2.group(1); break; }
         }
 
-        if (callerPkg == null || callerPkg.equals(packageName) || callerPkg.equals("android")) {
-            return list;
+        // --- b) Запуск через broadcast ---
+        String bcastOutput = shellManager.runShellCommandAndGetFullOutput(
+                "dumpsys activity broadcasts history");
+        if (bcastOutput != null && !bcastOutput.trim().isEmpty()) {
+
+            List<String> chainCallers = new ArrayList<>();
+            List<String> chainActions = new ArrayList<>();
+
+            String currentAction = null;
+            String currentCaller = null;
+            boolean relevantBroadcast = false;
+
+            for (String line : bcastOutput.split("\n")) {
+                String trimmed = line.trim();
+
+                // Начало нового BroadcastRecord — строго по заголовку
+                if (trimmed.startsWith("BroadcastRecord{")) {
+                    if (relevantBroadcast && currentCaller != null) {
+                        if (!chainCallers.contains(currentCaller)) {
+                            chainCallers.add(currentCaller);
+                            chainActions.add(currentAction); // может быть null
+                        }
+                    }
+                    relevantBroadcast = false;
+                    currentCaller = null;
+
+                    Matcher mAct = Pattern.compile("act=([\\w.]+)").matcher(trimmed);
+                    currentAction = mAct.find() ? shortenAction(mAct.group(1)) : null;
+                }
+
+                if (trimmed.startsWith("callerPackage=")) {
+                    String caller = trimmed.replace("callerPackage=", "").trim();
+                    if (!caller.equals(packageName) && !caller.equals("android") && !caller.equals("null")) {
+                        currentCaller = caller;
+                    }
+                }
+                if (trimmed.startsWith("callerApp=") && currentCaller == null) {
+                    Matcher m = Pattern.compile("callerApp=ProcessRecord\\{[^}]+\\s([\\w.]+)/").matcher(trimmed);
+                    if (m.find()) {
+                        String caller = m.group(1);
+                        if (!caller.equals(packageName) && !caller.equals("android")) {
+                            currentCaller = caller;
+                        }
+                    }
+                }
+
+                if (trimmed.contains(packageName)
+                        && !trimmed.startsWith("BroadcastRecord")
+                        && !trimmed.startsWith("callerPackage=" + packageName)
+                        && !trimmed.startsWith("callerApp=")) {
+                    relevantBroadcast = true;
+                }
+            }
+
+            // Последняя запись
+            if (relevantBroadcast && currentCaller != null) {
+                if (!chainCallers.contains(currentCaller)) {
+                    chainCallers.add(currentCaller);
+                    chainActions.add(currentAction);
+                }
+            }
+
+            // Каждый уникальный caller — отдельный TriggerInfo
+            int shown = Math.min(chainCallers.size(), 3);
+            for (int i = 0; i < shown; i++) {
+                String pkg    = chainCallers.get(i);
+                String action = chainActions.get(i) != null ? chainActions.get(i) : "?";
+                String name   = resolveAppName(pkg);
+                list.add(new TriggerInfo(
+                        context.getString(R.string.triggers_cat_chain_launch),
+                        context.getString(R.string.triggers_chain_broadcast_detail, name + " (" + pkg + ")", action),
+                        context.getString(R.string.triggers_chain_broadcast_explanation, name, action),
+                        TriggerInfo.Severity.MEDIUM));
+            }
+            if (chainCallers.size() > shown) {
+                list.add(new TriggerInfo(
+                        context.getString(R.string.triggers_cat_chain_launch),
+                        context.getString(R.string.triggers_chain_overflow, chainCallers.size() - shown),
+                        "",
+                        TriggerInfo.Severity.INFO));
+            }
         }
 
-        String callerName = resolveAppName(callerPkg);
-        String detail = callerName + " (" + callerPkg + ")";
-
-        list.add(new TriggerInfo(
-                context.getString(R.string.triggers_cat_caller),
-                detail,
-                context.getString(R.string.triggers_caller_explanation, callerName),
-                TriggerInfo.Severity.HIGH));
         return list;
     }
 
@@ -619,111 +707,6 @@ public class AppTriggersAnalyzer {
     // NEW DIAGNOSTIC METHODS
     // =========================================================================
 
-    // -------------------------------------------------------------------------
-    // 10. Broadcast History (цепной запуск)
-    //
-    // dumpsys activity broadcasts history — показывает очередь доставленных
-    // broadcast-ов. Ищем записи где targetComp или pkg совпадает с нашим
-    // пакетом, и вытаскиваем кто был отправителем (callerPackage / pid).
-    // -------------------------------------------------------------------------
-
-    private List<TriggerInfo> analyzeBroadcastHistory(String packageName) {
-        List<TriggerInfo> list = new ArrayList<>();
-        String output = shellManager.runShellCommandAndGetFullOutput(
-                "dumpsys activity broadcasts history");
-        if (output == null || output.trim().isEmpty()) return list;
-
-        // Структура: блоки вида
-        //   BroadcastRecord{... act=android.intent.action.BOOT_COMPLETED ...}
-        //     callerPackage=com.example.launcher
-        //     receivers: ...
-        //       ResolveInfo{... com.our.pkg/.OurReceiver ...}
-
-        List<String> chainCallers = new ArrayList<>(); // кто запускал наш пакет
-        List<String> chainActions = new ArrayList<>();  // через какой action
-
-        String[] lines = output.split("\n");
-        String currentAction = null;
-        String currentCaller = null;
-        boolean relevantBroadcast = false;
-
-        for (int i = 0; i < lines.length; i++) {
-            String trimmed = lines[i].trim();
-
-            // Начало нового BroadcastRecord
-            if (trimmed.startsWith("BroadcastRecord{") || trimmed.contains("act=")) {
-                // Сброс состояния предыдущей записи
-                if (relevantBroadcast && currentCaller != null && currentAction != null) {
-                    if (!chainCallers.contains(currentCaller)) {
-                        chainCallers.add(currentCaller);
-                        chainActions.add(currentAction);
-                    }
-                }
-                relevantBroadcast = false;
-                currentCaller = null;
-
-                // Извлекаем action
-                Matcher mAct = Pattern.compile("act=([\\w.]+)").matcher(trimmed);
-                currentAction = mAct.find() ? shortenAction(mAct.group(1)) : null;
-            }
-
-            // Кто отправил
-            if (trimmed.startsWith("callerPackage=")) {
-                String caller = trimmed.replace("callerPackage=", "").trim();
-                if (!caller.equals(packageName) && !caller.equals("android") && !caller.equals("null")) {
-                    currentCaller = caller;
-                }
-            }
-            // Альтернатива: callerApp
-            if (trimmed.startsWith("callerApp=") && currentCaller == null) {
-                Matcher m = Pattern.compile("callerApp=ProcessRecord\\{[^}]+\\s([\\w.]+)/").matcher(trimmed);
-                if (m.find()) {
-                    String caller = m.group(1);
-                    if (!caller.equals(packageName) && !caller.equals("android")) {
-                        currentCaller = caller;
-                    }
-                }
-            }
-
-            // Проверяем — наш пакет в списке получателей
-            if (trimmed.contains(packageName) && !trimmed.startsWith("BroadcastRecord")) {
-                relevantBroadcast = true;
-            }
-        }
-
-        // Последняя запись
-        if (relevantBroadcast && currentCaller != null && currentAction != null) {
-            if (!chainCallers.contains(currentCaller)) {
-                chainCallers.add(currentCaller);
-                chainActions.add(currentAction);
-            }
-        }
-
-        if (chainCallers.isEmpty()) return list;
-
-        // Формируем detail: "AppName (pkg) via ACTION, ..."
-        StringBuilder detail = new StringBuilder();
-        int shown = Math.min(chainCallers.size(), 3);
-        for (int i = 0; i < shown; i++) {
-            if (i > 0) detail.append("\n");
-            String pkg = chainCallers.get(i);
-            String action = chainActions.get(i);
-            detail.append(resolveAppName(pkg))
-                    .append(" (").append(pkg).append(")")
-                    .append(" → ").append(action != null ? action : "?");
-        }
-        if (chainCallers.size() > shown) {
-            detail.append(context.getString(R.string.triggers_broadcast_history_overflow,
-                    chainCallers.size() - shown));
-        }
-
-        list.add(new TriggerInfo(
-                context.getString(R.string.triggers_cat_broadcast_history),
-                detail.toString(),
-                context.getString(R.string.triggers_broadcast_history_explanation),
-                TriggerInfo.Severity.HIGH));
-        return list;
-    }
 
     // -------------------------------------------------------------------------
     // 11. Pending Intents
@@ -1088,9 +1071,11 @@ public class AppTriggersAnalyzer {
             if (established > 0) hasActiveConnection = true;
         }
 
-        // Если нет ни трафика ни соединений — не показываем
+        // Если нет ни трафика ни соединений — не показываем.
+        // Порог 10 KB для netstats: данные кумулятивные и даже неактивное
+        // приложение накопит ненулевой трафик за дни/недели.
         long totalBytes = rxBytes + txBytes;
-        if (totalBytes == 0 && !hasActiveConnection) return list;
+        if (totalBytes < 10 * 1024 && !hasActiveConnection) return list;
 
         StringBuilder detail = new StringBuilder();
         if (hasActiveConnection) {
