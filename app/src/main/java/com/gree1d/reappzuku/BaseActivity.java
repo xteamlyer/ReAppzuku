@@ -28,10 +28,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         int theme = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         boolean isSystemTheme = (theme == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
 
-        // Шаг 1: применить тему через setTheme() ДО super.onCreate()
-        // AMOLED проверяем первым — иначе accent==ACCENT_SYSTEM съедает AMOLED
         if (isAmoled) {
-            // AMOLED — всегда применяем AMOLED тему; акцент по умолчанию = Индиго
+
             switch (accent) {
                 case ACCENT_INDIGO:    setTheme(R.style.AppTheme_AccentIndigo_Amoled);    break;
                 case ACCENT_CRIMSON:   setTheme(R.style.AppTheme_AccentCrimson_Amoled);   break;
@@ -53,13 +51,13 @@ public abstract class BaseActivity extends AppCompatActivity {
                 case ACCENT_PEACH:     setTheme(R.style.AppTheme_AccentPeach_Amoled);     break;
                 case ACCENT_POWDER:     setTheme(R.style.AppTheme_AccentPowder_Amoled);     break;
                 case ACCENT_FOG:     setTheme(R.style.AppTheme_AccentFog_Amoled);     break;
-                default:               setTheme(R.style.AppTheme_Amoled);                 break; // ← дефолт = базовая AMOLED без акцента
+                default:               setTheme(R.style.AppTheme_Amoled);                 break; 
             }
         } else if (isSystemTheme || accent == ACCENT_SYSTEM) {
-            // Системная тема — DynamicColors
+            
             DynamicColors.applyToActivityIfAvailable(this);
         } else {
-            // Обычный пользовательский акцент
+            
             switch (accent) {
                 case ACCENT_INDIGO:    setTheme(R.style.AppTheme_AccentIndigo);    break;
                 case ACCENT_CRIMSON:   setTheme(R.style.AppTheme_AccentCrimson);   break;
@@ -84,8 +82,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 default:               setTheme(R.style.AppTheme_AccentIndigo);    break;
             }
         }
-
-        // Шаг 2: ночной режим
+        
         if (isAmoled) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
@@ -95,14 +92,12 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        // Шаг 3: статус-бар — светлые иконки только если тема тёмная
         applyStatusBarAppearance(isAmoled, theme);
     }
 
     private void applyStatusBarAppearance(boolean isAmoled, int theme) {
         if (getWindow() == null) return;
 
-        // Определяем светлая ли сейчас тема фактически
         boolean isCurrentlyLight;
         if (isAmoled) {
             isCurrentlyLight = false;
@@ -116,17 +111,20 @@ public abstract class BaseActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         int flags = decorView.getSystemUiVisibility();
         if (isCurrentlyLight) {
-            // Светлая тема — тёмные иконки статус-бара
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         } else {
-            // Тёмная тема — светлые иконки статус-бара
             flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         }
         decorView.setSystemUiVisibility(flags);
+
+        androidx.core.view.WindowInsetsControllerCompat insetsController =
+            androidx.core.view.WindowCompat.getInsetsController(getWindow(), decorView);
+        if (insetsController != null) {
+            insetsController.setAppearanceLightNavigationBars(isCurrentlyLight);
+        }
     }
 
     protected void applyTheme() {
-        // Оставляем для обратной совместимости
     }
 
     protected void applyNavBarInsets(View bottomNav) {
