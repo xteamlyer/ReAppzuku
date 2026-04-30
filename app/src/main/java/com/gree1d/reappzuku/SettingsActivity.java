@@ -369,6 +369,7 @@ public class SettingsActivity extends BaseActivity {
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
+            allApps = filterOutProtected(allApps);
             Set<String> blacklisted = appManager.getBlacklistedApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, blacklisted);
             listView.setAdapter(filterAdapter);
@@ -422,6 +423,7 @@ public class SettingsActivity extends BaseActivity {
         whitelistDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
+            allApps = filterOutProtected(allApps);
             Set<String> whitelistedApps = appManager.getWhitelistedApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, whitelistedApps);
             listView.setAdapter(filterAdapter);
@@ -477,6 +479,7 @@ public class SettingsActivity extends BaseActivity {
         filterDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
+            allApps = filterOutProtected(allApps);
             Set<String> hiddenApps = appManager.getHiddenApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, hiddenApps);
             listView.setAdapter(filterAdapter);
@@ -541,6 +544,7 @@ public class SettingsActivity extends BaseActivity {
         restrictionDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadBackgroundRestrictionApps(allApps -> {
+            allApps = filterOutProtected(allApps);
             Set<String> desiredRestrictedApps = appManager.getBackgroundRestrictedApps();
             Set<String> hardRestrictedApps = appManager.getHardRestrictedApps();
 
@@ -688,6 +692,7 @@ public class SettingsActivity extends BaseActivity {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadSleepModeApps(allApps -> {
+            allApps = filterOutProtected(allApps);
             Set<String> sleepModeApps = appManager.getSleepModeApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, sleepModeApps);
             listView.setAdapter(filterAdapter);
@@ -904,6 +909,14 @@ public class SettingsActivity extends BaseActivity {
         chkUser.setOnCheckedChangeListener(listener);
         chkRunning.setOnCheckedChangeListener(listener);
         btnClear.setOnClickListener(v -> adapter.clearSelection());
+    }
+
+    private List<AppModel> filterOutProtected(List<AppModel> apps) {
+        List<AppModel> result = new ArrayList<>();
+        for (AppModel app : apps) {
+            if (!app.isProtected()) result.add(app);
+        }
+        return result;
     }
 
     private void showBackupRestoreDialog() {

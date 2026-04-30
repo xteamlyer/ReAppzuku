@@ -208,6 +208,25 @@ public class MainActivity extends BaseActivity {
         PopupMenu popup = new PopupMenu(this, anchor);
         popup.getMenuInflater().inflate(R.menu.menu_app_options, popup.getMenu());
 
+        if (app.isProtected()) {
+            Menu menu = popup.getMenu();
+            menu.findItem(R.id.action_whitelist).setVisible(false);
+            menu.findItem(R.id.action_blacklist).setVisible(false);
+            menu.findItem(R.id.action_hidden).setVisible(false);
+            menu.findItem(R.id.action_uninstall).setVisible(false);
+            menu.findItem(R.id.action_app_triggers).setVisible(false);
+            menu.findItem(R.id.action_background_restriction).setVisible(false);
+            popup.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.action_app_info) {
+                    openAppInfo(app.getPackageName());
+                    return true;
+                }
+                return false;
+            });
+            popup.show();
+            return;
+        }
+
         if (app.isSystemApp()) {
             popup.getMenu().findItem(R.id.action_uninstall).setVisible(false);
         }
