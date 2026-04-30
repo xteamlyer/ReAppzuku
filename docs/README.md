@@ -33,6 +33,8 @@ Root or Shizuku privileges are required to run the app.
    * Detailed Auto-Kill log for the last 12 hours.
    * "Offenders" ranking by RAM consumption and restart frequency.
    * Tracking of background restriction status (applied, error, not applied).
+   * Detailed analysis of background app activity.
+   * Statistics on use phone's main resources for a period of 2 to 24 hours in form of diagrams and convenient graphs 
  * Flexible lists: Support for a Whitelist (Auto-Kill exclusions) and a Blacklist (Auto-Kill targets).
 
 ## 🛠 Requirements
