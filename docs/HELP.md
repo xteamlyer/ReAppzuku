@@ -266,65 +266,67 @@ Tapping an app in the list opens a quick actions menu:
 
 ### App triggers
 
-Triggers is a deep diagnostic tool that analyzes the **real reasons** an app runs in the background at the system level. Instead of guessing, you see precise technical facts: what is keeping the app alive, how often it wakes up, whether it has active network connections right now.
+Triggers is a deep diagnostic tool that analyzes the **real causes** of an app\'s background activity at the system level. Instead of guessing, you see precise technical facts: what is keeping the app alive, how often it wakes up, and whether it has active network connections right now.
 
-The analysis runs across **15 independent factors** using system commands (`dumpsys`, `am`, `cmd package`) with real-time output parsing. Each detected trigger is assigned a severity level: 🔴 High, 🟡 Medium, 🟢 Low, or ℹ️ Info.
+Analysis runs across **14 independent factors** using system commands (`dumpsys`, `am`, `cmd package`), parsing their output in real time. Each trigger found is assigned a severity level: 🔴 High, 🟡 Medium, 🟢 Low, or ℹ️ Info.
 
 ---
 
 #### What is analyzed
 
-**🔴 Chain launch (Broadcast History)**
-Shows exactly who woke the app up via a system broadcast. For example: "Telegram launched this app via BOOT_COMPLETED". Reveals hidden inter-app dependencies that are invisible through standard tools.
+**🔴 Chain Launch**
+Identifies who started this process and by what mechanism. Two methods are detected:
+- **Direct call** — another app explicitly started this process via a service or activity (`callingPackage` / `clientPackage`). For example: "VK launched RuStore".
+- **Broadcast** — the app was started by a broadcast sent from a third-party app. Shows the sender\'s name and the action, e.g. `CONNECTIVITY_CHANGE`. Reveals hidden dependencies between apps that cannot be seen through standard tools.
 
 **🔴 Foreground Service**
-Detects active foreground services — those that hold a notification in the shade and cannot be killed by the system. Shows the name of the specific service inside the app.
+Detects active foreground services — those that hold a persistent notification and cannot be killed by the system. Shows the specific service class name within the app.
 
 **🔴 Sticky Service**
-Services with the `START_STICKY` flag that Android automatically restarts after a Kill. This is exactly why some apps come back instantly — Android itself revives them.
+Services declared with `START_STICKY` that Android restarts automatically after being killed. This is why some apps come back instantly — Android itself brings them back.
 
 **🔴 Service Bindings**
-Identifies which other apps hold an active binder channel to this one. For example, Google Play Services or push services may keep an app in memory through a binding. Shows a list of "holders" with app names.
+Identifies which other apps hold an active binder connection to this one. For example, Google Play Services or push notification services may keep the app in memory via binding. Shows a list of "holders" with app names.
 
 **🔴 Boot Receivers**
-Checks whether the app is registered for system startup events: `BOOT_COMPLETED` (after full boot) and `LOCKED_BOOT_COMPLETED` (even before the screen is unlocked). The latter is a sign of particularly aggressive autostart behavior.
+Checks whether the app is registered for system startup events: `BOOT_COMPLETED` (after full boot) and `LOCKED_BOOT_COMPLETED` (before the screen is even unlocked). The latter is a sign of particularly aggressive auto-start behavior.
 
-**🔴 Doze exemption**
-Determines whether the app is on the system Doze whitelist. Such apps do not sleep with the device and have unrestricted access to the network and alarms even at night.
+**🔴 Doze Exemption**
+Determines whether the app is on the system\'s Doze whitelist. Such apps do not sleep with the device and retain unrestricted access to the network and alarms even at night.
 
 **🔴 WakeLock**
 Detects active sleep locks — `PARTIAL_WAKE_LOCK` (CPU stays on, screen off) and `FULL_WAKE_LOCK` (screen stays on too). Shows the lock tag and how long it has been held.
 
-**🔴 Network activity**
-Reads `/proc/net/tcp` and `/proc/net/tcp6` directly to find active TCP connections in `ESTABLISHED` state. Also shows total traffic (inbound and outbound) via `dumpsys netstats`. An active connection means the app is communicating with a server right now.
+**🔴 Network Activity**
+Reads `/proc/net/tcp` and `/proc/net/tcp6` directly to find active TCP connections with `ESTABLISHED` status. Also shows total traffic (inbound and outbound) via `dumpsys netstats` — only traffic above 10 KB is reported. An active connection means the app is communicating with a server right now.
 
 **🟡 PendingIntents**
-Shows registered pending intents: how many are of Activity, Service, and Broadcast type. A PendingIntent means the system can launch the app at any time — triggered by a notification, an alarm, or an external event.
+Shows registered pending intents and how many are of each type: Activity, Service, and Broadcast. A PendingIntent means the system can launch the app at any moment — triggered by a notification, alarm, or external event.
 
-**🟡 Jobs / WorkManager**
-Checks the `JobScheduler` queue for active and pending tasks belonging to the app. WorkManager tasks, sync operations, and periodic jobs are registered here — and they are what wake the app on schedule.
+**🟡 Job Scheduler (Jobs / WorkManager)**
+Checks the `JobScheduler` queue for active and pending jobs belonging to this app. WorkManager tasks, sync jobs, and periodic operations are all registered here — they are what wakes the app on a schedule.
 
 **🟡 Broadcast Receivers**
-Lists all system events the app is subscribed to: network changes, charger connection, timezone changes, and others. Subscriptions to `BOOT` and `CONNECTIVITY` are highlighted as potentially aggressive.
+Lists all system events the app is subscribed to: network changes, charger connection, timezone change, and others. Subscriptions to `BOOT` and `CONNECTIVITY` events are flagged as potentially aggressive.
 
 **🟡 Alarms**
-Analyzes active `AlarmManager` alarms: whether any are wakeup alarms (wake the device from sleep), how frequently they fire (interval under 2 minutes is high severity), and whether exact alarms (`setExact`) are used.
+Analyzes active `AlarmManager` alarms: whether any are wakeup alarms (wake the device from sleep), how frequently they fire (under 2 minutes is high severity), and whether exact alarms (`setExact`) are used.
 
 **🟡 App Standby Bucket**
-Shows the system priority of the app: `ACTIVE` → `WORKING_SET` → `FREQUENT` → `RARE` → `RESTRICTED` → `NEVER`. An app in `ACTIVE` status without an obvious reason receives elevated background limits — this is suspicious and worth investigating.
+Shows the system\'s priority ranking for the app: `ACTIVE` → `WORKING_SET` → `FREQUENT` → `RARE` → `RESTRICTED` → `NEVER`. The higher the status, the fewer background restrictions the system applies.
 
-**🟢 Battery Stats history**
-A historical picture from `dumpsys batterystats`: how many times the app held a wakelock during the session, how many alarm wakeups, job runs, and syncs occurred. Complements current data with historical context.
+**🟢 Battery Stats History**
+A historical picture from `dumpsys batterystats`: how many times the app held a wakelock during the session, how many alarm wakeups occurred, and how many jobs and syncs were launched. Complements current data with historical context.
 
 **🟢 Content Providers**
-Detects registered data providers. If other apps are accessing the provider, the system keeps the process alive to serve requests.
+Detects registered data providers. If other apps are accessing the provider, the system keeps the process alive to serve their requests.
 
 **🟢 Sync Adapters**
-Identifies sync adapters — a mechanism for periodic server synchronization. Shows the account type and sync interval.
+Identifies sync adapters — the mechanism for periodic server synchronization. Shows the account type and sync interval.
 
 ---
 
-> 💡 If an app comes back after Kill — Triggers will show you why. Foreground Service or Sticky Service → use **Background restrictions**. Boot Receiver → apply a **Hard restriction**. Doze exemption → restrict via battery optimization settings.
+> 💡 If an app comes back after Kill — Triggers will show you why. Foreground Service or Sticky Service: recommended use **Background restrictions** → **Soft/Hard restriction**.
 
 ---
 
