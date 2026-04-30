@@ -479,7 +479,7 @@ public class BackgroundAppManager {
                         pm.getApplicationIcon(appInfo),
                         isSystem,
                         isPersistent,
-                        false));
+                        ProtectedApps.isProtected(context, appInfo.packageName)));
             }
             // Sort alphabetically
             Collections.sort(allApps, (a1, a2) -> a1.getAppName().compareToIgnoreCase(a2.getAppName()));
