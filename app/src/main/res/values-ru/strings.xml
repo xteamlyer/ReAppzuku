@@ -600,6 +600,8 @@
     <string name="update_dialog_title">Найдено обновление</string>
     <string name="update_dialog_download">Скачать</string>
     <string name="update_dialog_close">Закрыть</string>
+    <string name="update_up_to_date">Последняя версия (%s)</string>
+    <string name="update_check_failed">Ошибка проверки обновления</string>
     <string name="settings_requires_privilege">Требуется Root или Shizuku</string>
     <string name="settings_requires_service_enabled">Сначала включите фоновый сервис</string>
 </resources>
