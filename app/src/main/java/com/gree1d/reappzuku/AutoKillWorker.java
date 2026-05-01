@@ -86,10 +86,6 @@ public class AutoKillWorker extends Worker {
                 return Result.retry();
             }
 
-            long pruneThreshold = System.currentTimeMillis() - STATS_PRUNE_THRESHOLD_MS;
-            com.gree1d.reappzuku.db.AppDatabase.getInstance(getApplicationContext())
-                    .appStatsDao().deleteOldStats(pruneThreshold);
-
             return Result.success();
 
         } catch (InterruptedException e) {

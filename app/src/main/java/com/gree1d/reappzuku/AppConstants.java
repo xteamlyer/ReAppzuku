@@ -18,7 +18,7 @@ public final class AppConstants {
 
         // Stats & History
         public static final long STATS_HISTORY_DURATION_MS = 12 * 60 * 60 * 1000L; // 12 hours
-        public static final long STATS_PRUNE_THRESHOLD_MS = 48 * 60 * 60 * 1000L; // 48 hours
+        public static final int STATS_MAX_COUNT = 10_000;
         public static final int RELAUNCH_GREEDY_THRESHOLD = 3; // Consider app "greedy" if relaunched more than this
 
         // Delays

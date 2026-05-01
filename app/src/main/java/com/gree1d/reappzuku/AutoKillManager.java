@@ -348,6 +348,19 @@ public class AutoKillManager {
         long now = System.currentTimeMillis();
 
         Set<String> uniquePackages = new HashSet<>(packageNames);
+        int newEntries = 0;
+        for (String pkg : uniquePackages) {
+            if (pkg != null && !pkg.isEmpty() && appStatsDao.getStats(pkg) == null) {
+                newEntries++;
+            }
+        }
+        if (newEntries > 0) {
+            int currentCount = appStatsDao.getCount();
+            int excess = (currentCount + newEntries) - STATS_MAX_COUNT;
+            if (excess > 0) {
+                appStatsDao.deleteOldestStats(excess);
+            }
+        }
         for (String packageName : uniquePackages) {
             if (packageName == null || packageName.isEmpty()) {
                 continue;
