@@ -42,6 +42,7 @@ public class ShappkyService extends Service {
     private ShellManager shellManager;
     private BackgroundAppManager appManager;
     private AutoKillManager autoKillManager;
+    private SleepModeManager sleepModeManager;
     private BatteryStatsManager batteryStatsManager;
     private KillTriggerReceiver screenOffReceiver;
 
@@ -93,6 +94,7 @@ public class ShappkyService extends Service {
         shellManager = new ShellManager(this, handler, executor);
         appManager = new BackgroundAppManager(this, handler, executor, shellManager);
         autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
+        sleepModeManager = new SleepModeManager(this, handler, executor, shellManager);
         batteryStatsManager = new BatteryStatsManager(this, shellManager);
         createNotificationChannel();
 
@@ -142,13 +144,13 @@ public class ShappkyService extends Service {
                     if (ramThresholdEnabled) {
                         int threshold = prefs.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
                         if (getCurrentRamUsagePercent() >= threshold) {
-                            appManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock());
+                            autoKillManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock());
                         } else {
                           
                             KillTriggerReceiver.releaseAutoKillWakeLock();
                         }
                     } else {
-                        appManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock());
+                        autoKillManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock());
                     }
                 });
                 break;
@@ -156,7 +158,7 @@ public class ShappkyService extends Service {
             case "SCREEN_OFF":
                 // Schedule exact alarm to fire after idle threshold
                 // AlarmManager.setExactAndAllowWhileIdle works even in Doze mode
-                if (appManager.isSleepModeEnabled()) {
+                if (sleepModeManager.isSleepModeEnabled()) {
                     scheduleIdleFreezeAlarm();
                     long delayMs = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
                             .getLong(KEY_SLEEP_MODE_DELAY, DEFAULT_SLEEP_MODE_DELAY_MS);
@@ -175,7 +177,7 @@ public class ShappkyService extends Service {
                         if (isFrozen) {
                             Log.d(TAG, "Screen on after idle freeze, unfreezing apps");
                             isFrozen = false;
-                            appManager.unfreezeBackgroundRestrictedApps(null);
+                            sleepModeManager.unfreezeBackgroundRestrictedApps(null);
                         } else {
                             Log.d(TAG, "Screen on before idle threshold, alarm cancelled");
                         }
@@ -187,12 +189,12 @@ public class ShappkyService extends Service {
 
             case "IDLE_FREEZE":
                 // Triggered by KillTriggerReceiver when AlarmManager alarm fires
-                if (!appManager.isSleepModeEnabled()) {
+                if (!sleepModeManager.isSleepModeEnabled()) {
                     Log.d(TAG, "Sleep mode disabled, skipping freeze");
                     break;
                 }
                 Log.d(TAG, "Idle threshold reached, freezing background restricted apps");
-                appManager.freezeBackgroundRestrictedApps(() -> {
+                sleepModeManager.freezeBackgroundRestrictedApps(() -> {
                     isFrozen = true;
                     Log.d(TAG, "Apps frozen successfully");
                 });
@@ -371,12 +373,12 @@ public class ShappkyService extends Service {
                     if (ramThresholdEnabled) {
                         int threshold = prefs.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
                         if (getCurrentRamUsagePercent() >= threshold) {
-                            appManager.performAutoKill(() -> handler.post(this::scheduleNextKill));
+                            autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill));
                         } else {
                             handler.post(this::scheduleNextKill);
                         }
                     } else {
-                        appManager.performAutoKill(() -> handler.post(this::scheduleNextKill));
+                        autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill));
                     }
                 } else {
                     handler.post(this::scheduleNextKill);

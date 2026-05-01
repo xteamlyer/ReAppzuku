@@ -57,6 +57,8 @@ public class SettingsActivity extends BaseActivity {
     private ActivitySettingsBinding binding;
     private ShellManager shellManager;
     private BackgroundAppManager appManager;
+    private AutoKillManager autoKillManager;
+    private SleepModeManager sleepModeManager;
     private BackupManager backupManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newCachedThreadPool();
@@ -77,6 +79,8 @@ public class SettingsActivity extends BaseActivity {
 
         shellManager = new ShellManager(this.getApplicationContext(), handler, executor);
         appManager = new BackgroundAppManager(this.getApplicationContext(), handler, executor, shellManager);
+        autoKillManager = new AutoKillManager(this.getApplicationContext(), handler, executor, shellManager, appManager.getCurrentAppsList());
+        sleepModeManager = new SleepModeManager(this.getApplicationContext(), handler, executor, shellManager);
         backupManager = new BackupManager(this);
 
         setupToolbar();
@@ -145,10 +149,10 @@ public class SettingsActivity extends BaseActivity {
         int ramThreshold = sharedPreferences.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
         updateRamThresholdText(ramThreshold);
 
-        updateAutoKillTypeText(appManager.getAutoKillType());
+        updateAutoKillTypeText(autoKillManager.getAutoKillType());
         updateAutomationOptionsVisibility(serviceEnabled, periodicKillEnabled);
 
-        binding.switchSleepMode.setChecked(appManager.isSleepModeEnabled());
+        binding.switchSleepMode.setChecked(sleepModeManager.isSleepModeEnabled());
         long sleepDelay = sharedPreferences.getLong(KEY_SLEEP_MODE_DELAY, DEFAULT_SLEEP_MODE_DELAY_MS);
         updateSleepModeDelayText(sleepDelay);
 
@@ -218,14 +222,14 @@ public class SettingsActivity extends BaseActivity {
             appManager.reapplySavedBackgroundRestrictions(null);
         });
 
-        binding.switchSleepMode.setChecked(appManager.isSleepModeEnabled());
+        binding.switchSleepMode.setChecked(sleepModeManager.isSleepModeEnabled());
         binding.switchSleepMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.settings_sleep_mode_title))
                         .setMessage(getString(R.string.settings_sleep_mode_restart_message))
                         .setPositiveButton(getString(R.string.dialog_ok), (dialog, which) -> {
-                            appManager.setSleepModeEnabled(true);
+                            sleepModeManager.setSleepModeEnabled(true);
                             new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
                                     () -> android.os.Process.killProcess(android.os.Process.myPid()), 300);
                         })
@@ -233,7 +237,7 @@ public class SettingsActivity extends BaseActivity {
                         .setCancelable(false)
                         .show();
             } else {
-                appManager.setSleepModeEnabled(false);
+                sleepModeManager.setSleepModeEnabled(false);
             }
         });
         binding.layoutSleepModeApps.setOnClickListener(v -> showSleepModeAppsDialog());
@@ -261,7 +265,7 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void updateKillModeVisibility() {
-        int mode = appManager.getKillMode();
+        int mode = autoKillManager.getKillMode();
         binding.textKillMode.setText(mode == 0 ? R.string.settings_mode_whitelist : R.string.settings_mode_blacklist);
         binding.layoutBlacklist.setVisibility(mode == 1 ? View.VISIBLE : View.GONE);
         binding.layoutWhitelist.setVisibility(mode == 0 ? View.VISIBLE : View.GONE);
@@ -292,8 +296,8 @@ public class SettingsActivity extends BaseActivity {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setCustomTitle(titleView)
-                .setSingleChoiceItems(types, appManager.getAutoKillType(), (d, which) -> {
-                    appManager.setAutoKillType(which);
+                .setSingleChoiceItems(types, autoKillManager.getAutoKillType(), (d, which) -> {
+                    autoKillManager.setAutoKillType(which);
                     updateAutoKillTypeText(which);
                     d.dismiss();
                 });
@@ -327,8 +331,8 @@ public class SettingsActivity extends BaseActivity {
         };
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_kill_mode_dialog_title))
-                .setSingleChoiceItems(modes, appManager.getKillMode(), (dialog, which) -> {
-                    appManager.setKillMode(which);
+                .setSingleChoiceItems(modes, autoKillManager.getKillMode(), (dialog, which) -> {
+                    autoKillManager.setKillMode(which);
                     updateKillModeVisibility();
                     dialog.dismiss();
                     if (which == 0) {
@@ -370,7 +374,7 @@ public class SettingsActivity extends BaseActivity {
 
         appManager.loadAllApps(allApps -> {
             allApps = filterOutProtected(allApps);
-            Set<String> blacklisted = appManager.getBlacklistedApps();
+            Set<String> blacklisted = autoKillManager.getBlacklistedApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, blacklisted);
             listView.setAdapter(filterAdapter);
             progressBar.setVisibility(View.GONE);
@@ -391,7 +395,7 @@ public class SettingsActivity extends BaseActivity {
             });
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                appManager.saveBlacklistedApps(filterAdapter.getSelectedPackages());
+                autoKillManager.saveBlacklistedApps(filterAdapter.getSelectedPackages());
                 dialog.dismiss();
             });
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
@@ -691,9 +695,9 @@ public class SettingsActivity extends BaseActivity {
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
-        appManager.loadSleepModeApps(allApps -> {
+        sleepModeManager.loadSleepModeApps(allApps -> {
             allApps = filterOutProtected(allApps);
-            Set<String> sleepModeApps = appManager.getSleepModeApps();
+            Set<String> sleepModeApps = sleepModeManager.getSleepModeApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, sleepModeApps);
             listView.setAdapter(filterAdapter);
             listView.setOnItemClickListener(null);
@@ -709,7 +713,7 @@ public class SettingsActivity extends BaseActivity {
             });
 
             dialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_save), (d, w) ->
-                    appManager.saveSleepModeApps(filterAdapter.getSelectedPackages()));
+                    sleepModeManager.saveSleepModeApps(filterAdapter.getSelectedPackages()));
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         });
     }

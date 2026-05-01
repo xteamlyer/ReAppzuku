@@ -49,6 +49,7 @@ public class MainActivity extends BaseActivity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private ShellManager shellManager;
     private BackgroundAppManager appManager;
+    private AutoKillManager autoKillManager;
     private RamMonitor ramMonitor;
     private BackgroundAppsRecyclerViewAdapter listAdapter;
     private final List<AppModel> appsDataList = new ArrayList<>();
@@ -94,6 +95,7 @@ public class MainActivity extends BaseActivity {
 
         shellManager = new ShellManager(this, handler, executor);
         appManager = new BackgroundAppManager(this, handler, executor, shellManager);
+        autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
         ramMonitor = new RamMonitor(this, handler, binding.ramUsage, binding.ramUsageText);
 
         listAdapter = new BackgroundAppsRecyclerViewAdapter(this);
@@ -169,12 +171,12 @@ public class MainActivity extends BaseActivity {
         listAdapter.setOnAppActionListener(new BackgroundAppsRecyclerViewAdapter.OnAppActionListener() {
             @Override
             public void onKillApp(AppModel app, int position) {
-                appManager.killApp(app.getPackageName(), MainActivity.this::loadBackgroundApps);
+                autoKillManager.killApp(app.getPackageName(), MainActivity.this::loadBackgroundApps);
             }
 
             @Override
             public void onToggleWhitelist(AppModel app, int position) {
-                boolean isNowWhitelisted = appManager.toggleWhitelist(app.getPackageName());
+                boolean isNowWhitelisted = autoKillManager.toggleWhitelist(app.getPackageName());
                 app.setWhitelisted(isNowWhitelisted);
                 listAdapter.notifyItemChanged(position);
 
@@ -235,7 +237,7 @@ public class MainActivity extends BaseActivity {
         popup.getMenu().findItem(R.id.action_whitelist).setChecked(
                 appManager.getWhitelistedApps().contains(packageName));
         popup.getMenu().findItem(R.id.action_blacklist).setChecked(
-                appManager.getBlacklistedApps().contains(packageName));
+                autoKillManager.getBlacklistedApps().contains(packageName));
         popup.getMenu().findItem(R.id.action_hidden).setChecked(
                 appManager.getHiddenApps().contains(packageName));
         MenuItem restrictionItem = popup.getMenu().findItem(R.id.action_background_restriction);
@@ -288,7 +290,7 @@ public class MainActivity extends BaseActivity {
                 .setTitle(getString(R.string.main_uninstall_title, app.getAppName()))
                 .setMessage(getString(R.string.main_uninstall_message))
                 .setPositiveButton(getString(R.string.main_uninstall_confirm), (dialog, which) -> {
-                    appManager.uninstallPackage(app.getPackageName(), this::loadBackgroundApps);
+                    autoKillManager.uninstallPackage(app.getPackageName(), this::loadBackgroundApps);
                 })
                 .setNegativeButton(getString(R.string.dialog_cancel), null)
                 .show();
@@ -372,7 +374,7 @@ public class MainActivity extends BaseActivity {
                 removedMsg = getString(R.string.main_removed_from_whitelist);
                 break;
             case "blacklist":
-                currentSet = appManager.getBlacklistedApps();
+                currentSet = autoKillManager.getBlacklistedApps();
                 addedMsg = getString(R.string.main_added_to_blacklist);
                 removedMsg = getString(R.string.main_removed_from_blacklist);
                 break;
@@ -398,7 +400,7 @@ public class MainActivity extends BaseActivity {
                 app.setWhitelisted(!wasInList);
                 break;
             case "blacklist":
-                appManager.saveBlacklistedApps(currentSet);
+                autoKillManager.saveBlacklistedApps(currentSet);
                 break;
             case "hidden":
                 appManager.saveHiddenApps(currentSet);
@@ -537,7 +539,7 @@ public class MainActivity extends BaseActivity {
         }
         listAdapter.submitList(new ArrayList<>(appsDataList));
 
-        appManager.killPackages(packagesToKill, () -> {
+        autoKillManager.killPackages(packagesToKill, () -> {
             loadBackgroundApps();
             binding.fab.show();
         });
