@@ -254,7 +254,7 @@ public class SettingsActivity extends BaseActivity {
 
         binding.layoutBackupRestore.setOnClickListener(v -> showBackupRestoreDialog());
         binding.layoutGithub.setOnClickListener(v -> openUrl("https://github.com/gree1d/ReAppzuku"));
-        binding.layoutCheckUpdates.setOnClickListener(v -> openUrl("https://github.com/gree1d/ReAppzuku/releases"));
+        binding.layoutCheckUpdates.setOnClickListener(v -> UpdateChecker.checkForUpdatesManual(this));
         binding.layoutTelegram.setOnClickListener(v -> openUrl("https://t.me/AkM0o"));
 
         updateKillModeVisibility();

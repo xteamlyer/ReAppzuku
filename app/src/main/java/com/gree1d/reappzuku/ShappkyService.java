@@ -119,6 +119,8 @@ public class ShappkyService extends Service {
         scheduleSnapshotCollection();
 
         appManager.reapplySavedBackgroundRestrictions(null);
+        
+        UpdateChecker.checkForUpdatesAuto(getApplicationContext());
     }
 
     @Override
