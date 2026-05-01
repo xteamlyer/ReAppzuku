@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 public class ShappkyBackgroundKillTile extends TileService {
 
     private ShellManager shellManager;
-    private BackgroundAppManager backgroundAppManager;
+    private AutoKillManager backgroundAppManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -57,7 +57,8 @@ public class ShappkyBackgroundKillTile extends TileService {
             shellManager = new ShellManager(this, handler, executor);
         }
         if (backgroundAppManager == null) {
-            backgroundAppManager = new BackgroundAppManager(this, handler, executor, shellManager);
+            BackgroundAppManager appManager = new BackgroundAppManager(this, handler, executor, shellManager);
+            backgroundAppManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
         }
 
         executor.execute(() -> {

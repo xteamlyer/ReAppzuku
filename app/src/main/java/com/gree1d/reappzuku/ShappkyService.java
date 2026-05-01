@@ -41,6 +41,7 @@ public class ShappkyService extends Service {
 
     private ShellManager shellManager;
     private BackgroundAppManager appManager;
+    private AutoKillManager autoKillManager;
     private BatteryStatsManager batteryStatsManager;
     private KillTriggerReceiver screenOffReceiver;
 
@@ -91,6 +92,7 @@ public class ShappkyService extends Service {
         super.onCreate();
         shellManager = new ShellManager(this, handler, executor);
         appManager = new BackgroundAppManager(this, handler, executor, shellManager);
+        autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
         batteryStatsManager = new BatteryStatsManager(this, shellManager);
         createNotificationChannel();
 

@@ -63,6 +63,8 @@ public class AutoKillWorker extends Worker {
             ShellManager shellManager = new ShellManager(getApplicationContext(), handler, executor);
             BackgroundAppManager appManager = new BackgroundAppManager(
                     getApplicationContext(), handler, executor, shellManager);
+            AutoKillManager autoKillManager = new AutoKillManager(
+                    getApplicationContext(), handler, executor, shellManager, appManager.getCurrentAppsList());
 
             if (!shellManager.hasAnyShellPermission()) {
                 try { Thread.sleep(ROOT_CHECK_TIMEOUT_MS); }
@@ -76,7 +78,7 @@ public class AutoKillWorker extends Worker {
             CountDownLatch latch = new CountDownLatch(1);
             Log.d("AutoKillWorker", "Triggering performAutoKill from WORKER");
 
-            appManager.performAutoKill(latch::countDown);
+            autoKillManager.performAutoKill(latch::countDown);
 
             boolean finished = latch.await(60, TimeUnit.SECONDS);
             if (!finished) {
