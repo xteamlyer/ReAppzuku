@@ -525,7 +525,7 @@ Interactive charts showing RAM, CPU, and battery consumption across all tracked 
 
 Shows activity over the last **12 hours**: number of Auto-Kills, restarts, freed RAM, and the time of the last event for each app.
 
-> 💡 Apps that restart more than 3 times are good candidates for Background restrictions. You can apply restrictions to all such apps in one tap directly from the log.
+> 💡 Apps that restart more than 3 times are good candidates for Background restrictions.
 
 #### Top offenders
 
