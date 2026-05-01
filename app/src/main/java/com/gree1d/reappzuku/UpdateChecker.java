@@ -102,7 +102,7 @@ public class UpdateChecker {
      */
     public static void checkForUpdatesManual(Context context) {
         if (!isConnected(context)) {
-            showToast(context, "No internet connection");
+            showToast(context, "No internet");
             return;
         }
 
@@ -115,13 +115,13 @@ public class UpdateChecker {
 
             main.post(() -> {
                 if (info == null) {
-                    showToast(context, "Failed to check for updates");
+                    showToast(context, context.getString(R.string.update_check_failed));
                     return;
                 }
                 if (isNewer(info.tagName, currentVersion)) {
                     showUpdateDialog(context, info);
                 } else {
-                    showToast(context, "You're up to date (" + currentVersion + ")");
+                    showToast(context, context.getString(R.string.update_up_to_date, currentVersion));
                 }
             });
         });
