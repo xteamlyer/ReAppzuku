@@ -586,9 +586,9 @@ public class BackgroundAppManager {
         if (shellManager.runShellCommandForResult(
                 buildHardRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
 
-        // Extra ops (BG_RUN, FGS_FROM_BG, WAKE_LOCK, ALARM) — best-effort, void
+        // Extra ops (BG_RUN, FGS_FROM_BG, WAKE_LOCK, ALARM) — best-effort, не учитываем в счётчике,
+        // т.к. некоторые ROM'ы не поддерживают их через cmd appops set
         applyHardExtraOps(packageName, "allow");
-        ok++; // считаем всю группу как одну попытку
 
         // Boot op
         if (shellManager.runShellCommandForResult(
@@ -616,9 +616,8 @@ public class BackgroundAppManager {
             if (shellManager.runShellCommandForResult(
                     buildHardRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
 
-            // Extra ops — best-effort, void
+            // Extra ops — best-effort, не учитываем в счётчике
             applyHardExtraOps(packageName, "ignore");
-            ok++; // считаем всю группу как одну попытку
 
             if (shellManager.runShellCommandForResult(
                     buildBootRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
