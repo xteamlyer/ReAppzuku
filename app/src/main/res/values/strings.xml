@@ -660,4 +660,5 @@
     <string name="log_badge_unfreeze">Unfreeze</string>
     <string name="log_badge_lift">Lift</string>
     <string name="log_badge_restore">Restore</string>
+    <string name="log_bg_restriction_empty">No background restriction events logged yet.\n\nEntries are stored in the app database and trimmed automatically.</string>
 </resources>
