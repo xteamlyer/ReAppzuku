@@ -104,7 +104,7 @@
 
     <!-- SettingsActivity — restriction log dialog -->
     <string name="settings_restriction_log_empty">Пока не зарегистрировано ни одного случая ограничения фоновой активности.</string>
-    <string name="settings_restriction_log_dialog_subtitle">Последние результаты ограничений фоновой работы. Сохраняются в кэш, количество записей ограничено до 200.</string>
+    <string name="settings_restriction_log_dialog_subtitle">Результаты фоновых ограничений.</string>
     <string name="settings_restriction_log_clear">Очистить</string>
     <string name="settings_restriction_log_summary">Последние события: %1$d записей.</string>
     <string name="settings_restriction_log_cleared">Журнал фоновых ограничений очищен</string>
@@ -221,7 +221,6 @@
     <string name="settings_source_code_title">Исходный код</string>
     <string name="settings_source_code_subtitle">Открыть репозиторий GitHub</string>
     <string name="settings_check_updates_title">Проверить обновления</string>
-    <string name="settings_check_updates_subtitle">Открыть последний релиз на GitHub</string>
     <string name="settings_version_label">ReAppzuku v%1$s</string>
     <string name="settings_interval_fallback">Каждые %1$d секунд</string>
 
