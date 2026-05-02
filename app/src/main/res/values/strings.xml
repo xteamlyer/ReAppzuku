@@ -620,10 +620,6 @@
     <string name="settings_requires_privilege">Required Root or Shizuku access</string>
     <string name="settings_requires_service_enabled">First, enable background service</string>
 
-    <string name="log_bg_restriction_empty">No background restriction events logged yet.\n\nEntries are stored in the app database and trimmed automatically.</string>
-    <string name="log_scheduler_empty">No scheduler events logged yet.</string>
-    <string name="log_sleep_mode_empty">No sleep mode events logget yet.</string>
-
     <!-- Restrictions Scheduler -->
     <string name="settings_section_background_service">App stability</string>
     <string name="settings_restrictions_scheduler_title">Restrictions Scheduler</string>
@@ -646,4 +642,22 @@
     <string name="scheduler_section_on_activate">On activation</string>
     <string name="scheduler_action_none">Nothing</string>
     <string name="scheduler_action_launch_main">Launch app</string>
+
+    <!-- Sleep Mode Log -->
+    <string name="log_sleep_mode_title">Sleep Mode Log</string>
+    <string name="log_sleep_mode_subtitle">Freeze / unfreeze history</string>
+    <string name="log_sleep_mode_dialog_subtitle">Recent freeze/unfreeze events</string>
+    <string name="log_sleep_mode_empty">No sleep mode events yet</string>
+
+    <!-- Scheduler Log -->
+    <string name="log_scheduler_title">Scheduler Log</string>
+    <string name="log_scheduler_subtitle">Scheduled restrictions history</string>
+    <string name="log_scheduler_dialog_subtitle">Recent scheduler events</string>
+    <string name="log_scheduler_empty">No scheduler events yet</string>
+
+    <!-- Badges -->
+    <string name="log_badge_freeze">Freeze</string>
+    <string name="log_badge_unfreeze">Unfreeze</string>
+    <string name="log_badge_lift">Lift</string>
+    <string name="log_badge_restore">Restore</string>
 </resources>
