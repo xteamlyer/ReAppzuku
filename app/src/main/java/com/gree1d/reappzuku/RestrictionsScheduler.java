@@ -88,8 +88,10 @@ public class RestrictionsScheduler {
     public static final int PROTECT_ALL             = PROTECT_AUTO_KILL | PROTECT_BG_RESTRICTIONS | PROTECT_SLEEP_MODE;
 
     // ── Activation actions ───────────────────────────────────────────────────
-    public static final int ON_ACTIVATE_NOTHING    = 0;
-    public static final int ON_ACTIVATE_LAUNCH_APP = 1;
+    public static final int ON_ACTIVATE_NOTHING  = 0;
+    public static final int ON_ACTIVATE_ACTIVITY = 1; // am start -n
+    public static final int ON_ACTIVATE_SERVICE  = 2; // am start-foreground-service -n
+    public static final int ON_ACTIVATE_RECEIVER = 3; // am broadcast -n
 
 
     // =========================================================================
@@ -112,8 +114,13 @@ public class RestrictionsScheduler {
         public int endMinute;
         /** Bitmask of PROTECT_* flags. */
         public int protectFlags;
-        /** Action on activation: ON_ACTIVATE_NOTHING / ON_ACTIVATE_LAUNCH_APP. */
+        /** Action on activation: ON_ACTIVATE_NOTHING / ON_ACTIVATE_ACTIVITY / ON_ACTIVATE_SERVICE / ON_ACTIVATE_RECEIVER. */
         public int onActivateAction;
+        /**
+         * Full component name to launch on activation, e.g. "ru.vk.store/.push.FCMReceiver".
+         * null = no component selected (onActivateAction must be ON_ACTIVATE_NOTHING).
+         */
+        public String componentName;
         /** Whether the schedule is enabled. */
         public boolean enabled;
 
@@ -169,8 +176,9 @@ public class RestrictionsScheduler {
             obj.put("endHour",     endHour);
             obj.put("endMin",      endMinute);
             obj.put("flags",       protectFlags);
-            obj.put("onActivate",  onActivateAction);
-            obj.put("enabled",     enabled);
+            obj.put("onActivate",     onActivateAction);
+            obj.put("componentName",  componentName != null ? componentName : "");
+            obj.put("enabled",        enabled);
             return obj;
         }
 
@@ -184,6 +192,8 @@ public class RestrictionsScheduler {
             e.endMinute        = obj.getInt("endMin");
             e.protectFlags     = obj.getInt("flags");
             e.onActivateAction = obj.getInt("onActivate");
+            String comp        = obj.optString("componentName", "");
+            e.componentName    = comp.isEmpty() ? null : comp;
             e.enabled          = obj.optBoolean("enabled", true);
             return e;
         }
@@ -220,14 +230,22 @@ public class RestrictionsScheduler {
         /**
          * Log a background restrictions lift event.
          *
-         * @param outcome   "ok" / "error" / "denied" / "skipped"
-         * @param hasLaunch true if main activity launch is configured
-         * @param use24h    time format (12h / 24h) — stored in detail, not in timestamp
+         * @param outcome       "ok" / "partial" / "error" / "skipped"
+         * @param componentName launched component name, or null if no launch
+         * @param use24h        time format (12h / 24h)
          */
         public static void logLift(Context context, String packageName,
-                                   String outcome, boolean hasLaunch, boolean use24h) {
-            String detail = "action=" + (hasLaunch ? "launch" : "none");
+                                   String outcome, String componentName, boolean use24h) {
+            String detail = componentName != null
+                    ? "action=" + shortName(componentName)
+                    : "action=none";
             append(context, "lift", packageName, outcome, detail);
+        }
+
+        /** Extracts short class name from a component: "ru.vk.store/.push.FCMReceiver" → "FCMReceiver" */
+        private static String shortName(String componentName) {
+            int dot = componentName.lastIndexOf('.');
+            return dot >= 0 ? componentName.substring(dot + 1) : componentName;
         }
 
         /**
@@ -643,17 +661,19 @@ public class RestrictionsScheduler {
                 Log.d(TAG, "tick: activating " + pkg);
 
                 if ((entry.protectFlags & PROTECT_BG_RESTRICTIONS) != 0) {
-                    boolean hasLaunch = (entry.onActivateAction == ON_ACTIVATE_LAUNCH_APP);
-                    String outcome    = backgroundAppManager.liftRestrictionsForScheduler(pkg);
-                    SchedulerLog.logLift(context, pkg, outcome, hasLaunch, use24h);
+                    String outcome = backgroundAppManager.liftRestrictionsForScheduler(pkg);
+                    SchedulerLog.logLift(context, pkg, outcome, entry.componentName, use24h);
                 }
 
                 if ((entry.protectFlags & PROTECT_SLEEP_MODE) != 0) {
                     shellManager.unfreezePackage(pkg);
                 }
 
-                if (entry.onActivateAction == ON_ACTIVATE_LAUNCH_APP) {
-                    handler.post(() -> launchApp(pkg));
+                if (entry.onActivateAction != ON_ACTIVATE_NOTHING && entry.componentName != null) {
+                    final String component = entry.componentName;
+                    final int    action    = entry.onActivateAction;
+                    // Небольшая задержка — даём appops примениться перед запуском
+                    handler.postDelayed(() -> launchComponent(component, action), 500);
                 }
             }
 
@@ -699,24 +719,54 @@ public class RestrictionsScheduler {
     }
 
     // =========================================================================
-    // App launch
+    // Component launch
     // =========================================================================
 
-    /** Launches the launcher activity. Must be called on the main thread (via handler.post). */
-    private void launchApp(String packageName) {
-        try {
-            Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
-            if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                context.startActivity(intent);
-                Log.d(TAG, "launchApp: launched " + packageName);
-            } else {
-                Log.w(TAG, "launchApp: no launcher activity for " + packageName);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "launchApp: failed " + packageName, e);
+    /**
+     * Launches a component via shell depending on its type.
+     * Must be called on the main thread (via handler.post/postDelayed).
+     *
+     * @param componentName full component name, e.g. "ru.vk.store/.push.FCMReceiver"
+     * @param type          ON_ACTIVATE_ACTIVITY / ON_ACTIVATE_SERVICE / ON_ACTIVATE_RECEIVER
+     */
+    private void launchComponent(String componentName, int type) {
+        String cmd;
+        switch (type) {
+            case ON_ACTIVATE_ACTIVITY:
+                cmd = "am start -n " + componentName;
+                break;
+            case ON_ACTIVATE_SERVICE:
+                cmd = "am start-foreground-service -n " + componentName;
+                break;
+            case ON_ACTIVATE_RECEIVER:
+                cmd = "am broadcast -n " + componentName;
+                break;
+            default:
+                Log.w(TAG, "launchComponent: unknown type " + type);
+                return;
         }
+        ShellManager.ShellResult r = shellManager.runShellCommandForResult(cmd);
+        if (r.succeeded()) {
+            Log.d(TAG, "launchComponent: ok — " + cmd);
+        } else {
+            Log.w(TAG, "launchComponent: failed (exit=" + r.exitCode() + ") — " + cmd);
+        }
+    }
+
+    /**
+     * Returns a human-readable label for the activation action.
+     * Uses scheduler_action_launch_main string as prefix + short component name.
+     * Example: "Launch FCMReceiver"
+     */
+    public String getActivationLabel(Context context, ScheduleEntry entry) {
+        if (entry.onActivateAction == ON_ACTIVATE_NOTHING || entry.componentName == null) {
+            return context.getString(R.string.scheduler_action_none);
+        }
+        int dot = entry.componentName.lastIndexOf('.');
+        String shortName = dot >= 0
+                ? entry.componentName.substring(dot + 1)
+                : entry.componentName;
+        return context.getString(R.string.scheduler_action_launch_main, shortName);
     }
 
     // =========================================================================
