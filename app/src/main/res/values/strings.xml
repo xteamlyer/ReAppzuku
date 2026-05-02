@@ -104,7 +104,7 @@
 
     <!-- SettingsActivity — restriction log dialog -->
     <string name="settings_restriction_log_empty">No background restriction events recorded yet.</string>
-    <string name="settings_restriction_log_dialog_subtitle">Recent background restriction results. Cached with a limit of 200 entries.</string>
+    <string name="settings_restriction_log_dialog_subtitle">Recent background restriction results.</string>
     <string name="settings_restriction_log_clear">Clear</string>
     <string name="settings_restriction_log_summary">Recent events: %1$d entries.</string>
     <string name="settings_restriction_log_cleared">Background restriction log cleared</string>
@@ -221,7 +221,6 @@
     <string name="settings_source_code_title">Source code</string>
     <string name="settings_source_code_subtitle">Open GitHub repository</string>
     <string name="settings_check_updates_title">Check for updates</string>
-    <string name="settings_check_updates_subtitle">Open the latest release on GitHub</string>
     <string name="settings_version_label">ReAppzuku v%1$s</string>
     <string name="settings_interval_fallback">Every %1$d seconds</string>
 
