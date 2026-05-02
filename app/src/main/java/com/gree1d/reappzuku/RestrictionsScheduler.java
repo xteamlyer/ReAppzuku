@@ -91,14 +91,6 @@ public class RestrictionsScheduler {
     public static final int ON_ACTIVATE_NOTHING    = 0;
     public static final int ON_ACTIVATE_LAUNCH_APP = 1;
 
-    // ── appops op codes ──────────────────────────────────────────────────────
-    private static final String OP_RUN_ANY_IN_BG = "RUN_ANY_IN_BACKGROUND";
-    private static final String OP_RUN_IN_BG     = "RUN_IN_BACKGROUND";
-    private static final String OP_FG            = "START_FOREGROUND";
-    private static final String OP_FGS_FROM_BG   = "START_FOREGROUND_SERVICES_FROM_BACKGROUND";
-    private static final String OP_WAKE_LOCK      = "WAKE_LOCK";
-    private static final String OP_ALARM          = "ALARM_WAKEUP";
-    private static final String OP_BOOT           = "RECEIVE_BOOT_COMPLETED";
 
     // =========================================================================
     // ScheduleEntry
@@ -652,7 +644,7 @@ public class RestrictionsScheduler {
 
                 if ((entry.protectFlags & PROTECT_BG_RESTRICTIONS) != 0) {
                     boolean hasLaunch = (entry.onActivateAction == ON_ACTIVATE_LAUNCH_APP);
-                    String outcome    = liftBackgroundRestriction(pkg);
+                    String outcome    = backgroundAppManager.liftRestrictionsForScheduler(pkg);
                     SchedulerLog.logLift(context, pkg, outcome, hasLaunch, use24h);
                 }
 
@@ -674,7 +666,7 @@ public class RestrictionsScheduler {
                 boolean forceStop = isForceStopMode();
 
                 if ((entry.protectFlags & PROTECT_BG_RESTRICTIONS) != 0) {
-                    String outcome = restoreBackgroundRestriction(pkg, forceStop);
+                    String outcome = backgroundAppManager.restoreRestrictionsForScheduler(pkg);
                     SchedulerLog.logRestore(context, pkg, outcome, forceStop, use24h);
                 } else if ((entry.protectFlags & PROTECT_AUTO_KILL) != 0) {
                     // Restrictions were not lifted, but Auto-Kill protection has ended —
@@ -689,85 +681,6 @@ public class RestrictionsScheduler {
             // Schedule the next event
             scheduleNext();
         });
-    }
-
-    // =========================================================================
-    // Lift and restore restrictions
-    // =========================================================================
-
-    /**
-     * Lifts all appops restrictions for a package.
-     * @return "ok" / "error" / "denied" / "skipped"
-     */
-    private String liftBackgroundRestriction(String packageName) {
-        if (!backgroundAppManager.getBackgroundRestrictedApps().contains(packageName)) {
-            Log.d(TAG, "liftBgRestriction: " + packageName + " not restricted, skipping");
-            return "skipped";
-        }
-
-        restoreBatteryWhitelistIfNeeded(packageName);
-
-        boolean anyDenied = false;
-        boolean anyError  = false;
-
-        String[] ops = {
-            OP_RUN_ANY_IN_BG, OP_RUN_IN_BG, OP_FG,
-            OP_FGS_FROM_BG, OP_WAKE_LOCK, OP_ALARM, OP_BOOT
-        };
-
-        for (String op : ops) {
-            ShellManager.ShellResult r = shellManager.runShellCommandForResult(
-                    "cmd appops set --user current " + packageName + " " + op + " allow");
-            if (!r.succeeded()) {
-                String out = r.output().toLowerCase(Locale.US);
-                if (out.contains("permission denied") || out.contains("not allowed")) {
-                    anyDenied = true;
-                } else {
-                    anyError = true;
-                }
-            }
-        }
-
-        if (anyDenied) return "denied";
-        if (anyError)  return "error";
-        return "ok";
-    }
-
-    /**
-     * Restores appops restrictions and stops the app.
-     * @param forceStop true = am force-stop, false = am kill
-     * @return "ok" / "error" / "skipped"
-     */
-    private String restoreBackgroundRestriction(String packageName, boolean forceStop) {
-        if (!backgroundAppManager.getBackgroundRestrictedApps().contains(packageName)) {
-            Log.d(TAG, "restoreBgRestriction: " + packageName + " no longer restricted, skip");
-            return "skipped";
-        }
-
-        boolean isHard   = backgroundAppManager.isHardRestricted(packageName);
-        boolean anyError = false;
-
-        if (isHard) {
-            String[] opsHard = {
-                OP_FG, OP_RUN_ANY_IN_BG, OP_RUN_IN_BG,
-                OP_FGS_FROM_BG, OP_WAKE_LOCK, OP_ALARM, OP_BOOT
-            };
-            for (String op : opsHard) {
-                ShellManager.ShellResult r = shellManager.runShellCommandForResult(
-                        "cmd appops set --user current " + packageName + " " + op + " ignore");
-                if (!r.succeeded()) anyError = true;
-            }
-            applyBatteryWhitelistRemovalIfNeeded(packageName);
-        } else {
-            ShellManager.ShellResult r = shellManager.runShellCommandForResult(
-                    "cmd appops set --user current " + packageName
-                    + " " + OP_RUN_ANY_IN_BG + " ignore");
-            if (!r.succeeded()) anyError = true;
-        }
-
-        stopApp(packageName, forceStop);
-
-        return anyError ? "error" : "ok";
     }
 
     /** Runs am force-stop or am kill depending on forceStop. */
@@ -804,39 +717,6 @@ public class RestrictionsScheduler {
         } catch (Exception e) {
             Log.e(TAG, "launchApp: failed " + packageName, e);
         }
-    }
-
-    // =========================================================================
-    // Battery whitelist helpers (mirrors logic from BackgroundAppManager)
-    // =========================================================================
-
-    private boolean isInBatteryWhitelist(String packageName) {
-        String output = shellManager.runShellCommandAndGetFullOutput("dumpsys deviceidle whitelist");
-        if (output == null) return false;
-        for (String line : output.split("\n")) {
-            String t = line.trim();
-            if (t.startsWith("user,") && t.contains("," + packageName + ",")) return true;
-        }
-        return false;
-    }
-
-    private void applyBatteryWhitelistRemovalIfNeeded(String packageName) {
-        if (!isInBatteryWhitelist(packageName)) return;
-        ShellManager.ShellResult r = shellManager.runShellCommandForResult(
-                "cmd deviceidle whitelist -" + packageName);
-        if (r.succeeded()) {
-            Set<String> removed = backgroundAppManager.getBatteryWhitelistRemoved();
-            removed.add(packageName);
-            backgroundAppManager.saveBatteryWhitelistRemoved(removed);
-        }
-    }
-
-    private void restoreBatteryWhitelistIfNeeded(String packageName) {
-        Set<String> removed = backgroundAppManager.getBatteryWhitelistRemoved();
-        if (!removed.contains(packageName)) return;
-        shellManager.runShellCommandForResult("cmd deviceidle whitelist +" + packageName);
-        removed.remove(packageName);
-        backgroundAppManager.saveBatteryWhitelistRemoved(removed);
     }
 
     // =========================================================================

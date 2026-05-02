@@ -550,7 +550,7 @@ public class BackgroundAppManager {
         return "cmd appops set --user current " + packageName + " " + BOOT_RESTRICTION_OP + " " + mode;
     }
 
-    private void applyHardExtraOps(String packageName, String mode) {
+    void applyHardExtraOps(String packageName, String mode) {
         shellManager.runShellCommandForResult(
                 "cmd appops set --user current " + packageName + " " + BACKGROUND_RESTRICTION_OP + " " + mode);
         shellManager.runShellCommandForResult(
@@ -561,6 +561,77 @@ public class BackgroundAppManager {
                 "cmd appops set --user current " + packageName + " " + WAKE_LOCK_RESTRICTION_OP + " " + mode);
         shellManager.runShellCommandForResult(
                 "cmd appops set --user current " + packageName + " " + ALARM_RESTRICTION_OP + " " + mode);
+    }
+
+    // --- Scheduler integration ---
+
+    /**
+     * Lifts all appops restrictions for a package (called by RestrictionsScheduler).
+     * Best-effort: applies as many ops as the ROM allows, partial success is not treated as error.
+     *
+     * @return "ok" / "partial" / "error" / "skipped"
+     */
+    public String liftRestrictionsForScheduler(String packageName) {
+        if (!getBackgroundRestrictedApps().contains(packageName)) return "skipped";
+
+        restoreBatteryWhitelist(packageName);
+
+        int ok = 0, fail = 0;
+
+        // Soft op
+        if (shellManager.runShellCommandForResult(
+                buildBackgroundRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
+
+        // Hard op
+        if (shellManager.runShellCommandForResult(
+                buildHardRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
+
+        // Extra ops (BG_RUN, FGS_FROM_BG, WAKE_LOCK, ALARM) — best-effort, void
+        applyHardExtraOps(packageName, "allow");
+        ok++; // считаем всю группу как одну попытку
+
+        // Boot op
+        if (shellManager.runShellCommandForResult(
+                buildBootRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
+
+        if (ok == 0) return "error";
+        if (fail == 0) return "ok";
+        return "partial";
+    }
+
+    /**
+     * Restores appops restrictions for a package (called by RestrictionsScheduler).
+     * Respects hard/soft restriction type saved in preferences.
+     * Does NOT stop the app — caller (RestrictionsScheduler) handles that separately.
+     *
+     * @return "ok" / "partial" / "error" / "skipped"
+     */
+    public String restoreRestrictionsForScheduler(String packageName) {
+        if (!getBackgroundRestrictedApps().contains(packageName)) return "skipped";
+
+        boolean isHard = isHardRestricted(packageName);
+        int ok = 0, fail = 0;
+
+        if (isHard) {
+            if (shellManager.runShellCommandForResult(
+                    buildHardRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
+
+            // Extra ops — best-effort, void
+            applyHardExtraOps(packageName, "ignore");
+            ok++; // считаем всю группу как одну попытку
+
+            if (shellManager.runShellCommandForResult(
+                    buildBootRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
+
+            applyBatteryWhitelistRemoval(packageName);
+        } else {
+            if (shellManager.runShellCommandForResult(
+                    buildBackgroundRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
+        }
+
+        if (ok == 0) return "error";
+        if (fail == 0) return "ok";
+        return "partial";
     }
 
     // --- Battery whitelist ---
