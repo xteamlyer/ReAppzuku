@@ -641,7 +641,7 @@
     <string name="scheduler_time_to">To</string>
     <string name="scheduler_section_on_activate">On activation</string>
     <string name="scheduler_action_none">Nothing</string>
-    <string name="scheduler_action_launch_main">Launch app</string>
+    <string name="scheduler_action_launch_main">Launch %s</string>
 
     <!-- Sleep Mode Log -->
     <string name="log_sleep_mode_title">Sleep Mode Log</string>
