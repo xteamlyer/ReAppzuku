@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 import static com.gree1d.reappzuku.PreferenceKeys.*;
+import com.gree1d.reappzuku.SleepModeLogManager;
 
 public class SleepModeManager {
     private static final String TAG = "SleepModeManager";
@@ -100,7 +101,8 @@ public class SleepModeManager {
         executor.execute(() -> {
             for (String packageName : packages) {
                 if (scheduler != null && scheduler.isProtected(packageName, RestrictionsScheduler.PROTECT_SLEEP_MODE)) continue;
-                shellManager.freezePackage(packageName);
+                boolean ok = shellManager.freezePackage(packageName);
+                SleepModeLogManager.logFreeze(context, packageName, ok);
             }
             if (onComplete != null) handler.post(onComplete);
         });
@@ -119,7 +121,8 @@ public class SleepModeManager {
         }
         executor.execute(() -> {
             for (String packageName : packages) {
-                shellManager.unfreezePackage(packageName);
+                boolean ok = shellManager.unfreezePackage(packageName);
+                SleepModeLogManager.logUnfreeze(context, packageName, ok);
             }
             if (onComplete != null) handler.post(onComplete);
         });
