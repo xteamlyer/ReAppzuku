@@ -238,6 +238,8 @@ public class StatisticsActivity extends BaseActivity {
         binding.layoutRestrictionLog.setVisibility(
                 appManager.supportsBackgroundRestriction() ? View.VISIBLE : View.GONE);
         binding.layoutRestrictionLog.setOnClickListener(v -> showBackgroundRestrictionLogDialog());
+        binding.layoutSleepModeLog.setOnClickListener(v -> showSleepModeLogDialog());
+        binding.layoutSchedulerLog.setOnClickListener(v -> showSchedulerLogDialog());
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -869,6 +871,96 @@ public class StatisticsActivity extends BaseActivity {
         });
     }
 
+    private void showSleepModeLogDialog() {
+        SettingsListContent content = createSettingsListContent(
+                getString(R.string.log_sleep_mode_empty), false);
+        SettingsSurfaceAdapter adapter = new SettingsSurfaceAdapter();
+        content.listView.setAdapter(adapter);
+        content.listView.setEmptyView(content.emptyView);
+        content.listView.setOnItemClickListener((parent, view, position, id) -> {
+            SettingsSurfaceRow row = adapter.getItem(position);
+            if (row != null && row.packageName != null && row.packageName.contains(".")) {
+                openAppInfo(row.packageName);
+            }
+        });
+        content.loading.setVisibility(View.VISIBLE);
+        content.listView.setVisibility(View.GONE);
+        content.summaryText.setText(getString(R.string.stats_loading));
+
+        AlertDialog dialog = createSettingsSurfaceDialog(
+                getString(R.string.log_sleep_mode_title),
+                getString(R.string.log_sleep_mode_dialog_subtitle),
+                content.rootView);
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
+        dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.settings_restriction_log_clear), (d, w) -> {});
+        dialog.show();
+        styleDialogButtons(dialog);
+
+        Runnable reloadLog = () -> executor.execute(() -> {
+            List<SettingsSurfaceRow> rows = buildSleepModeLogRows(SleepModeLogManager.readEntries(this));
+            String summary = getString(R.string.settings_restriction_log_summary, rows.size());
+            handler.post(() -> {
+                adapter.setItems(rows);
+                content.summaryText.setText(summary);
+                content.loading.setVisibility(View.GONE);
+                content.listView.setVisibility(View.VISIBLE);
+                content.emptyView.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
+            });
+        });
+        reloadLog.run();
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            SleepModeLogManager.clear(this);
+            reloadLog.run();
+            Toast.makeText(this, getString(R.string.settings_restriction_log_cleared), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void showSchedulerLogDialog() {
+        SettingsListContent content = createSettingsListContent(
+                getString(R.string.log_scheduler_empty), false);
+        SettingsSurfaceAdapter adapter = new SettingsSurfaceAdapter();
+        content.listView.setAdapter(adapter);
+        content.listView.setEmptyView(content.emptyView);
+        content.listView.setOnItemClickListener((parent, view, position, id) -> {
+            SettingsSurfaceRow row = adapter.getItem(position);
+            if (row != null && row.packageName != null && row.packageName.contains(".")) {
+                openAppInfo(row.packageName);
+            }
+        });
+        content.loading.setVisibility(View.VISIBLE);
+        content.listView.setVisibility(View.GONE);
+        content.summaryText.setText(getString(R.string.stats_loading));
+
+        AlertDialog dialog = createSettingsSurfaceDialog(
+                getString(R.string.log_scheduler_title),
+                getString(R.string.log_scheduler_dialog_subtitle),
+                content.rootView);
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
+        dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.settings_restriction_log_clear), (d, w) -> {});
+        dialog.show();
+        styleDialogButtons(dialog);
+
+        Runnable reloadLog = () -> executor.execute(() -> {
+            List<SettingsSurfaceRow> rows = buildSchedulerLogRows(RestrictionsScheduler.SchedulerLog.readEntries(this));
+            String summary = getString(R.string.settings_restriction_log_summary, rows.size());
+            handler.post(() -> {
+                adapter.setItems(rows);
+                content.summaryText.setText(summary);
+                content.loading.setVisibility(View.GONE);
+                content.listView.setVisibility(View.VISIBLE);
+                content.emptyView.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
+            });
+        });
+        reloadLog.run();
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            RestrictionsScheduler.SchedulerLog.clear(this);
+            reloadLog.run();
+            Toast.makeText(this, getString(R.string.settings_restriction_log_cleared), Toast.LENGTH_SHORT).show();
+        });
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Inner classes
     // ─────────────────────────────────────────────────────────────────────────
@@ -1023,6 +1115,45 @@ public class StatisticsActivity extends BaseActivity {
         return rows;
     }
 
+    private List<SettingsSurfaceRow> buildSleepModeLogRows(List<SleepModeLogManager.LogEntry> logEntries) {
+        List<SettingsSurfaceRow> rows = new ArrayList<>();
+        for (int i = 0; i < logEntries.size(); i++) {
+            SleepModeLogManager.LogEntry entry = logEntries.get(i);
+            String title = (entry.packageName == null || entry.packageName.equals("-"))
+                    ? humanizeLogAction(entry.action) : entry.packageName;
+            String subtitle = entry.timestamp;
+            if (entry.action != null && !entry.action.trim().isEmpty()) {
+                subtitle = subtitle.isEmpty() ? humanizeLogAction(entry.action)
+                        : subtitle + " | " + humanizeLogAction(entry.action);
+            }
+            String detail = humanizeLogOutcome(entry.outcome);
+            rows.add(new SettingsSurfaceRow("#" + (i + 1), title, subtitle, detail,
+                    resolveSleepModeLogBadge(entry.action), entry.packageName));
+        }
+        return rows;
+    }
+
+    private List<SettingsSurfaceRow> buildSchedulerLogRows(List<RestrictionsScheduler.SchedulerLog.Entry> logEntries) {
+        List<SettingsSurfaceRow> rows = new ArrayList<>();
+        for (int i = 0; i < logEntries.size(); i++) {
+            RestrictionsScheduler.SchedulerLog.Entry entry = logEntries.get(i);
+            String title = (entry.packageName == null || entry.packageName.equals("-"))
+                    ? humanizeLogAction(entry.action) : entry.packageName;
+            String subtitle = entry.timestamp;
+            if (entry.action != null && !entry.action.trim().isEmpty()) {
+                subtitle = subtitle.isEmpty() ? humanizeLogAction(entry.action)
+                        : subtitle + " | " + humanizeLogAction(entry.action);
+            }
+            String detail = humanizeLogOutcome(entry.outcome);
+            if (entry.detail != null && !entry.detail.trim().isEmpty()) {
+                detail = detail.isEmpty() ? entry.detail : detail + "  |  " + entry.detail;
+            }
+            rows.add(new SettingsSurfaceRow("#" + (i + 1), title, subtitle, detail,
+                    resolveSchedulerLogBadge(entry.action), entry.packageName));
+        }
+        return rows;
+    }
+
     private String resolveStatsAppName(com.gree1d.reappzuku.db.AppStats stats,
                                        com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
         if (stats.appName != null && !stats.appName.trim().isEmpty()) return stats.appName;
@@ -1046,6 +1177,24 @@ public class StatisticsActivity extends BaseActivity {
             case "restrict-soft": case "reapply-soft": case "restrict": return getString(R.string.restriction_badge_soft);
             case "allow": return getString(R.string.restriction_badge_removed);
             case "reapply": return getString(R.string.restriction_badge_retry);
+            default: return "";
+        }
+    }
+
+    private String resolveSleepModeLogBadge(String action) {
+        if (action == null) return "";
+        switch (action.trim().toLowerCase()) {
+            case "freeze":   return getString(R.string.log_badge_freeze);
+            case "unfreeze": return getString(R.string.log_badge_unfreeze);
+            default: return "";
+        }
+    }
+
+    private String resolveSchedulerLogBadge(String action) {
+        if (action == null) return "";
+        switch (action.trim().toLowerCase()) {
+            case "lift":    return getString(R.string.log_badge_lift);
+            case "restore": return getString(R.string.log_badge_restore);
             default: return "";
         }
     }
