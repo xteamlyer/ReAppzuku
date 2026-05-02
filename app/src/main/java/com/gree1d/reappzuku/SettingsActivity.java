@@ -60,6 +60,7 @@ public class SettingsActivity extends BaseActivity {
     private AutoKillManager autoKillManager;
     private SleepModeManager sleepModeManager;
     private BackupManager backupManager;
+    private RestrictionsScheduler scheduler;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -82,6 +83,8 @@ public class SettingsActivity extends BaseActivity {
         autoKillManager = new AutoKillManager(this.getApplicationContext(), handler, executor, shellManager, appManager.getCurrentAppsList());
         sleepModeManager = new SleepModeManager(this.getApplicationContext(), handler, executor, shellManager);
         backupManager = new BackupManager(this);
+        scheduler = new RestrictionsScheduler(
+                getApplicationContext(), handler, executor, shellManager, appManager);
 
         setupToolbar();
         loadSettings();
@@ -241,6 +244,10 @@ public class SettingsActivity extends BaseActivity {
             }
             appManager.reapplySavedBackgroundRestrictions(null);
         });
+        binding.layoutRestrictionsScheduler.setOnClickListener(v -> {
+            if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            showRestrictionsSchedulerDialog();
+        });
 
         // Sleep Mode — переключатель и под-опции требуют включённого сервиса
         binding.switchSleepMode.setChecked(sleepModeManager.isSleepModeEnabled());
@@ -342,6 +349,7 @@ public class SettingsActivity extends BaseActivity {
         if (appManager.supportsBackgroundRestriction()) {
             binding.layoutBackgroundRestriction.setAlpha(alpha);
             binding.layoutReapplyRestrictions.setAlpha(alpha);
+            binding.layoutRestrictionsScheduler.setAlpha(alpha);
         }
 
         // Sleep Mode
@@ -1019,6 +1027,249 @@ public class SettingsActivity extends BaseActivity {
             if (!app.isProtected()) result.add(app);
         }
         return result;
+    }
+
+    private void showRestrictionsSchedulerDialog() {
+        Set<String> bgApps    = appManager.getBackgroundRestrictedApps();
+        Set<String> sleepApps = sleepModeManager.getSleepModeApps();
+        Set<String> eligible  = new HashSet<>(bgApps);
+        eligible.addAll(sleepApps);
+
+        if (eligible.isEmpty()) {
+            Toast.makeText(this, getString(R.string.scheduler_no_eligible_apps), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        PackageManager pm = getPackageManager();
+        List<SchedulerAppItem> items = new ArrayList<>();
+        boolean use24h = android.text.format.DateFormat.is24HourFormat(this);
+
+        for (String pkg : eligible) {
+            String appName;
+            android.graphics.drawable.Drawable icon;
+            try {
+                android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
+                appName = pm.getApplicationLabel(ai).toString();
+                icon    = pm.getApplicationIcon(ai);
+            } catch (PackageManager.NameNotFoundException e) {
+                appName = pkg;
+                icon    = ContextCompat.getDrawable(this, android.R.drawable.sym_def_app_icon);
+            }
+            items.add(new SchedulerAppItem(pkg, appName, icon, findScheduleForPackage(pkg)));
+        }
+        java.util.Collections.sort(items, (a, b) -> a.appName.compareToIgnoreCase(b.appName));
+
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_scheduler_list, null);
+        android.widget.LinearLayout listContainer =
+                dialogView.findViewById(R.id.scheduler_list_container);
+
+        AlertDialog mainDialog = new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.settings_restrictions_scheduler_title))
+                .setView(dialogView)
+                .setPositiveButton(getString(R.string.dialog_ok), (d, w) -> d.dismiss())
+                .create();
+        mainDialog.getWindow().setBackgroundDrawable(
+                new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
+        mainDialog.show();
+        styleDialogButtons(mainDialog);
+
+        for (SchedulerAppItem item : items) {
+            View row = inflater.inflate(R.layout.item_scheduler_app, listContainer, false);
+
+            ((android.widget.ImageView) row.findViewById(R.id.scheduler_app_icon))
+                    .setImageDrawable(item.icon);
+            ((TextView) row.findViewById(R.id.scheduler_app_name))
+                    .setText(item.appName);
+
+            android.widget.ImageView schedIcon = row.findViewById(R.id.scheduler_entry_icon);
+            TextView schedTime = row.findViewById(R.id.scheduler_entry_time);
+
+            if (item.entry != null) {
+                schedIcon.setVisibility(View.VISIBLE);
+                schedTime.setVisibility(View.VISIBLE);
+                schedTime.setText(formatScheduleTime(item.entry, use24h));
+            } else {
+                schedIcon.setVisibility(View.INVISIBLE);
+                schedTime.setVisibility(View.INVISIBLE);
+            }
+
+            row.setOnClickListener(v -> showScheduleEntryDialog(item, use24h, mainDialog));
+            listContainer.addView(row);
+        }
+    }
+
+    private void showScheduleEntryDialog(SchedulerAppItem item, boolean use24h,
+                                          AlertDialog parentDialog) {
+        Set<String> bgApps    = appManager.getBackgroundRestrictedApps();
+        Set<String> sleepApps = sleepModeManager.getSleepModeApps();
+        boolean hasBg    = bgApps.contains(item.packageName);
+        boolean hasSleep = sleepApps.contains(item.packageName);
+
+        RestrictionsScheduler.ScheduleEntry src = item.entry;
+
+        int[] startHour        = { src != null ? src.startHour        : 8  };
+        int[] startMinute      = { src != null ? src.startMinute      : 0  };
+        int[] endHour          = { src != null ? src.endHour          : 9  };
+        int[] endMinute        = { src != null ? src.endMinute        : 0  };
+        int[] protectFlags     = { src != null ? src.protectFlags     : RestrictionsScheduler.PROTECT_ALL };
+        int[] onActivateAction = { src != null ? src.onActivateAction : RestrictionsScheduler.ON_ACTIVATE_NOTHING };
+
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_scheduler_entry, null);
+
+        CheckBox cbAutoKill = dialogView.findViewById(R.id.scheduler_cb_autokill);
+        CheckBox cbBg       = dialogView.findViewById(R.id.scheduler_cb_bg);
+        CheckBox cbSleep    = dialogView.findViewById(R.id.scheduler_cb_sleep);
+
+        cbAutoKill.setChecked((protectFlags[0] & RestrictionsScheduler.PROTECT_AUTO_KILL) != 0);
+
+        cbBg.setEnabled(hasBg);
+        cbBg.setChecked(hasBg && (protectFlags[0] & RestrictionsScheduler.PROTECT_BG_RESTRICTIONS) != 0);
+
+        cbSleep.setEnabled(hasSleep);
+        cbSleep.setChecked(hasSleep && (protectFlags[0] & RestrictionsScheduler.PROTECT_SLEEP_MODE) != 0);
+
+        TextView btnFrom = dialogView.findViewById(R.id.scheduler_btn_time_from);
+        TextView btnTo   = dialogView.findViewById(R.id.scheduler_btn_time_to);
+        btnFrom.setText(formatTime(startHour[0], startMinute[0], use24h));
+        btnTo.setText(formatTime(endHour[0], endMinute[0], use24h));
+
+        btnFrom.setOnClickListener(v ->
+                new android.app.TimePickerDialog(this, (tp, h, m) -> {
+                    startHour[0] = h; startMinute[0] = m;
+                    btnFrom.setText(formatTime(h, m, use24h));
+                }, startHour[0], startMinute[0], use24h).show());
+
+        btnTo.setOnClickListener(v ->
+                new android.app.TimePickerDialog(this, (tp, h, m) -> {
+                    endHour[0] = h; endMinute[0] = m;
+                    btnTo.setText(formatTime(h, m, use24h));
+                }, endHour[0], endMinute[0], use24h).show());
+
+        android.widget.RadioGroup rgAction = dialogView.findViewById(R.id.scheduler_rg_action);
+        rgAction.check(onActivateAction[0] == RestrictionsScheduler.ON_ACTIVATE_LAUNCH_APP
+                ? R.id.scheduler_rb_launch
+                : R.id.scheduler_rb_none);
+        rgAction.setOnCheckedChangeListener((rg, id) ->
+                onActivateAction[0] = (id == R.id.scheduler_rb_launch)
+                        ? RestrictionsScheduler.ON_ACTIVATE_LAUNCH_APP
+                        : RestrictionsScheduler.ON_ACTIVATE_NOTHING);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(item.appName)
+                .setView(dialogView)
+                .setPositiveButton(getString(R.string.dialog_save), null)
+                .setNegativeButton(getString(R.string.dialog_close), (d, w) -> d.dismiss());
+        if (src != null) {
+            builder.setNeutralButton(getString(R.string.scheduler_btn_remove), null);
+        }
+
+        AlertDialog entryDialog = builder.create();
+        entryDialog.getWindow().setBackgroundDrawable(
+                new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
+        entryDialog.show();
+        styleDialogButtons(entryDialog);
+
+        entryDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            int flags = 0;
+            if (cbAutoKill.isChecked()) flags |= RestrictionsScheduler.PROTECT_AUTO_KILL;
+            if (cbBg.isChecked())       flags |= RestrictionsScheduler.PROTECT_BG_RESTRICTIONS;
+            if (cbSleep.isChecked())    flags |= RestrictionsScheduler.PROTECT_SLEEP_MODE;
+
+            if (flags == 0) {
+                Toast.makeText(this, getString(R.string.scheduler_error_no_flags), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (startHour[0] == endHour[0] && startMinute[0] == endMinute[0]) {
+                Toast.makeText(this, getString(R.string.scheduler_error_same_time), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            RestrictionsScheduler.ScheduleEntry e = (src != null) ? cloneScheduleEntry(src)
+                                                                   : new RestrictionsScheduler.ScheduleEntry();
+            e.packageName      = item.packageName;
+            e.startHour        = startHour[0];
+            e.startMinute      = startMinute[0];
+            e.endHour          = endHour[0];
+            e.endMinute        = endMinute[0];
+            e.protectFlags     = flags;
+            e.onActivateAction = onActivateAction[0];
+            e.enabled          = true;
+
+            boolean ok = (src != null) ? scheduler.updateSchedule(e) : scheduler.addSchedule(e);
+            if (!ok) {
+                Toast.makeText(this,
+                        getString(R.string.scheduler_error_limit, RestrictionsScheduler.MAX_SCHEDULES),
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            entryDialog.dismiss();
+            if (parentDialog.isShowing()) parentDialog.dismiss();
+            showRestrictionsSchedulerDialog();
+        });
+
+        if (src != null) {
+            entryDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+                scheduler.removeSchedule(src.id);
+                entryDialog.dismiss();
+                if (parentDialog.isShowing()) parentDialog.dismiss();
+                showRestrictionsSchedulerDialog();
+            });
+        }
+    }
+
+    private RestrictionsScheduler.ScheduleEntry findScheduleForPackage(String pkg) {
+        for (RestrictionsScheduler.ScheduleEntry e : scheduler.getSchedules()) {
+            if (pkg.equals(e.packageName)) return e;
+        }
+        return null;
+    }
+
+    private RestrictionsScheduler.ScheduleEntry cloneScheduleEntry(
+            RestrictionsScheduler.ScheduleEntry src) {
+        RestrictionsScheduler.ScheduleEntry dst = new RestrictionsScheduler.ScheduleEntry();
+        dst.id               = src.id;
+        dst.packageName      = src.packageName;
+        dst.startHour        = src.startHour;
+        dst.startMinute      = src.startMinute;
+        dst.endHour          = src.endHour;
+        dst.endMinute        = src.endMinute;
+        dst.protectFlags     = src.protectFlags;
+        dst.onActivateAction = src.onActivateAction;
+        dst.enabled          = src.enabled;
+        return dst;
+    }
+
+    private String formatTime(int hour, int minute, boolean use24h) {
+        if (use24h) {
+            return String.format(Locale.US, "%02d:%02d", hour, minute);
+        }
+        int h12 = hour % 12;
+        if (h12 == 0) h12 = 12;
+        return String.format(Locale.US, "%d:%02d %s", h12, minute, hour < 12 ? "AM" : "PM");
+    }
+
+    private String formatScheduleTime(RestrictionsScheduler.ScheduleEntry entry, boolean use24h) {
+        return formatTime(entry.startHour, entry.startMinute, use24h)
+                + " – "
+                + formatTime(entry.endHour, entry.endMinute, use24h);
+    }
+
+    private static final class SchedulerAppItem {
+        final String packageName;
+        final String appName;
+        final android.graphics.drawable.Drawable icon;
+        final RestrictionsScheduler.ScheduleEntry entry;
+
+        SchedulerAppItem(String packageName, String appName,
+                         android.graphics.drawable.Drawable icon,
+                         RestrictionsScheduler.ScheduleEntry entry) {
+            this.packageName = packageName;
+            this.appName     = appName;
+            this.icon        = icon;
+            this.entry       = entry;
+        }
     }
 
     private void showBackupRestoreDialog() {
