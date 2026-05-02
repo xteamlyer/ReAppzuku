@@ -645,6 +645,8 @@
     <string name="scheduler_component_label">Component</string>
     <string name="scheduler_component_not_selected">Not selected</string>
     <string name="scheduler_action_launch_main">Launch %s</string>
+    <string name="scheduler_component_picker_title">Select component</string>
+    <string name="scheduler_component_none_found">No exported components found</string>
 
     <!-- Sleep Mode Log -->
     <string name="log_sleep_mode_title">Sleep Mode Log</string>
