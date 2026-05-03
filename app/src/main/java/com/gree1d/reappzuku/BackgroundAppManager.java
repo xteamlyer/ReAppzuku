@@ -400,51 +400,50 @@ public class BackgroundAppManager {
             boolean success = true;
 
             for (String packageName : packagesToAllow) {
-                ShellManager.ShellResult r1 = shellManager
-                        .runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "allow"));
-                ShellManager.ShellResult r2 = shellManager
-                        .runShellCommandForResult(buildHardRestrictionCommand(packageName, "allow"));
-                applyHardExtraOps(packageName, "allow");
-                shellManager.runShellCommandForResult(buildBootRestrictionCommand(packageName, "allow"));
+                int[] opsCount = applyAllHardOps(packageName, "allow");
                 restoreBatteryWhitelist(packageName);
-                if (!r1.succeeded()) success = false;
-                logRestrictionResult(packageName, "allow", r1, null);
+                if (opsCount[0] == 0) success = false;
+                logRestrictionResult(packageName, "allow", null, null, opsCount);
             }
 
             for (String packageName : packagesToRestrict) {
                 boolean isHard = hardSet.contains(packageName);
-                ShellManager.ShellResult restrictResult = isHard
-                        ? shellManager.runShellCommandForResult(buildHardRestrictionCommand(packageName, "ignore"))
-                        : shellManager.runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "ignore"));
-                if (!restrictResult.succeeded()) {
-                    success = false;
-                    logRestrictionResult(packageName, isHard ? "restrict-hard" : "restrict-soft", restrictResult, null);
-                    continue;
-                }
                 if (isHard) {
-                    applyHardExtraOps(packageName, "ignore");
-                    shellManager.runShellCommandForResult(buildBootRestrictionCommand(packageName, "ignore"));
+                    int[] opsCount = applyAllHardOps(packageName, "ignore");
                     applyBatteryWhitelistRemoval(packageName);
+                    ShellManager.ShellResult forceStopResult = shellManager
+                            .runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    if (opsCount[0] == 0) success = false;
+                    logRestrictionResult(packageName, "restrict-hard", null, forceStopResult, opsCount);
+                } else {
+                    ShellManager.ShellResult restrictResult = shellManager
+                            .runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "ignore"));
+                    if (!restrictResult.succeeded()) {
+                        success = false;
+                        logRestrictionResult(packageName, "restrict-soft", restrictResult, null);
+                        continue;
+                    }
+                    ShellManager.ShellResult forceStopResult = shellManager
+                            .runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    if (!forceStopResult.succeeded()) success = false;
+                    logRestrictionResult(packageName, "restrict-soft", restrictResult, forceStopResult);
                 }
-                ShellManager.ShellResult forceStopResult = shellManager.runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
-                if (!forceStopResult.succeeded()) success = false;
-                logRestrictionResult(packageName, isHard ? "restrict-hard" : "restrict-soft", restrictResult, forceStopResult);
             }
 
             for (String packageName : packagesToUpdate) {
                 boolean isHard = hardSet.contains(packageName);
                 if (isHard) {
-                    shellManager.runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "allow"));
-                    shellManager.runShellCommandForResult(buildHardRestrictionCommand(packageName, "ignore"));
-                    applyHardExtraOps(packageName, "ignore");
-                    shellManager.runShellCommandForResult(buildBootRestrictionCommand(packageName, "ignore"));
+                    // Сначала снимаем soft, потом применяем все hard ops
+                    shellManager.runShellCommandForResult(
+                            buildBackgroundRestrictionCommand(packageName, "allow"));
+                    applyAllHardOps(packageName, "ignore");
                     applyBatteryWhitelistRemoval(packageName);
                 } else {
-                    shellManager.runShellCommandForResult(buildHardRestrictionCommand(packageName, "allow"));
-                    applyHardExtraOps(packageName, "allow");
-                    shellManager.runShellCommandForResult(buildBootRestrictionCommand(packageName, "allow"));
+                    // Снимаем все hard ops, применяем soft
+                    applyAllHardOps(packageName, "allow");
                     restoreBatteryWhitelist(packageName);
-                    shellManager.runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "ignore"));
+                    shellManager.runShellCommandForResult(
+                            buildBackgroundRestrictionCommand(packageName, "ignore"));
                 }
             }
 
@@ -498,16 +497,16 @@ public class BackgroundAppManager {
                 }
                 boolean isHard = hard.contains(packageName);
 
-                ShellManager.ShellResult result = isHard
-                        ? shellManager.runShellCommandForResult(buildHardRestrictionCommand(packageName, "ignore"))
-                        : shellManager.runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "ignore"));
-                if (!result.succeeded()) success = false;
-                logRestrictionResult(packageName, isHard ? "reapply-hard" : "reapply-soft", result, null);
-
                 if (isHard) {
-                    applyHardExtraOps(packageName, "ignore");
-                    shellManager.runShellCommandForResult(buildBootRestrictionCommand(packageName, "ignore"));
+                    int[] opsCount = applyAllHardOps(packageName, "ignore");
                     applyBatteryWhitelistRemoval(packageName);
+                    if (opsCount[0] == 0) success = false;
+                    logRestrictionResult(packageName, "reapply-hard", null, null, opsCount);
+                } else {
+                    ShellManager.ShellResult result = shellManager
+                            .runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "ignore"));
+                    if (!result.succeeded()) success = false;
+                    logRestrictionResult(packageName, "reapply-soft", result, null);
                 }
 
                 BackgroundRestrictionState actualState = getBackgroundRestrictionState();
@@ -550,17 +549,33 @@ public class BackgroundAppManager {
         return "cmd appops set --user current " + packageName + " " + BOOT_RESTRICTION_OP + " " + mode;
     }
 
+    /**
+     * Applies all hard restriction ops and returns [ok, fail] counts.
+     * Includes soft op, hard op, extra ops and boot op — full set.
+     */
+    int[] applyAllHardOps(String packageName, String mode) {
+        int ok = 0, fail = 0;
+        String[] ops = {
+            BACKGROUND_RESTRICTION_OP,
+            BG_RUN_RESTRICTION_OP,
+            FOREGROUND_RESTRICTION_OP,
+            FGS_FROM_BG_RESTRICTION_OP,
+            WAKE_LOCK_RESTRICTION_OP,
+            ALARM_RESTRICTION_OP,
+            BOOT_RESTRICTION_OP
+        };
+        for (String op : ops) {
+            if (shellManager.runShellCommandForResult(
+                    "cmd appops set --user current " + packageName + " " + op + " " + mode)
+                    .succeeded()) ok++; else fail++;
+        }
+        return new int[]{ok, fail};
+    }
+
+    /** @deprecated Use applyAllHardOps which tracks results. Kept for any legacy callers. */
+    @Deprecated
     void applyHardExtraOps(String packageName, String mode) {
-        shellManager.runShellCommandForResult(
-                "cmd appops set --user current " + packageName + " " + BACKGROUND_RESTRICTION_OP + " " + mode);
-        shellManager.runShellCommandForResult(
-                "cmd appops set --user current " + packageName + " " + BG_RUN_RESTRICTION_OP + " " + mode);
-        shellManager.runShellCommandForResult(
-                "cmd appops set --user current " + packageName + " " + FGS_FROM_BG_RESTRICTION_OP + " " + mode);
-        shellManager.runShellCommandForResult(
-                "cmd appops set --user current " + packageName + " " + WAKE_LOCK_RESTRICTION_OP + " " + mode);
-        shellManager.runShellCommandForResult(
-                "cmd appops set --user current " + packageName + " " + ALARM_RESTRICTION_OP + " " + mode);
+        applyAllHardOps(packageName, mode);
     }
 
     // --- Scheduler integration ---
@@ -573,29 +588,10 @@ public class BackgroundAppManager {
      */
     public String liftRestrictionsForScheduler(String packageName) {
         if (!getBackgroundRestrictedApps().contains(packageName)) return "skipped";
-
         restoreBatteryWhitelist(packageName);
-
-        int ok = 0, fail = 0;
-
-        String[] ops = {
-            BACKGROUND_RESTRICTION_OP,   // RUN_ANY_IN_BACKGROUND
-            BG_RUN_RESTRICTION_OP,        // RUN_IN_BACKGROUND
-            FOREGROUND_RESTRICTION_OP,    // START_FOREGROUND
-            FGS_FROM_BG_RESTRICTION_OP,   // START_FOREGROUND_SERVICES_FROM_BACKGROUND
-            WAKE_LOCK_RESTRICTION_OP,     // WAKE_LOCK
-            ALARM_RESTRICTION_OP,         // ALARM_WAKEUP
-            BOOT_RESTRICTION_OP           // RECEIVE_BOOT_COMPLETED
-        };
-
-        for (String op : ops) {
-            if (shellManager.runShellCommandForResult(
-                    "cmd appops set --user current " + packageName + " " + op + " allow")
-                    .succeeded()) ok++; else fail++;
-        }
-
-        if (ok == 0) return "error";
-        if (fail == 0) return "ok";
+        int[] counts = applyAllHardOps(packageName, "allow");
+        if (counts[0] == 0) return "error";
+        if (counts[1] == 0) return "ok";
         return "partial";
     }
 
@@ -609,34 +605,18 @@ public class BackgroundAppManager {
      */
     public String restoreRestrictionsForScheduler(String packageName) {
         if (!getBackgroundRestrictedApps().contains(packageName)) return "skipped";
-
         boolean isHard = isHardRestricted(packageName);
-        int ok = 0, fail = 0;
-
+        int[] counts;
         if (isHard) {
-            String[] ops = {
-                FOREGROUND_RESTRICTION_OP,   // START_FOREGROUND
-                BACKGROUND_RESTRICTION_OP,   // RUN_ANY_IN_BACKGROUND
-                BG_RUN_RESTRICTION_OP,        // RUN_IN_BACKGROUND
-                FGS_FROM_BG_RESTRICTION_OP,   // START_FOREGROUND_SERVICES_FROM_BACKGROUND
-                WAKE_LOCK_RESTRICTION_OP,     // WAKE_LOCK
-                ALARM_RESTRICTION_OP,         // ALARM_WAKEUP
-                BOOT_RESTRICTION_OP           // RECEIVE_BOOT_COMPLETED
-            };
-            for (String op : ops) {
-                if (shellManager.runShellCommandForResult(
-                        "cmd appops set --user current " + packageName + " " + op + " ignore")
-                        .succeeded()) ok++; else fail++;
-            }
+            counts = applyAllHardOps(packageName, "ignore");
             applyBatteryWhitelistRemoval(packageName);
         } else {
-            if (shellManager.runShellCommandForResult(
-                    buildBackgroundRestrictionCommand(packageName, "ignore"))
-                    .succeeded()) ok++; else fail++;
+            boolean ok = shellManager.runShellCommandForResult(
+                    buildBackgroundRestrictionCommand(packageName, "ignore")).succeeded();
+            counts = ok ? new int[]{1, 0} : new int[]{0, 1};
         }
-
-        if (ok == 0) return "error";
-        if (fail == 0) return "ok";
+        if (counts[0] == 0) return "error";
+        if (counts[1] == 0) return "ok";
         return "partial";
     }
 
@@ -762,16 +742,36 @@ public class BackgroundAppManager {
 
     private void logRestrictionResult(String packageName, String action,
             ShellManager.ShellResult appOpsResult, ShellManager.ShellResult forceStopResult) {
-        StringBuilder detail = new StringBuilder()
-                .append("appops=")
-                .append(formatShellOutcome(appOpsResult));
+        logRestrictionResult(packageName, action, appOpsResult, forceStopResult, null);
+    }
+
+    private void logRestrictionResult(String packageName, String action,
+            ShellManager.ShellResult appOpsResult, ShellManager.ShellResult forceStopResult,
+            int[] opsCount) { // [ok, fail] from applyAllHardOps, or null for soft-only
+        StringBuilder detail = new StringBuilder();
+        if (opsCount != null) {
+            int ok   = opsCount[0];
+            int fail = opsCount[1];
+            int total = ok + fail;
+            if (fail == 0) {
+                detail.append("appops=ok(").append(ok).append("/").append(total).append(")");
+            } else if (ok == 0) {
+                detail.append("appops=failed(0/").append(total).append(")");
+            } else {
+                detail.append("appops=partial(").append(ok).append("/").append(total).append(")");
+            }
+        } else {
+            detail.append("appops=").append(formatShellOutcome(appOpsResult));
+        }
         if (forceStopResult != null) {
             detail.append(" force-stop=").append(formatShellOutcome(forceStopResult));
         }
-        String outcome = appOpsResult != null && appOpsResult.succeeded()
-                && (forceStopResult == null || forceStopResult.succeeded())
-                        ? "ok"
-                        : "failed";
+        boolean appOpsOk = opsCount != null
+                ? opsCount[1] == 0  // fail==0 → all ok
+                : appOpsResult != null && appOpsResult.succeeded();
+        String outcome = appOpsOk && (forceStopResult == null || forceStopResult.succeeded())
+                ? "ok"
+                : (opsCount != null && opsCount[0] > 0 ? "partial" : "failed");
         BackgroundRestrictionLog.log(context, packageName, action, outcome, detail.toString());
     }
 
