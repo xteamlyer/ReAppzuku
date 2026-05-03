@@ -453,6 +453,29 @@ Statuses in the list:
 
 Manually re-applies all saved restrictions. After a reboot this happens **automatically** when the background service starts.
 
+#### Restriction Scheduler
+Schedule restriction actions for your applications.
+
+> Only apps with an active **Background Restriction** (soft or hard) are shown in the list.
+> Already scheduled entries are indicated by a 🕐 icon next to the app, including the scheduled time.
+
+Tap an app to open its scheduler settings:
+
+**Protect from**
+Select the restrictions the app will be temporarily protected from.
+
+**Time window**
+Set the start time (restrictions lifted) and end time (restrictions restored).
+The app will be force-stopped before restrictions are restored.
+
+**On activation**
+Action to perform when restrictions are lifted. Available options:
+
+- **None** — no additional actions.
+- **Launch component** — opens the app's component picker (Activity, Service, Receiver, etc.).
+
+> Number of available schedule plans is limited to 15 applications for security of ReAppzuku itself.
+
 #### Sleep Mode
 
 Completely **freezes** selected apps when the device is idle. Unlike background restrictions — the app simply cannot start, it is fully disabled by the system.
