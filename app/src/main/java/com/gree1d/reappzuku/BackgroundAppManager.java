@@ -567,7 +567,7 @@ public class BackgroundAppManager {
 
     /**
      * Lifts all appops restrictions for a package (called by RestrictionsScheduler).
-     * Best-effort: applies as many ops as the ROM allows, partial success is not treated as error.
+     * Counts every op — if all succeed: "ok", some fail: "partial", all fail: "error".
      *
      * @return "ok" / "partial" / "error" / "skipped"
      */
@@ -578,21 +578,21 @@ public class BackgroundAppManager {
 
         int ok = 0, fail = 0;
 
-        // Soft op
-        if (shellManager.runShellCommandForResult(
-                buildBackgroundRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
+        String[] ops = {
+            BACKGROUND_RESTRICTION_OP,   // RUN_ANY_IN_BACKGROUND
+            BG_RUN_RESTRICTION_OP,        // RUN_IN_BACKGROUND
+            FOREGROUND_RESTRICTION_OP,    // START_FOREGROUND
+            FGS_FROM_BG_RESTRICTION_OP,   // START_FOREGROUND_SERVICES_FROM_BACKGROUND
+            WAKE_LOCK_RESTRICTION_OP,     // WAKE_LOCK
+            ALARM_RESTRICTION_OP,         // ALARM_WAKEUP
+            BOOT_RESTRICTION_OP           // RECEIVE_BOOT_COMPLETED
+        };
 
-        // Hard op
-        if (shellManager.runShellCommandForResult(
-                buildHardRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
-
-        // Extra ops (BG_RUN, FGS_FROM_BG, WAKE_LOCK, ALARM) — best-effort, не учитываем в счётчике,
-        // т.к. некоторые ROM'ы не поддерживают их через cmd appops set
-        applyHardExtraOps(packageName, "allow");
-
-        // Boot op
-        if (shellManager.runShellCommandForResult(
-                buildBootRestrictionCommand(packageName, "allow")).succeeded()) ok++; else fail++;
+        for (String op : ops) {
+            if (shellManager.runShellCommandForResult(
+                    "cmd appops set --user current " + packageName + " " + op + " allow")
+                    .succeeded()) ok++; else fail++;
+        }
 
         if (ok == 0) return "error";
         if (fail == 0) return "ok";
@@ -603,6 +603,7 @@ public class BackgroundAppManager {
      * Restores appops restrictions for a package (called by RestrictionsScheduler).
      * Respects hard/soft restriction type saved in preferences.
      * Does NOT stop the app — caller (RestrictionsScheduler) handles that separately.
+     * Counts every op — if all succeed: "ok", some fail: "partial", all fail: "error".
      *
      * @return "ok" / "partial" / "error" / "skipped"
      */
@@ -613,19 +614,25 @@ public class BackgroundAppManager {
         int ok = 0, fail = 0;
 
         if (isHard) {
-            if (shellManager.runShellCommandForResult(
-                    buildHardRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
-
-            // Extra ops — best-effort, не учитываем в счётчике
-            applyHardExtraOps(packageName, "ignore");
-
-            if (shellManager.runShellCommandForResult(
-                    buildBootRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
-
+            String[] ops = {
+                FOREGROUND_RESTRICTION_OP,   // START_FOREGROUND
+                BACKGROUND_RESTRICTION_OP,   // RUN_ANY_IN_BACKGROUND
+                BG_RUN_RESTRICTION_OP,        // RUN_IN_BACKGROUND
+                FGS_FROM_BG_RESTRICTION_OP,   // START_FOREGROUND_SERVICES_FROM_BACKGROUND
+                WAKE_LOCK_RESTRICTION_OP,     // WAKE_LOCK
+                ALARM_RESTRICTION_OP,         // ALARM_WAKEUP
+                BOOT_RESTRICTION_OP           // RECEIVE_BOOT_COMPLETED
+            };
+            for (String op : ops) {
+                if (shellManager.runShellCommandForResult(
+                        "cmd appops set --user current " + packageName + " " + op + " ignore")
+                        .succeeded()) ok++; else fail++;
+            }
             applyBatteryWhitelistRemoval(packageName);
         } else {
             if (shellManager.runShellCommandForResult(
-                    buildBackgroundRestrictionCommand(packageName, "ignore")).succeeded()) ok++; else fail++;
+                    buildBackgroundRestrictionCommand(packageName, "ignore"))
+                    .succeeded()) ok++; else fail++;
         }
 
         if (ok == 0) return "error";
