@@ -36,6 +36,7 @@ public class BackgroundAppManager {
     private static final String BOOT_RESTRICTION_OP = "RECEIVE_BOOT_COMPLETED";
     private static final String WAKE_LOCK_RESTRICTION_OP = "WAKE_LOCK";
     private static final String ALARM_RESTRICTION_OP = "ALARM_WAKEUP";
+    private static final String INTERACT_ACROSS_PROFILES_OP = "INTERACT_ACROSS_PROFILES";
     private static final Pattern PACKAGE_NAME_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+");
     private static final String FORCE_STOP_COMMAND_PREFIX = "am force-stop ";
 
@@ -562,7 +563,8 @@ public class BackgroundAppManager {
             FGS_FROM_BG_RESTRICTION_OP,
             WAKE_LOCK_RESTRICTION_OP,
             ALARM_RESTRICTION_OP,
-            BOOT_RESTRICTION_OP
+            BOOT_RESTRICTION_OP,
+            INTERACT_ACROSS_PROFILES_OP
         };
         for (String op : ops) {
             if (shellManager.runShellCommandForResult(

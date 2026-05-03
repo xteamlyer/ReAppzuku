@@ -155,6 +155,7 @@ public class SettingsActivity extends BaseActivity {
         binding.switchRamThreshold.setChecked(ramThresholdEnabled);
         int ramThreshold = sharedPreferences.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
         updateRamThresholdText(ramThreshold);
+        updateRamThresholdLimitVisibility(ramThresholdEnabled && serviceEnabled);
 
         updateAutoKillTypeText(autoKillManager.getAutoKillType());
         updateAutomationOptionsVisibility(serviceEnabled, periodicKillEnabled);
@@ -211,11 +212,11 @@ public class SettingsActivity extends BaseActivity {
         binding.switchKillScreenOff.setOnCheckedChangeListener((buttonView, isChecked) ->
                 sharedPreferences.edit().putBoolean(KEY_KILL_ON_SCREEN_OFF, isChecked).apply());
 
-        binding.switchRamThreshold.setOnCheckedChangeListener((buttonView, isChecked) ->
-                sharedPreferences.edit().putBoolean(KEY_RAM_THRESHOLD_ENABLED, isChecked).apply());
-        binding.layoutRamThresholdToggle.setOnClickListener(v -> {
-            if (binding.switchRamThreshold.isChecked()) showRamThresholdDialog();
+        binding.switchRamThreshold.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            sharedPreferences.edit().putBoolean(KEY_RAM_THRESHOLD_ENABLED, isChecked).apply();
+            updateRamThresholdLimitVisibility(isChecked && binding.switchAutoKill.isChecked());
         });
+        binding.layoutRamThreshold.setOnClickListener(v -> showRamThresholdDialog());
 
         binding.layoutKillInterval.setOnClickListener(v -> showKillIntervalDialog());
         binding.layoutHiddenApps.setOnClickListener(v -> showHiddenAppsDialog());
@@ -832,6 +833,11 @@ public class SettingsActivity extends BaseActivity {
         binding.textRamThreshold.setText(getString(R.string.settings_ram_threshold_summary, threshold));
     }
 
+    private void updateRamThresholdLimitVisibility(boolean enabled) {
+        binding.layoutRamThreshold.setAlpha(enabled ? 1.0f : 0.5f);
+        binding.layoutRamThreshold.setClickable(enabled);
+    }
+
     private void showRamThresholdDialog() {
         int current = sharedPreferences.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
         int selected = 1;
@@ -960,6 +966,8 @@ public class SettingsActivity extends BaseActivity {
         binding.switchKillScreenOff.setEnabled(serviceEnabled);
         binding.layoutRamThresholdToggle.setAlpha(serviceAlpha);
         binding.switchRamThreshold.setEnabled(serviceEnabled);
+        boolean ramEnabled = serviceEnabled && binding.switchRamThreshold.isChecked();
+        updateRamThresholdLimitVisibility(ramEnabled);
         binding.layoutKillInterval.setAlpha(periodicAlpha);
         binding.layoutKillInterval.setClickable(serviceEnabled && periodicEnabled);
     }
