@@ -232,6 +232,7 @@
     <string name="settings_ram_threshold_default">Auto-Kill только при загруженности ОЗУ 80%%</string>
     <string name="settings_ram_threshold_summary">Auto-Kill только при загруженности ОЗУ %1$d%%</string>
     <string name="settings_ram_threshold_dialog_title">Выберите лимит загруженности ОЗУ</string>
+    <string name="settings_ram_threshold_limit_title">Порог использования RAM</string>
 
     <string-array name="settings_kill_interval_labels">
         <item>Каждые 10 секунд</item>
