@@ -1,4 +1,4 @@
-[English][English](https://github.com/gree1d/ReAppzuku/blob/main/docs/README.md) | **Русский**
+[English](https://github.com/gree1d/ReAppzuku/blob/main/docs/README.md) | **Русский**
 
 ---
 
