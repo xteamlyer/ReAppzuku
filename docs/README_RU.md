@@ -1,8 +1,8 @@
-[English](https://github.com/gree1d/ReAppzuku/blob/main/README.md) | **Русский**
+[English][English](https://github.com/gree1d/ReAppzuku/blob/main/docs/README.md) | **Русский**
 
 ---
 
-!![Logo](https://github.com/gree1d/ReAppzuku/blob/main/docs/images/logo.png)
+![Logo](https://github.com/gree1d/ReAppzuku/blob/main/docs/images/logo.png)
 <p align="center">
 <img src="https://img.shields.io/github/v/release/gree1d/ReAppzuku?label=Release&logo=github" alt="Latest Release">
 <img src="https://img.shields.io/github/downloads/gree1d/ReAppzuku/total?label=Downloads&logo=github&color=a855f7" alt="Downloads">
