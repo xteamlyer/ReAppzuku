@@ -62,6 +62,7 @@ public class MainActivity extends BaseActivity {
 
     private int appliedAccent;
     private boolean appliedIsAmoled;
+    private int fabNavBarHeight = 0;
 
     private final Shizuku.OnRequestPermissionResultListener shizukuPermissionListener = (requestCode, grantResult) -> {
         if (grantResult == PackageManager.PERMISSION_GRANTED) {
@@ -116,22 +117,20 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupFabInsets() {
-        // Базовый отступ FAB над bottom nav bar (72dp из XML).
-        // Читаем высоту системной навигации через getRootWindowInsets в post() —
-        // не трогая fitsSystemWindows, чтобы не сломать отступы bottom nav bar.
-        final int baseMarginPx = (int) (72 * getResources().getDisplayMetrics().density);
-
-        binding.fab.post(() -> {
-            int navBarHeight = 0;
-            WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(binding.fab);
-            if (insets != null) {
-                navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
-            }
-            androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams params =
-                    (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) binding.fab.getLayoutParams();
-            params.bottomMargin = baseMarginPx + navBarHeight;
-            binding.fab.setLayoutParams(params);
+        // Запоминаем высоту системной навигации при dispatch insets.
+        // Применяем margin каждый раз перед show() через applyFabMargin().
+        ViewCompat.setOnApplyWindowInsetsListener(binding.fab, (v, insets) -> {
+            fabNavBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            return insets;
         });
+    }
+
+    private void applyFabMargin() {
+        final int baseMarginPx = (int) (72 * getResources().getDisplayMetrics().density);
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams params =
+                (androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) binding.fab.getLayoutParams();
+        params.bottomMargin = baseMarginPx + fabNavBarHeight;
+        binding.fab.setLayoutParams(params);
     }
 
     private void setupBottomNavigation() {
@@ -563,6 +562,7 @@ public class MainActivity extends BaseActivity {
 
         autoKillManager.killPackages(packagesToKill, () -> {
             loadBackgroundApps();
+            applyFabMargin();
             binding.fab.show();
         });
     }
@@ -577,6 +577,7 @@ public class MainActivity extends BaseActivity {
     private void updateSelectMenuVisibility() {
         boolean hasSelection = fullAppsList.stream().anyMatch(AppModel::isSelected);
         if (hasSelection) {
+            applyFabMargin();
             binding.fab.show();
             updateFabText();
         } else {
