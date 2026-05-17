@@ -127,6 +127,7 @@ public class MainActivity extends BaseActivity {
         cpuMonitor.setAppsList(fullAppsList);
 
         setupKillButton();
+        setupBottomNavigation();
         setupListeners();
         setupKillButtonInsets();
 
@@ -160,6 +161,18 @@ public class MainActivity extends BaseActivity {
         if (hasFocus) {
             binding.swiperefreshlayout1.post(this::recalculateListHeight);
         }
+    }
+
+    private void setupBottomNavigation() {
+        binding.bottomNavigation.navIconMain.setSelected(true);
+        binding.bottomNavigation.navIconSettings.setSelected(false);
+        binding.bottomNavigation.navIconStatistics.setSelected(false);
+        binding.bottomNavigation.navBtnMain.setOnClickListener(v -> {});
+        binding.bottomNavigation.navBtnSettings.setOnClickListener(v ->
+                startActivity(new Intent(this, SettingsActivity.class)));
+        binding.bottomNavigation.navBtnStatistics.setOnClickListener(v ->
+                startActivity(new Intent(this, StatisticsActivity.class)));
+        applyNavBarInsets(binding.bottomNavigation.getRoot());
     }
 
     private void setupKillButtonInsets() {
@@ -676,6 +689,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        setupBottomNavigation();
 
         int newAccent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
         boolean newIsAmoled = sharedPreferences.getBoolean(KEY_AMOLED, false);
