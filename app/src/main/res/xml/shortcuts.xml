@@ -8,8 +8,8 @@
         android:shortcutLongLabel="@string/shortcut_kill_long_label">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.northmendo.Appzuku"
-            android:targetClass="com.northmendo.Appzuku.KillShortcutActivity" />
+            android:targetPackage="com.gree1d.reappzuku"
+            android:targetClass="com.gree1d.reappzuku.KillShortcutActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 </shortcuts>
