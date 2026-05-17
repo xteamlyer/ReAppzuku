@@ -91,10 +91,17 @@
 
     </LinearLayout>
 
+    <include
+        android:id="@+id/bottom_navigation"
+        layout="@layout/bottom_nav_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
+
     <Button
         android:id="@+id/kill_button"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:text="@string/fab_kill_app"
         android:textColor="@android:color/white"
@@ -103,6 +110,8 @@
         android:backgroundTint="#0136FF"
         android:visibility="gone"
         android:stateListAnimator="@null"
-        style="@style/Widget.Material3.Button" />
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        style="@style/Widget.App.KillButton" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
