@@ -176,7 +176,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupKillButtonInsets() {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.killButton, (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.coordinator, (v, insets) -> {
             systemNavBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
             int basePx = (int) (64 * getResources().getDisplayMetrics().density);
             killButtonHeight = basePx + systemNavBarHeight;
