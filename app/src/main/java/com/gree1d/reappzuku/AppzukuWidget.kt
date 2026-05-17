@@ -87,7 +87,8 @@ class AppzukuWidget : GlanceAppWidget() {
                         .width(1.dp)
                         .height(36.dp)
                         .background(Color(0x33FFFFFF))
-                )
+                ) {
+                }
 
                 StatCell(
                     value = data.freed,
@@ -100,7 +101,8 @@ class AppzukuWidget : GlanceAppWidget() {
                         .width(1.dp)
                         .height(36.dp)
                         .background(Color(0x33FFFFFF))
-                )
+                ) {
+                }
 
                 StatCell(
                     value = data.lastKill,
