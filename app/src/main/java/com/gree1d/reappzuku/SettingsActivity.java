@@ -591,7 +591,6 @@ public class SettingsActivity extends BaseActivity {
         filterDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
-            allApps = filterOutProtected(allApps);
             Set<String> hiddenApps = appManager.getHiddenApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, hiddenApps);
             listView.setAdapter(filterAdapter);
