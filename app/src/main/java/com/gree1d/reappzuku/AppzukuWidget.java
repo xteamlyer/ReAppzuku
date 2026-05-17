@@ -1,17 +1,24 @@
 package com.gree1d.reappzuku;
 
-import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.widget.RemoteViews;
 
+import com.gree1d.reappzuku.db.AppDatabase;
+import com.gree1d.reappzuku.db.AppStats;
+import com.gree1d.reappzuku.db.AppStatsDao;
+
+import java.io.RandomAccessFile;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import static com.gree1d.reappzuku.AppConstants.STATS_HISTORY_DURATION_MS;
+
 public class AppzukuWidget extends AppWidgetProvider {
-    private static final Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -20,39 +27,79 @@ public class AppzukuWidget extends AppWidgetProvider {
         }
     }
 
-    static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
-
-        Intent intent = new Intent(context, ShappkyService.class);
-        intent.setAction("TRIGGER_KILL");
-
-        PendingIntent pendingIntent;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            pendingIntent = PendingIntent.getForegroundService(context, 0, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        } else {
-            pendingIntent = PendingIntent.getService(context, 0, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    public static void updateAllWidgets(Context context) {
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        ComponentName component = new ComponentName(context, AppzukuWidget.class);
+        int[] ids = manager.getAppWidgetIds(component);
+        if (ids == null || ids.length == 0) return;
+        for (int id : ids) {
+            updateAppWidget(context, manager, id);
         }
+    }
 
-        views.setOnClickPendingIntent(R.id.widget_button_clean, pendingIntent);
-
-        // Update RAM text in background to avoid ANR
+    static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         new Thread(() -> {
-            long totalRam = 0;
-            long availableRam = 0;
-            try (java.io.RandomAccessFile reader = new java.io.RandomAccessFile("/proc/meminfo", "r")) {
-                totalRam = Long.parseLong(reader.readLine().replaceAll("\\D+", "")) / 1024;
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+
+            long totalRamMb = 0;
+            long usedRamMb = 0;
+            try (RandomAccessFile reader = new RandomAccessFile("/proc/meminfo", "r")) {
+                long totalKb = Long.parseLong(reader.readLine().replaceAll("\\D+", ""));
                 reader.readLine();
-                availableRam = Long.parseLong(reader.readLine().replaceAll("\\D+", "")) / 1024;
-            } catch (Exception ignored) {
+                long availKb = Long.parseLong(reader.readLine().replaceAll("\\D+", ""));
+                totalRamMb = totalKb / 1024;
+                usedRamMb  = (totalKb - availKb) / 1024;
+            } catch (Exception ignored) {}
+
+            if (totalRamMb > 0) {
+                int progress = (int) (usedRamMb * 100 / totalRamMb);
+                views.setProgressBar(R.id.widget_ram_progress, 100, progress, false);
+                views.setTextViewText(R.id.widget_ram_label,
+                        usedRamMb + " / " + totalRamMb + " MB");
+            } else {
+                views.setProgressBar(R.id.widget_ram_progress, 100, 0, false);
+                views.setTextViewText(R.id.widget_ram_label, "RAM: —");
             }
 
-            if (totalRam > 0) {
-                views.setTextViewText(R.id.widget_ram_text,
-                        "RAM: " + (totalRam - availableRam) + "MB / " + totalRam + "MB");
+            int totalKills = 0;
+            long totalRecoveredKb = 0;
+            long lastKillTime = 0;
+            try {
+                AppStatsDao dao = AppDatabase.getInstance(context).appStatsDao();
+                long since = System.currentTimeMillis() - STATS_HISTORY_DURATION_MS;
+                List<AppStats> statsList = dao.getAllStatsSince(since);
+                for (AppStats s : statsList) {
+                    totalKills      += s.killCount;
+                    totalRecoveredKb += s.totalRecoveredKb;
+                    if (s.lastKillTime > lastKillTime) lastKillTime = s.lastKillTime;
+                }
+            } catch (Exception ignored) {}
+
+            views.setTextViewText(R.id.widget_kills_text,
+                    context.getString(R.string.widget_kills, totalKills));
+
+            views.setTextViewText(R.id.widget_freed_text,
+                    formatRecoveredSize(context, totalRecoveredKb));
+
+            if (lastKillTime > 0) {
+                DateFormat fmt = android.text.format.DateFormat.getTimeFormat(context);
+                views.setTextViewText(R.id.widget_last_kill_text, fmt.format(new Date(lastKillTime)));
+            } else {
+                views.setTextViewText(R.id.widget_last_kill_text,
+                        context.getString(R.string.widget_no_kills));
             }
-            handler.post(() -> appWidgetManager.updateAppWidget(appWidgetId, views));
+
+            appWidgetManager.updateAppWidget(appWidgetId, views);
         }).start();
+    }
+
+    private static String formatRecoveredSize(Context context, long kb) {
+        if (kb <= 0)   return context.getString(R.string.widget_freed, "0 MB");
+        if (kb < 1024) return context.getString(R.string.widget_freed,
+                String.format(Locale.US, "%d KB", kb));
+        if (kb < 1024 * 1024) return context.getString(R.string.widget_freed,
+                String.format(Locale.US, "%.1f MB", kb / 1024f));
+        return context.getString(R.string.widget_freed,
+                String.format(Locale.US, "%.2f GB", kb / (1024f * 1024f)));
     }
 }

@@ -113,6 +113,7 @@ public class ShappkyService extends Service {
         cancelShizukuLostNotification();
         shellManager.setOnRootCheckCompleteListener(this::scheduleShizukuCheck);
         scheduleSnapshotCollection();
+        scheduleWidgetUpdate();
 
         appManager.reapplySavedBackgroundRestrictions(null);
         watchdog.startIfNeeded();
@@ -286,6 +287,19 @@ public class ShappkyService extends Service {
 
     private static final long SNAPSHOT_INTERVAL_MS = 15 * 60 * 1000L;
     private static final long UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L;
+    private static final long WIDGET_UPDATE_INTERVAL_MS = 60 * 1000L;
+
+    private void scheduleWidgetUpdate() {
+        Runnable widgetRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!isRunning) return;
+                AppzukuWidget.updateAllWidgets(ShappkyService.this);
+                handler.postDelayed(this, WIDGET_UPDATE_INTERVAL_MS);
+            }
+        };
+        handler.post(widgetRunnable);
+    }
 
     private void scheduleSnapshotCollection() {
         Runnable snapshotRunnable = new Runnable() {

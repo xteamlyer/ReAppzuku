@@ -1,7 +1,5 @@
 package com.gree1d.reappzuku;
 
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -183,7 +181,6 @@ public class AutoKillManager {
                 shellManager.runShellCommandAndGetFullOutput(killCommand);
 
                 sendKillNotification(toKill.size());
-                updateWidget();
 
                 try {
                     Thread.sleep(RELAUNCH_CHECK_DELAY_MS);
@@ -353,18 +350,6 @@ public class AutoKillManager {
         ShappkyService.updateNotification(context,
                 context.getString(R.string.bg_manager_auto_kill_active),
                 context.getString(R.string.bg_manager_stopped_apps, count));
-    }
-
-    private void updateWidget() {
-        try {
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-            ComponentName widgetComponent = new ComponentName(context, AppzukuWidget.class);
-            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
-            for (int appWidgetId : appWidgetIds) {
-                AppzukuWidget.updateAppWidget(context, appWidgetManager, appWidgetId);
-            }
-        } catch (Exception ignored) {
-        }
     }
 
     private void recordSuccessfulKills(List<String> packageNames, Map<String, Long> recoveredKbByPackage) {
