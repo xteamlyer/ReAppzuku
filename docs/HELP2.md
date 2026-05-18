@@ -11,7 +11,7 @@
 - [Background Survival Setup](#background-survival-setup)
 - [Quick Start](#quick-start)
 - [Manual Control](#manual-control)
-- [Main](#home)
+- [Main](#main)
   - [Toolbar](#toolbar)
   - [App Triggers](#app-triggers)
 - [Settings](#settings)
@@ -19,7 +19,7 @@
   - [Appearance](#-appearance)
   - [Automation](#️-automation)
   - [Auto-Kill Settings](#-auto-kill-settings)
-  - [Extra Tools](#-extra-tools)
+  - [Advanced Tools](#-advanced-tools)
   - [About](#ℹ️-about)
 - [Statistics & Logs](#-statistics--logs)
 - [Protected Apps](#protected-apps)
@@ -254,7 +254,7 @@ Tapping an app in the list opens a quick action menu:
   - Whitelist
   - Blacklist
   - Hidden
-  - Background Restriction
+  - Background Restriction (Soft)
 
 ### App Triggers
 
@@ -274,7 +274,7 @@ Determined by the process priority in the Linux kernel (oom_score_adj) — the s
 
 **Trigger types:**
 
-#### Currently Active
+#### Actual
 
 These triggers indicate that the app is consuming resources **right now**.
 
@@ -419,7 +419,7 @@ Identifies hidden background wakeups by comparing two timestamps from `dumpsys u
 
 ### 🔵 Information
 
-#### ReAppzuku Operating Mode
+#### ReAppzuku Access Mode
 
 Shows the current system command access mode: **Root**, **Shizuku**, or **No Access**. Read-only.
 
@@ -504,7 +504,7 @@ The app list for the selected mode. Depending on the mode, one of the two lists 
 
 ---
 
-### 🔧 Extra Tools
+### 🔧 Advanced Tools
 
 #### Background Restrictions
 
@@ -577,7 +577,7 @@ Prevents the app from interacting with other work profiles (e.g., Android work p
 
 ---
 
-## Restriction Mode Comparison
+## Restriction types comparison
 
 | Restriction | Soft | Hard | Manual |
 |---|:---:|:---:|:---:|
