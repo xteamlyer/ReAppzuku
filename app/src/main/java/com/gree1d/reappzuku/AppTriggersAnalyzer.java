@@ -434,21 +434,31 @@ public class AppTriggersAnalyzer {
         boolean killable      = true;
         String  notifChannel  = null;
         String  notifImport   = null;
+        boolean isForeground  = false;
+        boolean isSticky      = false;
         List<String> binders  = new ArrayList<>();
 
         for (String line : output.split("\n")) {
             String t = line.trim();
 
             if (t.contains("ServiceRecord") && t.contains(packageName)) {
+                if (inBlock) {
+                    emitServiceTriggers(list, currentSvc, packageName, fgType, notifChannel,
+                            notifImport, killable, isForeground, isSticky);
+                }
                 inBlock      = true;
                 currentSvc   = extractServiceShortName(t, packageName);
                 fgType       = null;
                 killable     = true;
                 notifChannel = null;
                 notifImport  = null;
+                isForeground = false;
+                isSticky     = false;
                 continue;
             }
             if (inBlock && t.contains("ServiceRecord") && !t.contains(packageName)) {
+                emitServiceTriggers(list, currentSvc, packageName, fgType, notifChannel,
+                        notifImport, killable, isForeground, isSticky);
                 inBlock = false;
             }
             if (!inBlock) continue;
@@ -465,34 +475,8 @@ public class AppTriggersAnalyzer {
             Matcher mImp = Pattern.compile("importance=(\\d+)").matcher(t);
             if (mImp.find()) notifImport = mapNotifImportance(Integer.parseInt(mImp.group(1)));
 
-
-            if (t.contains("isForeground=true")) {
-                String svcName = currentSvc != null ? currentSvc : packageName;
-                StringBuilder detail = new StringBuilder(svcName);
-                if (fgType       != null) detail.append(" [").append(fgType).append("]");
-                if (notifChannel != null) detail.append(" · ch:").append(notifChannel);
-                if (notifImport  != null) detail.append(" · notif:").append(notifImport);
-                detail.append(" · ").append(killable
-                        ? context.getString(R.string.triggers_fg_service_killable)
-                        : context.getString(R.string.triggers_fg_service_not_killable));
-
-                list.add(new TriggerInfo(TriggerInfo.Group.ACTIVE_NOW,
-                        context.getString(R.string.triggers_cat_fg_service),
-                        detail.toString(),
-                        context.getString(R.string.triggers_fg_service_explanation),
-                        TriggerInfo.Severity.HIGH));
-            }
-
-
-            if ((t.contains("START_STICKY") || t.contains("startRequested=true"))
-                    && !t.contains("isForeground=true")) {
-                list.add(new TriggerInfo(TriggerInfo.Group.ACTIVE_NOW,
-                        context.getString(R.string.triggers_cat_sticky),
-                        currentSvc != null ? currentSvc : packageName,
-                        context.getString(R.string.triggers_sticky_explanation),
-                        TriggerInfo.Severity.HIGH));
-            }
-
+            if (t.contains("isForeground=true")) isForeground = true;
+            if (t.contains("START_STICKY") || t.contains("startRequested=true")) isSticky = true;
 
             for (Pattern bp : BINDER_PATS) {
                 Matcher m = bp.matcher(t);
@@ -502,6 +486,11 @@ public class AppTriggersAnalyzer {
                             && !binders.contains(pkg)) binders.add(pkg);
                 }
             }
+        }
+
+        if (inBlock) {
+            emitServiceTriggers(list, currentSvc, packageName, fgType, notifChannel,
+                    notifImport, killable, isForeground, isSticky);
         }
 
         if (!binders.isEmpty()) {
@@ -528,6 +517,33 @@ public class AppTriggersAnalyzer {
         }
 
         return list;
+    }
+
+    private void emitServiceTriggers(List<TriggerInfo> list, String currentSvc,
+            String packageName, String fgType, String notifChannel, String notifImport,
+            boolean killable, boolean isForeground, boolean isSticky) {
+        if (isForeground) {
+            String svcName = currentSvc != null ? currentSvc : packageName;
+            StringBuilder detail = new StringBuilder(svcName);
+            if (fgType       != null) detail.append(" [").append(fgType).append("]");
+            if (notifChannel != null) detail.append(" · ch:").append(notifChannel);
+            if (notifImport  != null) detail.append(" · notif:").append(notifImport);
+            detail.append(" · ").append(killable
+                    ? context.getString(R.string.triggers_fg_service_killable)
+                    : context.getString(R.string.triggers_fg_service_not_killable));
+            list.add(new TriggerInfo(TriggerInfo.Group.ACTIVE_NOW,
+                    context.getString(R.string.triggers_cat_fg_service),
+                    detail.toString(),
+                    context.getString(R.string.triggers_fg_service_explanation),
+                    TriggerInfo.Severity.HIGH));
+        }
+        if (isSticky && !isForeground) {
+            list.add(new TriggerInfo(TriggerInfo.Group.ACTIVE_NOW,
+                    context.getString(R.string.triggers_cat_sticky),
+                    currentSvc != null ? currentSvc : packageName,
+                    context.getString(R.string.triggers_sticky_explanation),
+                    TriggerInfo.Severity.HIGH));
+        }
     }
 
     private String parseForegroundServiceType(String raw) {
@@ -577,8 +593,8 @@ public class AppTriggersAnalyzer {
 
         if (wlBlock.length() > 0) {
             Pattern heldMsPat  = Pattern.compile("held=(\\d+)ms");
-            Pattern acquirePat = Pattern.compile("acq(?:uire)?[=:](\\d+)");
-            Pattern releasePat = Pattern.compile("rel(?:ease)?[=:](\\d+)");
+            Pattern acquirePat = Pattern.compile("\\bacq(?:uire)?[=:](\\d+)");
+            Pattern releasePat = Pattern.compile("\\brel(?:ease)?[=:](\\d+)");
             Pattern heldLegacy = Pattern.compile("(\\d+m\\s*\\d+s|\\d+s)");
             Pattern tagPat     = Pattern.compile("'([^']{1,60})'");
             String  uid        = cachedUid;
@@ -690,21 +706,23 @@ public class AppTriggersAnalyzer {
         }
 
         List<String> established = new ArrayList<>();
-        for (String procFile : new String[]{"tcp6", "tcp"}) {
-            try {
-                String raw = shellManager.runShellCommandAndGetFullOutput(
-                        "grep ' " + uid + " ' /proc/net/" + procFile + " 2>/dev/null");
-                if (raw == null) continue;
-                for (String line : raw.split("\n")) {
-                    String[] cols = line.trim().split("\\s+");
-                    if (cols.length < 4) continue;
-                    if (!"01".equals(cols[3])) continue;
-                    String remote = hexToAddress(cols.length > 2 ? cols[2] : "", procFile.equals("tcp6"));
-                    if (!established.contains(remote) && established.size() < 5)
-                        established.add(remote);
+        try {
+            String connOut = shellManager.runShellCommandAndGetFullOutput(
+                    "dumpsys connectivity | grep -i " + packageName);
+            if (connOut != null) {
+                Pattern addrPat = Pattern.compile(
+                        "(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}:\\d+)");
+                for (String line : connOut.split("\n")) {
+                    if (!line.toLowerCase().contains("established")
+                            && !line.toLowerCase().contains("connected")) continue;
+                    Matcher m = addrPat.matcher(line);
+                    while (m.find() && established.size() < 5) {
+                        String addr = m.group(1);
+                        if (!established.contains(addr)) established.add(addr);
+                    }
                 }
-            } catch (Exception e) { Log.w(TAG, "proc/net/" + procFile + " failed: " + e.getMessage()); }
-        }
+            }
+        } catch (Exception e) { Log.w(TAG, "connectivity failed: " + e.getMessage()); }
 
         long total = rxBytes + txBytes;
         if (total < 10 * 1024 && established.isEmpty()) return list;
@@ -730,20 +748,6 @@ public class AppTriggersAnalyzer {
                 context.getString(R.string.triggers_network_explanation),
                 sev));
         return list;
-    }
-
-    private String hexToAddress(String hex, boolean is6) {
-        try {
-            String[] parts = hex.split(":");
-            if (parts.length < 2) return hex;
-            int port = Integer.parseInt(parts[1], 16);
-            if (!is6 && parts[0].length() == 8) {
-                long a = Long.parseLong(parts[0], 16);
-                return String.format("%d.%d.%d.%d:%d",
-                        a & 0xFF, (a >> 8) & 0xFF, (a >> 16) & 0xFF, (a >> 24) & 0xFF, port);
-            }
-            return "*:" + port;
-        } catch (Exception e) { return hex; }
     }
 
     private List<TriggerInfo> analyzeSensors(String packageName) {

@@ -18,11 +18,22 @@ public class AppTriggerAnalyzersExt {
     private final ShellManager         shellManager;
     private final AppTriggersAnalyzer  analyzer;
 
+    private String cachedBroadcastHistory = null;
+
     public AppTriggerAnalyzersExt(Context context, ShellManager shellManager,
                                    AppTriggersAnalyzer analyzer) {
         this.context      = context.getApplicationContext();
         this.shellManager = shellManager;
         this.analyzer     = analyzer;
+    }
+
+    private String getBroadcastHistory() {
+        if (cachedBroadcastHistory == null) {
+            cachedBroadcastHistory = shellManager.runShellCommandAndGetFullOutput(
+                    "dumpsys activity broadcasts history");
+            if (cachedBroadcastHistory == null) cachedBroadcastHistory = "";
+        }
+        return cachedBroadcastHistory.isEmpty() ? null : cachedBroadcastHistory;
     }
 
     List<TriggerInfo> analyzeAlarms(String packageName) {
@@ -512,8 +523,7 @@ public class AppTriggerAnalyzersExt {
 
 
         try {
-            String bcastOut = shellManager.runShellCommandAndGetFullOutput(
-                    "dumpsys activity broadcasts history");
+            String bcastOut = getBroadcastHistory();
             if (bcastOut != null) {
                 List<String> relevant = new ArrayList<>();
                 for (String line : bcastOut.split("\n"))
@@ -629,7 +639,7 @@ public class AppTriggerAnalyzersExt {
                         R.string.triggers_receivers_detail_overflow, dynamicActions.size() - shown));
 
             list.add(new TriggerInfo(TriggerInfo.Group.CAN_WAKE,
-                    "Dynamic Receivers (" + dynamicActions.size() + ")",
+                    context.getString(R.string.triggers_cat_receivers_dynamic, dynamicActions.size()),
                     detail.toString(),
                     context.getString(R.string.triggers_receivers_explanation_base),
                     dynamicActions.size() > 3 ? TriggerInfo.Severity.HIGH : TriggerInfo.Severity.MEDIUM));
@@ -1044,8 +1054,7 @@ public class AppTriggerAnalyzersExt {
 
     List<TriggerInfo> analyzeBroadcastEfficiency(String packageName) {
         List<TriggerInfo> list = new ArrayList<>();
-        String output = shellManager.runShellCommandAndGetFullOutput(
-                "dumpsys activity broadcasts history");
+        String output = getBroadcastHistory();
         if (output == null || output.trim().isEmpty()) return list;
 
 
@@ -1233,7 +1242,7 @@ public class AppTriggerAnalyzersExt {
             List<String> processNames = new ArrayList<>();
             List<Integer> pids        = new ArrayList<>();
 
-            Pattern pidPat  = Pattern.compile("^\\s*\\S+\\s+(\\d+)");
+            Pattern pidPat  = Pattern.compile("^\\s*(\\d+)");
             Pattern namePat = Pattern.compile("(" + Pattern.quote(packageName) + "[:\\w]*)\\s*$");
 
             for (String line : psOut.split("\n")) {
@@ -1435,7 +1444,7 @@ public class AppTriggerAnalyzersExt {
 
 
             Pattern timePat = Pattern.compile(
-                    "time=\\+([\\d][\\d\\w\\s]*)ago", Pattern.CASE_INSENSITIVE);
+                    "time=\\+([\\d]+[\\dhms]+(?:\\s*[\\dhms]+)*)\\s+ago", Pattern.CASE_INSENSITIVE);
 
             for (String line : out.split("\n")) {
                 String t = line.trim();
