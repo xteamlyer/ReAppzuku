@@ -11,7 +11,7 @@
 - [Background Survival Setup](#background-survival-setup)
 - [Quick Start](#quick-start)
 - [Manual Control](#manual-control)
-- [Home](#home)
+- [Main](#home)
   - [Toolbar](#toolbar)
   - [App Triggers](#app-triggers)
 - [Settings](#settings)
@@ -219,7 +219,7 @@ A static shortcut via long-pressing the app icon — kills the current foregroun
 
 ---
 
-## Home
+## Main
 
 The main screen shows a list of all active background apps with real-time RAM and CPU usage. The top section displays overall stats: the number of active apps and current RAM load.
 
