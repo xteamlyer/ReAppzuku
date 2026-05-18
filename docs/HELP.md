@@ -731,6 +731,16 @@ A detailed log of background restriction operations. Stored in cache, maximum 20
 | `Removed from whitelist` | App removed from battery optimization exceptions |
 | `Restored to whitelist` | App restored to battery optimization exceptions |
 
+#### Sleep Mode Log
+Allows you to monitor sleep mode operation. It logs the date and time of freezing and defrosting target applications. 
+
+#### Scheduler Log 
+Contains records of Restrictions Scheduler's operation. In each record, you can see the following parameters:
+- The date and time the restrictions were lifted/restored.
+- How successfully the restrictions were restored (OK / PARTIAL / FAILED).
+- The type of forced stop applied, depending on the Auto-Kill settings.
+- Which application component (which you selected when configuring the scheduler) was running when the restriction was lifted.
+
 ---
 
 ## Protected Apps
