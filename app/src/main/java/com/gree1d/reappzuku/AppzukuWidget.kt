@@ -22,7 +22,6 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
-import androidx.glance.layout.wrapContentWidth
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -65,26 +64,26 @@ class AppzukuWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = GlanceModifier.fillMaxWidth().height(22.dp),
+                modifier = GlanceModifier.fillMaxWidth().height(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.glance.appwidget.LinearProgressIndicator(
                     progress = data.ramProgress,
-                    modifier = GlanceModifier.fillMaxWidth().height(22.dp),
+                    modifier = GlanceModifier.fillMaxWidth().height(24.dp),
                     color = ColorProvider(ramColor),
-                    backgroundColor = ColorProvider(Color(0x33FFFFFF))
+                    backgroundColor = ColorProvider(Color(0x22FFFFFF))
                 )
                 Text(
                     text = data.ramLabel,
                     style = TextStyle(
                         color = ColorProvider(Color.White),
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Bold
                     )
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(6.dp))
+            Spacer(modifier = GlanceModifier.height(8.dp))
 
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
@@ -93,33 +92,20 @@ class AppzukuWidget : GlanceAppWidget() {
             ) {
                 StatCell(
                     value = data.kills,
-                    label = "kills 12h",
+                    label = "KILLS 12H",
+                    accentColor = Color(0xFF4FC3F7),
                     modifier = GlanceModifier.defaultWeight()
                 )
-
-                Box(
-                    modifier = GlanceModifier
-                        .width(1.dp)
-                        .height(28.dp)
-                        .background(Color(0x33FFFFFF))
-                ) {}
-
                 StatCell(
                     value = data.freed,
-                    label = "freed",
+                    label = "FREED",
+                    accentColor = Color(0xFF66BB6A),
                     modifier = GlanceModifier.defaultWeight()
                 )
-
-                Box(
-                    modifier = GlanceModifier
-                        .width(1.dp)
-                        .height(28.dp)
-                        .background(Color(0x33FFFFFF))
-                ) {}
-
                 StatCell(
                     value = data.lastKill,
-                    label = "last kill",
+                    label = "LAST KILL",
+                    accentColor = Color(0xFFFFA726),
                     modifier = GlanceModifier.defaultWeight()
                 )
             }
@@ -127,12 +113,24 @@ class AppzukuWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun StatCell(value: String, label: String, modifier: GlanceModifier) {
+    private fun StatCell(
+        value: String,
+        label: String,
+        accentColor: Color,
+        modifier: GlanceModifier
+    ) {
         Column(
-            modifier = modifier,
+            modifier = modifier.padding(horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = GlanceModifier
+                    .width(24.dp)
+                    .height(3.dp)
+                    .background(accentColor)
+            ) {}
+            Spacer(modifier = GlanceModifier.height(5.dp))
             Text(
                 text = value,
                 style = TextStyle(
@@ -141,11 +139,13 @@ class AppzukuWidget : GlanceAppWidget() {
                     fontWeight = FontWeight.Bold
                 )
             )
+            Spacer(modifier = GlanceModifier.height(1.dp))
             Text(
                 text = label,
                 style = TextStyle(
-                    color = ColorProvider(Color(0x88FFFFFF)),
-                    fontSize = 9.sp
+                    color = ColorProvider(Color(0x66FFFFFF)),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Medium
                 )
             )
         }
