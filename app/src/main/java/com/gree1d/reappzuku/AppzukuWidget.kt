@@ -1,6 +1,7 @@
 package com.gree1d.reappzuku
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -38,17 +39,15 @@ import java.io.RandomAccessFile
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.annotation.Keep
 
-// ── Palette ──────────────────────────────────────────────────────────────────
-private val BgSurface      = Color(0xFF1A1C24)   // чуть теплее, меньше синевы
-private val BgCard         = Color(0xFF22242E)   // чуть светлее фона
-private val TextPrimary    = Color(0xFFE8EAF0)
-private val TextSecondary  = Color(0x80E8EAF0)   // 50% primary
-private val AccentBlue     = Color(0xFF82CAFF)   // пастельнее (M3 tertiary)
-private val AccentGreen    = Color(0xFF81C784)
-private val AccentAmber    = Color(0xFFFFCA28)
-private val AccentRed      = Color(0xFFEF9A9A)   // мягче чем 0xFFEF5350
+private val BgSurface     = Color(0xFF1A1C24)
+private val BgCard        = Color(0xFF22242E)
+private val TextPrimary   = Color(0xFFE8EAF0)
+private val TextSecondary = Color(0x80E8EAF0)
+private val AccentBlue    = Color(0xFF82CAFF)
+private val AccentGreen   = Color(0xFF81C784)
+private val AccentAmber   = Color(0xFFFFCA28)
+private val AccentRed     = Color(0xFFEF9A9A)
 
 @Keep
 class AppzukuWidget : GlanceAppWidget() {
@@ -75,13 +74,12 @@ class AppzukuWidget : GlanceAppWidget() {
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // ── RAM row ──────────────────────────────────────────────────────
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "RAM",
+                    text = data.labelRam,
                     style = TextStyle(
                         color = ColorProvider(TextSecondary),
                         fontSize = 9.sp,
@@ -115,7 +113,6 @@ class AppzukuWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.height(5.dp))
 
-            // ── Stat cards ───────────────────────────────────────────────────
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -123,21 +120,21 @@ class AppzukuWidget : GlanceAppWidget() {
             ) {
                 StatCard(
                     value = data.kills,
-                    label = "kills 12h",
+                    label = data.labelKills,
                     accentColor = AccentBlue,
                     modifier = GlanceModifier.defaultWeight()
                 )
                 Spacer(modifier = GlanceModifier.width(6.dp))
                 StatCard(
                     value = data.freed,
-                    label = "freed",
+                    label = data.labelFreed,
                     accentColor = AccentGreen,
                     modifier = GlanceModifier.defaultWeight()
                 )
                 Spacer(modifier = GlanceModifier.width(6.dp))
                 StatCard(
                     value = data.lastKill,
-                    label = "last kill",
+                    label = data.labelLastKill,
                     accentColor = AccentAmber,
                     modifier = GlanceModifier.defaultWeight()
                 )
@@ -168,7 +165,6 @@ class AppzukuWidget : GlanceAppWidget() {
                 )
             )
             Spacer(modifier = GlanceModifier.height(0.dp))
-            // цветная метка вместо цветной черты — меньше визуального шума
             Text(
                 text = label,
                 style = TextStyle(
@@ -231,7 +227,11 @@ class AppzukuWidget : GlanceAppWidget() {
                 ramLabel = ramLabel,
                 kills = "$totalKills",
                 freed = formatSize(totalRecoveredKb),
-                lastKill = lastKillStr
+                lastKill = lastKillStr,
+                labelRam = context.getString(R.string.widget_ram),
+                labelKills = context.getString(R.string.widget_kills),
+                labelFreed = context.getString(R.string.widget_freed),
+                labelLastKill = context.getString(R.string.widget_last_kill)
             )
         }
 
@@ -248,7 +248,11 @@ class AppzukuWidget : GlanceAppWidget() {
         val ramLabel: String,
         val kills: String,
         val freed: String,
-        val lastKill: String
+        val lastKill: String,
+        val labelRam: String,
+        val labelKills: String,
+        val labelFreed: String,
+        val labelLastKill: String
     )
 }
 

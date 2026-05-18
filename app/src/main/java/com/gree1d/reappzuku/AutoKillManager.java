@@ -157,7 +157,6 @@ public class AutoKillManager {
 
             Log.d(TAG, "toKill list (" + toKill.size() + "): " + toKill);
 
-            // Проверяем пакеты из предыдущего цикла: если их нет в ps — RAM действительно освобождена
             Map<String, Long> pendingRss = loadPendingRss();
             Map<String, Long> confirmedFreedKb = new HashMap<>();
             for (Map.Entry<String, Long> entry : pendingRss.entrySet()) {
@@ -174,10 +173,8 @@ public class AutoKillManager {
             }
 
             if (!toKill.isEmpty()) {
-                // Kill выполнен — записываем сразу, без RAM
                 recordSuccessfulKills(toKill, null);
 
-                // Сохраняем RSS убиваемых пакетов — проверим в следующем цикле
                 Map<String, Long> newPendingRss = new HashMap<>();
                 for (String pkg : toKill) {
                     long rssKb = psRssMap.getOrDefault(pkg, 0L);
