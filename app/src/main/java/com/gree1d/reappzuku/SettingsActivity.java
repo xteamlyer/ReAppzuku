@@ -7,8 +7,13 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.widget.ImageView;
+import android.widget.RadioGroup;
+import android.widget.RadioButton;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -98,15 +103,30 @@ public class SettingsActivity extends BaseActivity {
 
     private void setupToolbar() {
         setSupportActionBar(binding.toolbar);
-        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        int accent    = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        int onColor   = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE);
+        boolean isAmoled = sharedPreferences.getBoolean(KEY_AMOLED, false);
+
         if (accent == ACCENT_SYSTEM) {
             binding.toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.toolbar_navy));
+            binding.toolbar.setTitleTextColor(Color.WHITE);
+            return;
         }
-        boolean isNewAccent = (accent == ACCENT_APRICOT || accent == ACCENT_SKY ||
+
+        if (accent == ACCENT_CUSTOM) {
+            int customColor = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+            binding.toolbar.setBackgroundColor(customColor);
+            int textColor = (onColor == ACCENT_ON_BLACK) ? Color.BLACK : Color.WHITE;
+            binding.toolbar.setTitleTextColor(textColor);
+            binding.toolbar.setNavigationIconTint(textColor);
+            return;
+        }
+
+        boolean isLightAccent = (accent == ACCENT_APRICOT || accent == ACCENT_SKY ||
                 accent == ACCENT_PAPAYA || accent == ACCENT_LAVENDER ||
                 accent == ACCENT_MINT || accent == ACCENT_PEACH ||
                 accent == ACCENT_POWDER || accent == ACCENT_FOG);
-        binding.toolbar.setTitleTextColor(isNewAccent ? android.graphics.Color.BLACK : android.graphics.Color.WHITE);
+        binding.toolbar.setTitleTextColor(isLightAccent ? Color.BLACK : Color.WHITE);
     }
 
     private void setupBottomNavigation() {
@@ -136,6 +156,10 @@ public class SettingsActivity extends BaseActivity {
         int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
         updateAccentText(accent);
         updateAccentLayoutEnabled(theme);
+
+        int onColor = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE);
+        updateOnColorText(onColor);
+        updateOnColorLayoutVisibility(accent);
 
         int notificationMode = sharedPreferences.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
         updateNotificationModeText(notificationMode);
@@ -181,6 +205,8 @@ public class SettingsActivity extends BaseActivity {
             if (theme == androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) return;
             showAccentDialog();
         });
+
+        binding.layoutAccentOnColor.setOnClickListener(v -> showAccentOnColorDialog());
 
         binding.layoutNotificationMode.setOnClickListener(v -> showNotificationModeDialog());
 
@@ -915,8 +941,33 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void updateAccentText(int accentValue) {
-        String[] accentLabels = getResources().getStringArray(R.array.settings_accent_labels);
-        if (accentValue >= 0 && accentValue < accentLabels.length) binding.textAccent.setText(accentLabels[accentValue]);
+        if (accentValue == ACCENT_CUSTOM) {
+            int color = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+            binding.textAccent.setText(String.format("#%06X", 0xFFFFFF & color));
+            if (binding.accentColorSwatch != null) {
+                binding.accentColorSwatch.setVisibility(View.VISIBLE);
+                GradientDrawable swatch = new GradientDrawable();
+                swatch.setShape(GradientDrawable.OVAL);
+                swatch.setColor(color);
+                binding.accentColorSwatch.setBackground(swatch);
+            }
+        } else {
+            if (binding.accentColorSwatch != null) binding.accentColorSwatch.setVisibility(View.GONE);
+            String[] accentLabels = getResources().getStringArray(R.array.settings_accent_labels);
+            if (accentValue >= 0 && accentValue < accentLabels.length)
+                binding.textAccent.setText(accentLabels[accentValue]);
+        }
+    }
+
+    private void updateOnColorText(int onColor) {
+        binding.textAccentOnColor.setText(onColor == ACCENT_ON_BLACK
+                ? R.string.settings_accent_on_color_black
+                : R.string.settings_accent_on_color_white);
+    }
+
+    private void updateOnColorLayoutVisibility(int accent) {
+        boolean visible = (accent == ACCENT_CUSTOM);
+        binding.layoutAccentOnColor.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private void updateAccentLayoutEnabled(int themeValue) {
@@ -969,19 +1020,66 @@ public class SettingsActivity extends BaseActivity {
 
     private void showAccentDialog() {
         int currentAccent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_INDIGO);
+
+        String[] builtinLabels = getResources().getStringArray(R.array.settings_accent_labels);
+        String customLabel = getString(R.string.settings_accent_custom_label);
+        String[] allLabels = new String[builtinLabels.length + 1];
+        System.arraycopy(builtinLabels, 0, allLabels, 0, builtinLabels.length);
+        allLabels[builtinLabels.length] = customLabel;
+
+        int selectedIndex = (currentAccent == ACCENT_CUSTOM)
+                ? builtinLabels.length
+                : currentAccent;
+
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_accent_title))
-                .setSingleChoiceItems(getResources().getStringArray(R.array.settings_accent_labels), currentAccent, (d, which) -> {
-                    sharedPreferences.edit().putInt(KEY_ACCENT, which).apply();
-                    updateAccentText(which);
-                    d.dismiss();
-                    recreate();
+                .setSingleChoiceItems(allLabels, selectedIndex, (d, which) -> {
+                    if (which == builtinLabels.length) {
+                        d.dismiss();
+                        int currentCustomColor = sharedPreferences.getInt(
+                                KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+                        ColorPickerDialog.show(this, currentCustomColor, pickedColor -> {
+                            sharedPreferences.edit()
+                                    .putInt(KEY_ACCENT, ACCENT_CUSTOM)
+                                    .putInt(KEY_ACCENT_CUSTOM_COLOR, pickedColor)
+                                    .apply();
+                            updateAccentText(ACCENT_CUSTOM);
+                            updateOnColorLayoutVisibility(ACCENT_CUSTOM);
+                            recreate();
+                        });
+                    } else {
+                        sharedPreferences.edit().putInt(KEY_ACCENT, which).apply();
+                        updateAccentText(which);
+                        updateOnColorLayoutVisibility(which);
+                        d.dismiss();
+                        recreate();
+                    }
                 })
                 .setNegativeButton(getString(R.string.dialog_cancel), null)
                 .create();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
+        dialog.getWindow().setBackgroundDrawable(
+                new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
+    }
+
+    private void showAccentOnColorDialog() {
+        int current = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE);
+        String[] options = {
+                getString(R.string.settings_accent_on_color_white),
+                getString(R.string.settings_accent_on_color_black)
+        };
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.settings_accent_on_color_title))
+                .setSingleChoiceItems(options, current, (dialog, which) -> {
+                    sharedPreferences.edit().putInt(KEY_ACCENT_ON_COLOR, which).apply();
+                    updateOnColorText(which);
+                    dialog.dismiss();
+                    recreate();
+                })
+                .setNegativeButton(getString(R.string.dialog_cancel), null)
+                .show();
     }
 
     private void updateAutomationOptionsVisibility(boolean serviceEnabled, boolean periodicEnabled) {
