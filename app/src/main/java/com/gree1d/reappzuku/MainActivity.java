@@ -250,10 +250,18 @@ public class MainActivity extends BaseActivity {
 
         if (app.isProtected()) {
             Menu menu = popup.getMenu();
-            menu.findItem(R.id.action_add_to_list).setVisible(false);
             menu.findItem(R.id.action_uninstall).setVisible(false);
-            menu.findItem(R.id.action_whitelist).setVisible(false);
-            menu.findItem(R.id.action_blacklist).setVisible(false);
+        
+            MenuItem addToListItem = menu.findItem(R.id.action_add_to_list);
+            Menu subMenu = addToListItem.getSubMenu();
+            subMenu.findItem(R.id.action_whitelist).setVisible(false);
+            subMenu.findItem(R.id.action_blacklist).setVisible(false);
+            subMenu.findItem(R.id.action_background_restriction).setVisible(false);
+        
+            String packageName = app.getPackageName();
+            subMenu.findItem(R.id.action_hidden).setChecked(
+                    appManager.getHiddenApps().contains(packageName));
+        
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.action_app_info) {
@@ -264,7 +272,7 @@ public class MainActivity extends BaseActivity {
                     return true;
                 } else if (id == R.id.action_hidden) {
                     toggleListMembership(app, "hidden");
-                    return true;                  
+                    return true;
                 }
                 return false;
             });
