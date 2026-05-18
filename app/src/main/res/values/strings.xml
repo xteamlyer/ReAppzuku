@@ -849,6 +849,7 @@
     <string name="triggers_appops_activity_recognition_explanation">App is using the Activity Recognition API — it periodically receives motion updates in the background.</string>
 
     <!-- UsageStats -->
+    <string name="triggers_cat_receivers_dynamic">Dynamic Receivers (%d)</string>
     <string name="triggers_cat_usagestats">Background Start</string>
     <string name="triggers_usagestats_last_used">used %1$s ago</string>
     <string name="triggers_usagestats_last_fg">last foreground %1$s ago</string>
