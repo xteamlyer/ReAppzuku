@@ -13,7 +13,7 @@ android {
         minSdk 23
         targetSdk 36
         versionCode 21
-        versionName "1.6.1"
+        versionName "1.7.0"
         multiDexEnabled = true
         vectorDrawables {
             useSupportLibrary true
@@ -41,8 +41,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
