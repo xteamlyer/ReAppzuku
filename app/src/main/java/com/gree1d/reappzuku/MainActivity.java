@@ -44,6 +44,7 @@ import androidx.appcompat.app.AlertDialog;
 import android.widget.PopupWindow;
 import android.widget.ImageView;
 import android.view.LayoutInflater;
+import android.widget.CheckBox;
 
 import rikka.shizuku.Shizuku;
 
