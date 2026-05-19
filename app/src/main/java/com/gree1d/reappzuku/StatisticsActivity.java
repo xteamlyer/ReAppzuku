@@ -134,7 +134,9 @@ public class StatisticsActivity extends BaseActivity {
                     ? Color.BLACK : Color.WHITE;
             binding.toolbar.setBackgroundColor(customColor);
             binding.toolbar.setTitleTextColor(onColor);
-            binding.toolbar.setNavigationIconTint(ColorStateList.valueOf(onColor));
+            if (binding.toolbar.getNavigationIcon() != null)
+                androidx.core.graphics.drawable.DrawableCompat.setTint(
+                        binding.toolbar.getNavigationIcon(), onColor);
         } else if (accent == ACCENT_SYSTEM) {
             binding.toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.toolbar_navy));
             binding.toolbar.setTitleTextColor(Color.WHITE);

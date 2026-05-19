@@ -119,7 +119,9 @@ public class SettingsActivity extends BaseActivity {
             binding.toolbar.setBackgroundColor(customColor);
             int textColor = (onColor == ACCENT_ON_BLACK) ? Color.BLACK : Color.WHITE;
             binding.toolbar.setTitleTextColor(textColor);
-            binding.toolbar.setNavigationIconTint(ColorStateList.valueOf(textColor));
+            if (binding.toolbar.getNavigationIcon() != null)
+                androidx.core.graphics.drawable.DrawableCompat.setTint(
+                        binding.toolbar.getNavigationIcon(), textColor);
             return;
         }
 
