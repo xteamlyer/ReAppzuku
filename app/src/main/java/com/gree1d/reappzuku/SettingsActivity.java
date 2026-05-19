@@ -505,6 +505,7 @@ public class SettingsActivity extends BaseActivity {
             showAutoKillTypeHelpDialog(() -> showAutoKillTypeDialog());
         });
         dialog.show();
+        tintDialogListItems(dialog);
     }
 
     private void showAutoKillTypeHelpDialog(Runnable onBack) {
@@ -524,7 +525,7 @@ public class SettingsActivity extends BaseActivity {
                 getString(R.string.settings_mode_whitelist),
                 getString(R.string.settings_mode_blacklist)
         };
-        new AlertDialog.Builder(this)
+        AlertDialog killModeDialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_kill_mode_dialog_title))
                 .setSingleChoiceItems(modes, autoKillManager.getKillMode(), (dialog, which) -> {
                     autoKillManager.setKillMode(which);
@@ -543,7 +544,9 @@ public class SettingsActivity extends BaseActivity {
                         }
                     }
                 })
-                .show();
+                .create();
+        killModeDialog.show();
+        tintDialogListItems(killModeDialog);
     }
 
     private void showBlacklistDialog() {
@@ -888,6 +891,7 @@ public class SettingsActivity extends BaseActivity {
                 .create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
+        tintDialogListItems(dialog);
     }
 
     private void showSleepModeAppsDialog() {
@@ -951,7 +955,7 @@ public class SettingsActivity extends BaseActivity {
         for (int i = 0; i < RAM_THRESHOLD_VALUES.length; i++) {
             if (RAM_THRESHOLD_VALUES[i] == current) { selected = i; break; }
         }
-        new AlertDialog.Builder(this)
+        AlertDialog ramDialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_ram_threshold_dialog_title))
                 .setSingleChoiceItems(getResources().getStringArray(R.array.settings_ram_threshold_labels), selected,
                         (dialog, which) -> {
@@ -959,7 +963,9 @@ public class SettingsActivity extends BaseActivity {
                             updateRamThresholdText(RAM_THRESHOLD_VALUES[which]);
                             dialog.dismiss();
                         })
-                .show();
+                .create();
+        ramDialog.show();
+        tintDialogListItems(ramDialog);
     }
 
     private void updateNotificationModeText(int mode) {
@@ -974,7 +980,7 @@ public class SettingsActivity extends BaseActivity {
                 getString(R.string.settings_notification_mode_all),
                 getString(R.string.settings_notification_mode_important_only)
         };
-        new AlertDialog.Builder(this)
+        AlertDialog notifDialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_notification_mode_title))
                 .setSingleChoiceItems(options, current, (dialog, which) -> {
                     sharedPreferences.edit().putInt(KEY_NOTIFICATION_MODE, which).apply();
@@ -982,7 +988,9 @@ public class SettingsActivity extends BaseActivity {
                     dialog.dismiss();
                 })
                 .setNegativeButton(getString(R.string.dialog_cancel), null)
-                .show();
+                .create();
+        notifDialog.show();
+        tintDialogListItems(notifDialog);
     }
 
     private void updateThemeText(int themeValue, boolean isAmoled) {
@@ -1060,6 +1068,7 @@ public class SettingsActivity extends BaseActivity {
                 .create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
+        tintDialogListItems(dialog);
     }
 
     private void showAccentDialog() {
@@ -1067,18 +1076,33 @@ public class SettingsActivity extends BaseActivity {
 
         String[] builtinLabels = getResources().getStringArray(R.array.settings_accent_labels);
         String customLabel = getString(R.string.settings_accent_custom_label);
-        String[] allLabels = new String[builtinLabels.length + 1];
-        System.arraycopy(builtinLabels, 0, allLabels, 0, builtinLabels.length);
-        allLabels[builtinLabels.length] = customLabel;
 
-        int selectedIndex = (currentAccent == ACCENT_CUSTOM)
-                ? builtinLabels.length
-                : currentAccent;
+        // Порядок: [0]=По умолчанию, [1]=Свой цвет, [2..]=остальные акценты (Indigo, Crimson, ...)
+        String[] allLabels = new String[builtinLabels.length + 1];
+        allLabels[0] = builtinLabels[0]; // ACCENT_SYSTEM
+        allLabels[1] = customLabel;       // ACCENT_CUSTOM
+        System.arraycopy(builtinLabels, 1, allLabels, 2, builtinLabels.length - 1);
+
+        // Вычисляем выбранный индекс в новом порядке
+        int selectedIndex;
+        if (currentAccent == ACCENT_SYSTEM) {
+            selectedIndex = 0;
+        } else if (currentAccent == ACCENT_CUSTOM) {
+            selectedIndex = 1;
+        } else {
+            selectedIndex = currentAccent + 1; // сдвиг на 1 из-за вставки Custom
+        }
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_accent_title))
                 .setSingleChoiceItems(allLabels, selectedIndex, (d, which) -> {
-                    if (which == builtinLabels.length) {
+                    if (which == 0) {
+                        sharedPreferences.edit().putInt(KEY_ACCENT, ACCENT_SYSTEM).apply();
+                        updateAccentText(ACCENT_SYSTEM);
+                        updateOnColorLayoutVisibility(ACCENT_SYSTEM);
+                        d.dismiss();
+                        recreate();
+                    } else if (which == 1) {
                         d.dismiss();
                         int currentCustomColor = sharedPreferences.getInt(
                                 KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
@@ -1092,9 +1116,10 @@ public class SettingsActivity extends BaseActivity {
                             recreate();
                         });
                     } else {
-                        sharedPreferences.edit().putInt(KEY_ACCENT, which).apply();
-                        updateAccentText(which);
-                        updateOnColorLayoutVisibility(which);
+                        int accentValue = which - 1; // обратный сдвиг
+                        sharedPreferences.edit().putInt(KEY_ACCENT, accentValue).apply();
+                        updateAccentText(accentValue);
+                        updateOnColorLayoutVisibility(accentValue);
                         d.dismiss();
                         recreate();
                     }
@@ -1104,6 +1129,7 @@ public class SettingsActivity extends BaseActivity {
         dialog.getWindow().setBackgroundDrawable(
                 new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
+        tintDialogListItems(dialog);
     }
 
     private void showAccentOnColorDialog() {
@@ -1112,7 +1138,7 @@ public class SettingsActivity extends BaseActivity {
                 getString(R.string.settings_accent_on_color_white),
                 getString(R.string.settings_accent_on_color_black)
         };
-        new AlertDialog.Builder(this)
+        AlertDialog onColorDialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.settings_accent_on_color_title))
                 .setSingleChoiceItems(options, current, (dialog, which) -> {
                     sharedPreferences.edit().putInt(KEY_ACCENT_ON_COLOR, which).apply();
@@ -1121,7 +1147,9 @@ public class SettingsActivity extends BaseActivity {
                     recreate();
                 })
                 .setNegativeButton(getString(R.string.dialog_cancel), null)
-                .show();
+                .create();
+        onColorDialog.show();
+        tintDialogListItems(onColorDialog);
     }
 
     private void updateAutomationOptionsVisibility(boolean serviceEnabled, boolean periodicEnabled) {
@@ -1175,6 +1203,7 @@ public class SettingsActivity extends BaseActivity {
                 .create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
+        tintDialogListItems(dialog);
     }
 
     private void openUrl(String url) {
@@ -1675,6 +1704,23 @@ public class SettingsActivity extends BaseActivity {
         if (accent == ACCENT_CUSTOM)
             return sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
         return ContextCompat.getColor(this, R.color.dialog_button_text);
+    }
+
+    private void tintDialogListItems(AlertDialog dialog) {
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        if (accent != ACCENT_CUSTOM) return;
+        android.content.res.ColorStateList tint =
+                android.content.res.ColorStateList.valueOf(getDialogAccentColor());
+        android.widget.ListView lv = dialog.getListView();
+        if (lv == null) return;
+        lv.post(() -> {
+            for (int i = 0; i < lv.getChildCount(); i++) {
+                android.view.View item = lv.getChildAt(i);
+                if (item instanceof android.widget.CheckedTextView) {
+                    ((android.widget.CheckedTextView) item).setCheckMarkTintList(tint);
+                }
+            }
+        });
     }
 
     private void startAutomationService() {
