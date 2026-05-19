@@ -200,6 +200,11 @@
     <string name="settings_notification_mode_title">Уведомления</string>
     <string name="settings_notification_mode_all">Все</string>
     <string name="settings_notification_mode_important_only">Только важные</string>
+    <string name="settings_accent_custom_label">Кастомный</string>
+    <string name="settings_accent_custom_picker_title">Выберите цвет акцента</string>
+    <string name="settings_accent_on_color_title">Цвет текста</string>
+    <string name="settings_accent_on_color_white">Белый</string>
+    <string name="settings_accent_on_color_black">Чёрный</string>
 
     <string-array name="settings_theme_labels">
         <item>@string/settings_theme_system</item>
