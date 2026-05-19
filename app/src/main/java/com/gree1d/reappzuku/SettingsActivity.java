@@ -1713,14 +1713,20 @@ public class SettingsActivity extends BaseActivity {
                 android.content.res.ColorStateList.valueOf(getDialogAccentColor());
         android.widget.ListView lv = dialog.getListView();
         if (lv == null) return;
-        lv.post(() -> {
-            for (int i = 0; i < lv.getChildCount(); i++) {
-                android.view.View item = lv.getChildAt(i);
-                if (item instanceof android.widget.CheckedTextView) {
-                    ((android.widget.CheckedTextView) item).setCheckMarkTintList(tint);
-                }
-            }
-        });
+        lv.getViewTreeObserver().addOnGlobalLayoutListener(
+                new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        lv.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        for (int i = 0; i < lv.getChildCount(); i++) {
+                            android.view.View item = lv.getChildAt(i);
+                            if (item instanceof android.widget.CheckedTextView) {
+                                ((android.widget.CheckedTextView) item)
+                                        .setCheckMarkTintList(tint);
+                            }
+                        }
+                    }
+                });
     }
 
     private void startAutomationService() {
