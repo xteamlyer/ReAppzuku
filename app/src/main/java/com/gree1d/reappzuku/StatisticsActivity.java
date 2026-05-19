@@ -325,14 +325,10 @@ public class StatisticsActivity extends BaseActivity {
         binding.chartCpu.setVisibility(currentChartIdx == CHART_CPU     ? View.VISIBLE : View.GONE);
         binding.chartRam.setVisibility(currentChartIdx == CHART_RAM     ? View.VISIBLE : View.GONE);
 
-        double totalBat = 0, totalCpu = 0, totalRam = 0, peakRam = 0;
-        int count = 0;
+        double totalBat = 0, totalCpu = 0;
         for (BatteryStatsManager.AppResourceStats s : sorted) {
             totalBat += s.batteryMah;
             totalCpu += s.cpuPct;
-            totalRam += s.ramMb;
-            if (s.peakRamMb > peakRam) peakRam = s.peakRamMb;
-            count++;
         }
 
         switch (currentChartIdx) {
@@ -343,13 +339,6 @@ public class StatisticsActivity extends BaseActivity {
             case CHART_CPU:
                 binding.tvChartTotal.setText(
                         String.format(Locale.US, "%.1f%%", Math.min(100.0, totalCpu)));
-                break;
-            case CHART_RAM:
-
-                binding.tvChartTotal.setText(String.format(Locale.US,
-                        "Ср. %s / Пик %s",
-                        formatRamMb(totalRam / Math.max(count, 1)),
-                        formatRamMb(peakRam)));
                 break;
         }
     }
@@ -599,17 +588,6 @@ public class StatisticsActivity extends BaseActivity {
             case CPU:     return s.cpuPct;
             case RAM:     return s.ramMb;
             default:      return 0;
-        }
-    }
-
-    private String formatMetricValue(BatteryStatsManager.AppResourceStats s, ChartMetric m) {
-        if (s == null) return "";
-        switch (m) {
-            case BATTERY: return String.format(Locale.US, "%.2f mAh", s.batteryMah);
-            case CPU:     return String.format(Locale.US, "%.1f%%", s.cpuPct);
-            case RAM:     return String.format(Locale.US, "Ср. %s / Пик %s",
-                              formatRamMb(s.ramMb), formatRamMb(s.peakRamMb));
-            default:      return "";
         }
     }
 
@@ -1026,6 +1004,16 @@ public class StatisticsActivity extends BaseActivity {
             bindOptionalText((TextView) view.findViewById(R.id.offender_package), item.subtitle);
             bindOptionalText((TextView) view.findViewById(R.id.offender_metrics), item.detail);
             bindOptionalText((TextView) view.findViewById(R.id.offender_score), item.badge);
+
+            int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+            if (accent == ACCENT_CUSTOM) {
+                int color = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+                TextView rank  = view.findViewById(R.id.offender_rank);
+                TextView score = view.findViewById(R.id.offender_score);
+                if (rank  != null) rank.setTextColor(color);
+                if (score != null) score.setTextColor(color);
+            }
+
             return view;
         }
     }

@@ -393,6 +393,11 @@ public class MainActivity extends BaseActivity {
         if (checkable) {
             cb.setVisibility(View.VISIBLE);
             cb.setChecked(checked);
+            int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+            if (accent == ACCENT_CUSTOM) {
+                int color = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+                cb.setButtonTintList(android.content.res.ColorStateList.valueOf(color));
+            }
         }
         item.setOnClickListener(v -> {
             if (checkable) {
@@ -463,7 +468,10 @@ public class MainActivity extends BaseActivity {
             String labelPart = getString(R.string.triggers_status_label_prefix);
             String fullText = labelPart + " " + statusLabel;
             SpannableString spannable = new SpannableString(fullText);
-            int primaryColor = resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
+            int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+            int primaryColor = (accent == ACCENT_CUSTOM)
+                    ? sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
+                    : resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
             spannable.setSpan(new ForegroundColorSpan(primaryColor), 0, labelPart.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             statusView.setText(spannable);
             statusView.setTextSize(13f);
@@ -510,11 +518,7 @@ public class MainActivity extends BaseActivity {
         TextView header = new TextView(this);
         header.setText(title);
         header.setTextSize(12f);
-        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-        int color = (accent == ACCENT_CUSTOM)
-                ? sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
-                : resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
-        header.setTextColor(color);
+        header.setTextColor(resolveColorAttr(androidx.appcompat.R.attr.colorPrimary));
         header.setAllCaps(true);
         header.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -970,19 +974,14 @@ public class MainActivity extends BaseActivity {
 
         sortDialog.show();
 
-        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-        int dialogButtonColor;
-        if (accent == ACCENT_CUSTOM) {
-            dialogButtonColor = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
-        } else {
-            boolean isDarkTheme = sharedPreferences.getBoolean(KEY_AMOLED, false)
-                    || sharedPreferences.getInt(KEY_THEME,
-                            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-                            == androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
-            dialogButtonColor = isDarkTheme ? Color.WHITE : resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
+        boolean isDarkTheme = sharedPreferences.getBoolean(KEY_AMOLED, false)
+                || sharedPreferences.getInt(KEY_THEME,
+                        androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                        == androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
+        if (isDarkTheme) {
+            sortDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.WHITE);
+            sortDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.WHITE);
         }
-        sortDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(dialogButtonColor);
-        sortDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(dialogButtonColor);
     }
 
     private void applyToolbarIconTint(Menu menu) {
