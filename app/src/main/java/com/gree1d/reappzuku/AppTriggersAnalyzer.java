@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// for debug logcat -s AppTriggersAnalyzer:D AppTriggerAnalyzersExt:D
+
 public class AppTriggersAnalyzer {
 
     private static final String TAG = "AppTriggersAnalyzer";
