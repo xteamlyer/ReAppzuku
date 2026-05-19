@@ -500,9 +500,6 @@ public class SettingsActivity extends BaseActivity {
             android.widget.RadioButton rb = new android.widget.RadioButton(this);
             rb.setText(types[i]); rb.setId(i); rb.setTextSize(16f);
             rb.setMinHeight((int) (getResources().getDisplayMetrics().density * 48));
-            rb.setPaddingRelative(
-                    (int) (getResources().getDisplayMetrics().density * 24), 0,
-                    (int) (getResources().getDisplayMetrics().density * 24), 0);
             rb.setGravity(android.view.Gravity.CENTER_VERTICAL);
             android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
@@ -1665,9 +1662,6 @@ public class SettingsActivity extends BaseActivity {
             rb.setId(i);
             rb.setTextSize(16f);
             rb.setMinHeight((int) (getResources().getDisplayMetrics().density * 48));
-            rb.setPaddingRelative(
-                    (int) (getResources().getDisplayMetrics().density * 24), 0,
-                    (int) (getResources().getDisplayMetrics().density * 24), 0);
             rb.setGravity(android.view.Gravity.CENTER_VERTICAL);
             android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
