@@ -19,6 +19,19 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+/**
+ * Диалог выбора кастомного акцентного цвета.
+ *
+ * Содержит:
+ *   - HueSaturationView   — 2D-квадрат: X = насыщенность, Y = яркость (фиксированный Hue)
+ *   - HueBarView          — горизонтальная полоса выбора оттенка
+ *   - ColorPreviewView    — прямоугольник предпросмотра
+ *
+ * Использование:
+ *   ColorPickerDialog.show(this, currentColor, color -> {
+ *       // сохранить цвет, пересоздать Activity
+ *   });
+ */
 public class ColorPickerDialog {
 
     public interface OnColorPickedListener {
@@ -29,6 +42,7 @@ public class ColorPickerDialog {
         float[] hsv = new float[3];
         Color.colorToHSV(initialColor, hsv);
 
+        // Wrap mutable state in single-element arrays for lambda capture
         final float[] currentHsv = { hsv[0], hsv[1], hsv[2] };
 
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -38,6 +52,7 @@ public class ColorPickerDialog {
         HueBarView hueBar         = view.findViewById(R.id.color_picker_hue);
         View previewView          = view.findViewById(R.id.color_picker_preview);
 
+        // Инициализация начальными значениями
         hsvView.setHsv(currentHsv[0], currentHsv[1], currentHsv[2]);
         hueBar.setHue(currentHsv[0]);
         previewView.setBackgroundColor(Color.HSVToColor(currentHsv));
@@ -76,11 +91,13 @@ public class ColorPickerDialog {
         private float val = 1f;
         private OnSatValChangedListener listener;
 
-        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint paintSat = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint paintVal = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint paintMarker = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rect = new RectF();
 
-        public HueSaturationView(Context ctx) { super(ctx); }
-        public HueSaturationView(Context ctx, AttributeSet attrs) { super(ctx, attrs); }
+        public HueSaturationView(Context ctx) { super(ctx); paintMarker.setStyle(Paint.Style.STROKE); }
+        public HueSaturationView(Context ctx, AttributeSet attrs) { super(ctx, attrs); paintMarker.setStyle(Paint.Style.STROKE); }
 
         public void setHsv(float h, float s, float v) {
             hue = h; sat = s; val = v;
@@ -97,30 +114,27 @@ public class ColorPickerDialog {
         @Override
         protected void onDraw(Canvas canvas) {
             int w = getWidth(), h = getHeight();
+            if (w == 0 || h == 0) return;
             rect.set(0, 0, w, h);
 
-            Shader satShader = new LinearGradient(0, 0, w, 0,
+            paintSat.setShader(new LinearGradient(0, 0, w, 0,
                     Color.WHITE, Color.HSVToColor(new float[]{hue, 1f, 1f}),
-                    Shader.TileMode.CLAMP);
-            paint.setShader(satShader);
-            canvas.drawRect(rect, paint);
+                    Shader.TileMode.CLAMP));
+            canvas.drawRect(rect, paintSat);
 
-            Shader valShader = new LinearGradient(0, 0, 0, h,
+            paintVal.setShader(new LinearGradient(0, 0, 0, h,
                     Color.TRANSPARENT, Color.BLACK,
-                    Shader.TileMode.CLAMP);
-            paint.setShader(valShader);
-            canvas.drawRect(rect, paint);
+                    Shader.TileMode.CLAMP));
+            canvas.drawRect(rect, paintVal);
 
             float cx = sat * w;
             float cy = (1f - val) * h;
-            paint.setShader(null);
-            paint.setColor(Color.WHITE);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(3f);
-            canvas.drawCircle(cx, cy, 12f, paint);
-            paint.setColor(Color.BLACK);
-            paint.setStrokeWidth(1.5f);
-            canvas.drawCircle(cx, cy, 12f, paint);
+            paintMarker.setColor(Color.WHITE);
+            paintMarker.setStrokeWidth(3f);
+            canvas.drawCircle(cx, cy, 12f, paintMarker);
+            paintMarker.setColor(Color.BLACK);
+            paintMarker.setStrokeWidth(1.5f);
+            canvas.drawCircle(cx, cy, 12f, paintMarker);
         }
 
         @Override
@@ -136,6 +150,9 @@ public class ColorPickerDialog {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    //  HueBarView — горизонтальная полоса оттенка
+    // ─────────────────────────────────────────────────────────────────────────
     public static class HueBarView extends View {
 
         public interface OnHueChangedListener {
@@ -144,10 +161,20 @@ public class ColorPickerDialog {
 
         private float hue = 0f;
         private OnHueChangedListener listener;
-        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint paintRainbow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint paintMarkerFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint paintMarkerStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        public HueBarView(Context ctx) { super(ctx); }
-        public HueBarView(Context ctx, AttributeSet attrs) { super(ctx, attrs); }
+        public HueBarView(Context ctx) { super(ctx); initPaints(); }
+        public HueBarView(Context ctx, AttributeSet attrs) { super(ctx, attrs); initPaints(); }
+
+        private void initPaints() {
+            paintMarkerFill.setStyle(Paint.Style.FILL);
+            paintMarkerFill.setColor(Color.WHITE);
+            paintMarkerStroke.setStyle(Paint.Style.STROKE);
+            paintMarkerStroke.setColor(Color.DKGRAY);
+            paintMarkerStroke.setStrokeWidth(2f);
+        }
 
         public void setHue(float h) { hue = h; invalidate(); }
         public void setOnHueChangedListener(OnHueChangedListener l) { listener = l; }
@@ -155,24 +182,19 @@ public class ColorPickerDialog {
         @Override
         protected void onDraw(Canvas canvas) {
             int w = getWidth(), h = getHeight();
+            if (w == 0 || h == 0) return;
 
-            int[] colors = new int[361];
-            for (int i = 0; i <= 360; i++) {
-                colors[i] = Color.HSVToColor(new float[]{i, 1f, 1f});
+            int[] colors = new int[7];
+            for (int i = 0; i < 7; i++) {
+                colors[i] = Color.HSVToColor(new float[]{i * 60f, 1f, 1f});
             }
-            Shader hueShader = new LinearGradient(0, 0, w, 0, colors, null, Shader.TileMode.CLAMP);
-            paint.setShader(hueShader);
-            canvas.drawRoundRect(0, 0, w, h, h / 2f, h / 2f, paint);
+            paintRainbow.setShader(new LinearGradient(0, 0, w, 0, colors, null, Shader.TileMode.CLAMP));
+            float r = h / 2f;
+            canvas.drawRoundRect(0, 0, w, h, r, r, paintRainbow);
 
             float cx = hue / 360f * w;
-            paint.setShader(null);
-            paint.setColor(Color.WHITE);
-            paint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(cx, h / 2f, h / 2f - 2, paint);
-            paint.setColor(Color.DKGRAY);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(2f);
-            canvas.drawCircle(cx, h / 2f, h / 2f - 2, paint);
+            canvas.drawCircle(cx, r, r - 2, paintMarkerFill);
+            canvas.drawCircle(cx, r, r - 2, paintMarkerStroke);
         }
 
         @Override
