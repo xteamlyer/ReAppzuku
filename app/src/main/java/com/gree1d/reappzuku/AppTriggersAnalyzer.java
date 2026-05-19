@@ -888,7 +888,10 @@ public class AppTriggersAnalyzer {
             case 28: return "Stationary";      case 29: return "Motion Detect";
             case 30: return "Heart Beat";      case 34: return "OffBody Detect";
             case 35: return "Uncal Accel";
-            default: return "Sensor#" + h;
+            default:
+                int standard = h & 0xFF;
+                if (standard != h && standard > 0) return sensorHandleToName(standard);
+                return "Sensor#" + h;
         }
     }
 
