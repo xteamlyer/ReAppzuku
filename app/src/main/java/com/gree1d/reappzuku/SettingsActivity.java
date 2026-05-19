@@ -498,7 +498,7 @@ public class SettingsActivity extends BaseActivity {
                 ? android.content.res.ColorStateList.valueOf(getDialogAccentColor()) : null;
         for (int i = 0; i < types.length; i++) {
             android.widget.RadioButton rb = new android.widget.RadioButton(this);
-            rb.setText(types[i]); rb.setId(i); rb.setTextSize(16f); rb.setPadding(16, 20, 16, 20);
+            rb.setText(types[i]); rb.setId(i); rb.setTextSize(16f); rb.setPaddingRelative(32, 24, 32, 24);
             if (tint != null) rb.setButtonTintList(tint);
             group.addView(rb);
         }
@@ -1655,7 +1655,7 @@ public class SettingsActivity extends BaseActivity {
             rb.setText(options[i]);
             rb.setId(i);
             rb.setTextSize(16f);
-            rb.setPadding(16, 20, 16, 20);
+            rb.setPaddingRelative(32, 24, 32, 24);
             if (tint != null) rb.setButtonTintList(tint);
             group.addView(rb);
         }
