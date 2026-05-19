@@ -683,7 +683,6 @@ public class StatisticsActivity extends BaseActivity {
                         content.rootView);
                 dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
                 dialog.show();
-                styleDialogButtons(dialog);
             });
         });
     }
@@ -718,7 +717,6 @@ public class StatisticsActivity extends BaseActivity {
                 content.rootView);
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
         dialog.show();
-        styleDialogButtons(dialog);
 
         filterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -830,7 +828,6 @@ public class StatisticsActivity extends BaseActivity {
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
         dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.settings_restriction_log_clear), (d, w) -> {});
         dialog.show();
-        styleDialogButtons(dialog);
 
         Runnable reloadLog = () -> executor.execute(() -> {
             List<SettingsSurfaceRow> rows = buildRestrictionLogRows(BackgroundRestrictionLog.readEntries(this));
@@ -875,7 +872,6 @@ public class StatisticsActivity extends BaseActivity {
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
         dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.settings_restriction_log_clear), (d, w) -> {});
         dialog.show();
-        styleDialogButtons(dialog);
 
         Runnable reloadLog = () -> executor.execute(() -> {
             List<SettingsSurfaceRow> rows = buildSleepModeLogRows(SleepModeLogManager.readEntries(this));
@@ -920,7 +916,6 @@ public class StatisticsActivity extends BaseActivity {
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
         dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.settings_restriction_log_clear), (d, w) -> {});
         dialog.show();
-        styleDialogButtons(dialog);
 
         Runnable reloadLog = () -> executor.execute(() -> {
             List<SettingsSurfaceRow> rows = buildSchedulerLogRows(RestrictionsScheduler.SchedulerLog.readEntries(this));
@@ -1222,19 +1217,6 @@ public class StatisticsActivity extends BaseActivity {
         tabs.setTabTextColors(
                 ContextCompat.getColor(this, R.color.text_secondary),
                 color);
-    }
-
-    private void styleDialogButtons(AlertDialog dialog) {
-        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-        int color = (accent == ACCENT_CUSTOM)
-                ? sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
-                : ContextCompat.getColor(this, R.color.dialog_button_text);
-        if (dialog.getButton(AlertDialog.BUTTON_NEGATIVE) != null)
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(color);
-        if (dialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null)
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(color);
-        if (dialog.getButton(AlertDialog.BUTTON_POSITIVE) != null)
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(color);
     }
 
     private String formatRecoveredSize(long kb) {

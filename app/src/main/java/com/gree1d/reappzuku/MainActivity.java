@@ -983,18 +983,17 @@ public class MainActivity extends BaseActivity {
         sortDialog.show();
 
         int accentForDialog = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-        int dialogButtonColor;
         if (accentForDialog == ACCENT_CUSTOM) {
-            dialogButtonColor = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
-        } else {
-            boolean isDarkTheme = sharedPreferences.getBoolean(KEY_AMOLED, false)
-                    || sharedPreferences.getInt(KEY_THEME,
-                            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-                            == androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
-            dialogButtonColor = isDarkTheme ? Color.WHITE : resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
+            android.content.res.ColorStateList tint = android.content.res.ColorStateList.valueOf(
+                    sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR));
+            for (int i = 0; i < radioGroup.getChildCount(); i++) {
+                android.view.View child = radioGroup.getChildAt(i);
+                if (child instanceof android.widget.RadioButton)
+                    ((android.widget.RadioButton) child).setButtonTintList(tint);
+            }
+            checkboxSystem.setButtonTintList(tint);
+            checkboxPersistent.setButtonTintList(tint);
         }
-        sortDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(dialogButtonColor);
-        sortDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(dialogButtonColor);
     }
 
     private void applyToolbarIconTint(Menu menu) {

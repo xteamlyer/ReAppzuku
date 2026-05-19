@@ -505,7 +505,6 @@ public class SettingsActivity extends BaseActivity {
             showAutoKillTypeHelpDialog(() -> showAutoKillTypeDialog());
         });
         dialog.show();
-        styleDialogButtons(dialog);
     }
 
     private void showAutoKillTypeHelpDialog(Runnable onBack) {
@@ -518,7 +517,6 @@ public class SettingsActivity extends BaseActivity {
                 })
                 .create();
         dialog.show();
-        styleDialogButtons(dialog);
     }
 
     private void showKillModeDialog() {
@@ -566,8 +564,6 @@ public class SettingsActivity extends BaseActivity {
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (d, w) -> d.dismiss());
         searchBox.setVisibility(View.GONE);
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
             allApps = filterOutProtected(allApps);
@@ -595,7 +591,6 @@ public class SettingsActivity extends BaseActivity {
                 autoKillManager.saveBlacklistedApps(filterAdapter.getSelectedPackages());
                 dialog.dismiss();
             });
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         });
     }
 
@@ -620,8 +615,6 @@ public class SettingsActivity extends BaseActivity {
         listView.setVisibility(View.GONE);
         searchBox.setVisibility(View.GONE);
         whitelistDialog.show();
-        whitelistDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
-        whitelistDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
             allApps = filterOutProtected(allApps);
@@ -651,7 +644,6 @@ public class SettingsActivity extends BaseActivity {
                 appManager.saveWhitelistedApps(filterAdapter.getSelectedPackages());
                 whitelistDialog.dismiss();
             });
-            whitelistDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         });
     }
 
@@ -676,8 +668,6 @@ public class SettingsActivity extends BaseActivity {
         listView.setVisibility(View.GONE);
         searchBox.setVisibility(View.GONE);
         filterDialog.show();
-        filterDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
-        filterDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadAllApps(allApps -> {
             Set<String> hiddenApps = appManager.getHiddenApps();
@@ -706,7 +696,6 @@ public class SettingsActivity extends BaseActivity {
                 appManager.saveHiddenApps(filterAdapter.getSelectedPackages());
                 filterDialog.dismiss();
             });
-            filterDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         });
     }
 
@@ -740,8 +729,6 @@ public class SettingsActivity extends BaseActivity {
             showRestrictionTypeHelpDialog(() -> showBackgroundRestrictionDialog());
         });
 
-        restrictionDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
-        restrictionDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         appManager.loadBackgroundRestrictionApps(rawApps -> {
             List<AppModel> allApps = filterOutProtected(rawApps);
@@ -778,7 +765,6 @@ public class SettingsActivity extends BaseActivity {
 
             filterAdapter.setOnSelectionChangedListener(() -> {
                 restrictionDialog.getButton(AlertDialog.BUTTON_POSITIVE).setText(getString(R.string.dialog_apply));
-                restrictionDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
             });
 
             Runnable doApply = () -> {
@@ -828,7 +814,6 @@ public class SettingsActivity extends BaseActivity {
             };
 
             restrictionDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_save), (dialog, which) -> doApply.run());
-            restrictionDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         });
     }
 
@@ -866,7 +851,6 @@ public class SettingsActivity extends BaseActivity {
         dialog.show();
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) messageView.setText(sb);
-        styleDialogButtons(dialog);
     }
 
     private void updateSleepModeDelayText(long delayMs) {
@@ -896,7 +880,6 @@ public class SettingsActivity extends BaseActivity {
                 .create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
     }
 
     private void showSleepModeAppsDialog() {
@@ -920,8 +903,6 @@ public class SettingsActivity extends BaseActivity {
         searchBox.setVisibility(View.GONE);
         filterOptions.setVisibility(View.GONE);
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
 
         sleepModeManager.loadSleepModeApps(allApps -> {
             allApps = filterOutProtected(allApps);
@@ -942,7 +923,6 @@ public class SettingsActivity extends BaseActivity {
 
             dialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_save), (d, w) ->
                     sleepModeManager.saveSleepModeApps(filterAdapter.getSelectedPackages()));
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
         });
     }
 
@@ -1070,7 +1050,6 @@ public class SettingsActivity extends BaseActivity {
                 .create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
     }
 
     private void showAccentDialog() {
@@ -1115,8 +1094,6 @@ public class SettingsActivity extends BaseActivity {
         dialog.getWindow().setBackgroundDrawable(
                 new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                .setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
     }
 
     private void showAccentOnColorDialog() {
@@ -1188,7 +1165,6 @@ public class SettingsActivity extends BaseActivity {
                 .create();
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(this, R.color.dialog_button_text));
     }
 
     private void openUrl(String url) {
@@ -1205,6 +1181,16 @@ public class SettingsActivity extends BaseActivity {
         CheckBox chkUser = dialogView.findViewById(R.id.filter_chk_user);
         CheckBox chkRunning = dialogView.findViewById(R.id.filter_chk_running);
         android.widget.TextView btnClear = dialogView.findViewById(R.id.filter_btn_clear);
+
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        if (accent == ACCENT_CUSTOM) {
+            android.content.res.ColorStateList tint =
+                    android.content.res.ColorStateList.valueOf(getDialogAccentColor());
+            chkSystem.setButtonTintList(tint);
+            chkUser.setButtonTintList(tint);
+            chkRunning.setButtonTintList(tint);
+            btnClear.setTextColor(getDialogAccentColor());
+        }
 
         android.widget.CompoundButton.OnCheckedChangeListener listener = (buttonView, isChecked) ->
                 adapter.setFilters(chkSystem.isChecked(), chkUser.isChecked(), chkRunning.isChecked());
@@ -1265,7 +1251,6 @@ public class SettingsActivity extends BaseActivity {
         mainDialog.getWindow().setBackgroundDrawable(
                 new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         mainDialog.show();
-        styleDialogButtons(mainDialog);
 
         for (SchedulerAppItem item : items) {
             View row = inflater.inflate(R.layout.item_scheduler_app, listContainer, false);
@@ -1282,6 +1267,9 @@ public class SettingsActivity extends BaseActivity {
                 schedIcon.setVisibility(View.VISIBLE);
                 schedTime.setVisibility(View.VISIBLE);
                 schedTime.setText(formatScheduleTime(item.entry, use24h));
+                int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+                if (accent == ACCENT_CUSTOM)
+                    schedTime.setTextColor(getDialogAccentColor());
             } else {
                 schedIcon.setVisibility(View.INVISIBLE);
                 schedTime.setVisibility(View.INVISIBLE);
@@ -1388,7 +1376,23 @@ public class SettingsActivity extends BaseActivity {
         entryDialog.getWindow().setBackgroundDrawable(
                 new ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
         entryDialog.show();
-        styleDialogButtons(entryDialog);
+
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        if (accent == ACCENT_CUSTOM) {
+            int color = getDialogAccentColor();
+            android.content.res.ColorStateList tint = android.content.res.ColorStateList.valueOf(color);
+            cbAutoKill.setButtonTintList(tint);
+            cbBg.setButtonTintList(tint);
+            cbSleep.setButtonTintList(tint);
+            for (int i = 0; i < rgAction.getChildCount(); i++) {
+                android.view.View child = rgAction.getChildAt(i);
+                if (child instanceof android.widget.RadioButton)
+                    ((android.widget.RadioButton) child).setButtonTintList(tint);
+            }
+            btnFrom.setTextColor(color);
+            btnTo.setTextColor(color);
+            btnComponent.setTextColor(color);
+        }
 
         entryDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             int flags = 0;
@@ -1656,14 +1660,11 @@ public class SettingsActivity extends BaseActivity {
         });
     }
 
-    private void styleDialogButtons(AlertDialog dialog) {
-        int color = ContextCompat.getColor(this, R.color.dialog_button_text);
-        if (dialog.getButton(AlertDialog.BUTTON_NEGATIVE) != null)
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(color);
-        if (dialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null)
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(color);
-        if (dialog.getButton(AlertDialog.BUTTON_POSITIVE) != null)
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(color);
+    private int getDialogAccentColor() {
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        if (accent == ACCENT_CUSTOM)
+            return sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+        return ContextCompat.getColor(this, R.color.dialog_button_text);
     }
 
     private void startAutomationService() {
