@@ -27,6 +27,7 @@
     <!-- Единицы измерения -->
     <string name="unit_kb">%d KB</string>
     <string name="unit_mb">%d МБ</string>
+    <string name="unit_mbb">%1$.0f МБ</string>
     <string name="unit_mb_precise">%.2f МБ</string>
     <string name="unit_mb_short">МБ</string>
     <string name="unit_gb">%.1f ГБ</string>
