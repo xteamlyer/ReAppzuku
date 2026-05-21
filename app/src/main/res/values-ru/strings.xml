@@ -906,6 +906,7 @@
     <string name="triggers_status_active">Активное</string>
     <string name="triggers_status_background">Фоновое</string>
     <string name="triggers_status_cached">Кэшированное</string>
+    <string name="triggers_aggression_label_prefix">Агрессивность:</string>
     
     <!-- ══════════════════════════════════════════════
          ДИАЛОГ ОБНОВЛЕНИЯ
