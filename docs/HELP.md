@@ -284,9 +284,9 @@ Evaluated on a 100-point scale based on triggers.
 
 
 > 💡 What you can do based on aggression score:
-> 0–40 — system can handle this on its own. No urgent need for restrictions.
-> 41–65 — medium level. Auto-Kill or Soft background restrictions may be enough.
-> 66+ — ideal candidate for Auto-Kill, Hard or Manual restrictions, or Sleep Mode.
+> - 0–40 — system can handle this on its own. No urgent need for restrictions.
+> - 41–65 — medium level. Auto-Kill or Soft background restrictions may be enough.
+> - 66+ — ideal candidate for Auto-Kill, Hard or Manual restrictions, or Sleep Mode.
 
 > ℹ️ This note is provided for informational purposes only and should not be treated as a recommendation. Decide whether to apply restrictions to an app based on factors such as:
 > - app’s behavior.
