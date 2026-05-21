@@ -370,7 +370,7 @@ Android 11–13: app has permission to receive location data from background at 
 
 ---
 
-## Can Wake Up at Any Time
+#### Can Wake Up at Any Time
 
 System **may start or resume** app without any user action.
 
