@@ -875,7 +875,7 @@
     <string name="triggers_bg_location_explanation">Android 11+: the application has permission to receive location data from the background at any time, even when the user is not actively using it. Requires separate user approval.</string>
     <string name="triggers_bt_permissions_explanation">Android 12+: the application has permissions for Bluetooth scanning and/or connection. It can initiate scanning upon receiving a broadcast.</string>
     <string name="triggers_kernel_wakelock_explanation">The application is holding a kernel-level wakelock (/sys/power/wake_lock). An extremely rare case that indicates a non-standard driver or system component.</string>
-    <string name="triggers_alarm_throttled_explanation">The system cancels the alarm due to app_standby or battery_saver. The application attempts to launch itself via a timer, but HyperOS blocks it.</string>
+    <string name="triggers_alarm_throttled_explanation">The system cancels the alarm due to app_standby or battery_saver. The application attempts to launch itself via a timer, but system blocks it.</string>
     <string name="triggers_bal_privilege_explanation">Android 14+: the application received a token to launch from the background. Usually granted by the system for high-priority FCM, exact alarms, or a PendingIntent from a visible app.</string>
     <string name="triggers_bal_blocked_detail_prefix">BAL blocked by system · caller=</string>
     <string name="triggers_bal_blocked_explanation">Android 14+: the system blocked a background launch attempt. The application is trying to start an Activity or FGS without permission.</string>
