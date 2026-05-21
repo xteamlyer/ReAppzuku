@@ -857,6 +857,53 @@
     <string name="triggers_usagestats_last_fg">last foreground %1$s ago</string>
     <string name="triggers_usagestats_total_fg">fg total %1$s</string>
     <string name="triggers_usagestats_explanation">App was active recently but was not in the foreground — indicates a hidden background wake triggered by an alarm, job, push notification, or chain launch.</string>
+
+    <string name="triggers_proc_frozen_detail">Process Frozen (cgroup freezer)</string>
+    <string name="triggers_proc_frozen_explanation">The process is frozen by the system (Android 11+): execution is paused, but the process is not killed. It unfreezes automatically upon access.</string>
+    <string name="triggers_cat_fgs_timeout_exceeded">FGS Timeout Exceeded</string>
+    <string name="triggers_fgs_timeout_exceeded_explanation">Android 15: a service of type dataSync or mediaProcessing exceeded the 6-hour limit. The system should have triggered onTimeout() and stopped the service.</string>
+    <string name="triggers_cat_fgs_near_timeout">FGS Near Timeout</string>
+    <string name="triggers_fgs_near_timeout_explanation">Android 15: the service has less than 30 minutes remaining out of the 6-hour limit (dataSync/mediaProcessing).</string>
+    <string name="triggers_wakelock_wakeup_sources_explanation">Wakeup source from /sys/kernel/wakeup_sources (fallback for Android 14+ when dumpsys power does not show the wakelock).</string>
+    <string name="triggers_fgs_blocked_detail">FGS blocked when starting from background</string>
+    <string name="triggers_fgs_blocked_explanation">Android 12+: an attempt to start a Foreground Service from the background without an allowed exemption. The service did not start.</string>
+    <string name="triggers_network_bg_blocked_detail">Background network access blocked (Data Saver)</string>
+    <string name="triggers_network_bg_blocked_explanation">The user enabled Data Saver or restricted background network access. The application cannot use the network in the background on mobile data.</string>
+    <string name="triggers_network_bg_allowed_detail">Background network access: explicitly allowed (Data Saver exemption)</string>
+    <string name="triggers_network_bg_allowed_explanation">The application has been whitelisted by the user in Data Saver settings — it has unrestricted network access in the background.</string>
+    <string name="triggers_bg_location_detail">ACCESS_BACKGROUND_LOCATION granted</string>
+    <string name="triggers_bg_location_explanation">Android 11+: the application has permission to receive location data from the background at any time, even when the user is not actively using it. Requires separate user approval.</string>
+    <string name="triggers_bt_permissions_explanation">Android 12+: the application has permissions for Bluetooth scanning and/or connection. It can initiate scanning upon receiving a broadcast.</string>
+    <string name="triggers_kernel_wakelock_explanation">The application is holding a kernel-level wakelock (/sys/power/wake_lock). An extremely rare case that indicates a non-standard driver or system component.</string>
+    <string name="triggers_alarm_throttled_explanation">The system cancels the alarm due to app_standby or battery_saver. The application attempts to launch itself via a timer, but HyperOS blocks it.</string>
+    <string name="triggers_bal_privilege_explanation">Android 14+: the application received a token to launch from the background. Usually granted by the system for high-priority FCM, exact alarms, or a PendingIntent from a visible app.</string>
+    <string name="triggers_bal_blocked_detail_prefix">BAL blocked by system · caller=</string>
+    <string name="triggers_bal_blocked_explanation">Android 14+: the system blocked a background launch attempt. The application is trying to start an Activity or FGS without permission.</string>
+    <string name="triggers_receiver_exported_detail">exported=true · Android 13 requires explicit flag</string>
+    <string name="triggers_receiver_exported_explanation">Android 13+: a dynamically registered receiver with exported=true is accessible to other applications. It can receive broadcasts from any senders.</string>
+    <string name="triggers_fgs_boot_blocked_detail">FGS blocked at boot · FGS_BOOT_COMPLETED_RESTRICTIONS</string>
+    <string name="triggers_fgs_boot_blocked_explanation">Android 14+: a BOOT_COMPLETED receiver cannot start an FGS of type MICROPHONE (API 34) or PHONE_CALL (API 35). The application is attempting to bypass this restriction.</string>
+    <string name="triggers_fgs_boot_exception_detail">ForegroundServiceStartNotAllowedException at boot</string>
+    <string name="triggers_fgs_boot_exception_explanation">Android 15: an attempt to start an FGS from BOOT_COMPLETED resulted in an exception. The service type (dataSync/mediaProcessing/phoneCall) is forbidden from launching at boot.</string>
+    <string name="triggers_doze_battery_opt_detail">Battery optimization disabled · RUN_ANY_IN_BACKGROUND=allow</string>
+    <string name="triggers_doze_battery_opt_explanation">The application has been excluded from battery optimization by the user or the system. It can run in the background without Doze/App Standby restrictions.</string>
+    <string name="triggers_doze_battery_exempt_detail">Battery exempt (dumpsys battery)</string>
+    <string name="triggers_doze_battery_exempt_explanation">The application is in the battery manager exemptions list.</string>
+    <string name="triggers_bucket_restricted_explanation">RESTRICTED bucket (Android 12+): Jobs and Alarms are completely blocked. On Android 14, even ALLOW_WHILE_IDLE alarms are ignored. The application has been restricted due to excessive background consumption.</string>
+    <string name="triggers_bucket_never_explanation">NEVER bucket: background execution is entirely disabled by the system.</string>
+    <string name="triggers_restricted_confirmed_explanation">Android 12+: the system confirmed RESTRICTED bucket constraints via appops. Jobs and Alarms are blocked. The application cannot launch itself independently.</string>
+    <string name="triggers_doze_state_prefix">Android 11+: the device is in Doze mode (%1$s). </string>
+    <string name="triggers_doze_state_suffix">Wakelocks, Network, Jobs, and Alarms (except ALLOW_WHILE_IDLE) are blocked. Applications without a doze-exemption cannot run in the background.</string>
+    <string name="triggers_appops_schedule_exact_alarm_explanation">Permission to schedule exact alarm triggers. Android 14: deny by default for new installations. If allow — the application can precisely wake up the device via a timer.</string>
+    <string name="triggers_appops_full_screen_intent_explanation">Permission to display notifications over the lock screen. Android 14+: allowed only for alarm/call applications. Presence in a third-party application is an anomaly.</string>
+    <string name="triggers_appops_manage_media_explanation">Management of media sessions of other applications. Associated with the mediaProcessing FGS type on Android 15.</string>
+    <string name="triggers_appops_user_initiated_jobs_explanation">Permission to run User-Initiated Jobs (long tasks initiated by the user). Android 14: replacement for \'long jobs\'. Can be executed when the screen is locked.</string>
+    <string name="triggers_appops_start_fgs_blocked_explanation">The system has blocked the right to launch a Foreground Service. The application is trying to operate in the background but is restricted.</string>
+    <string name="trigger_manage_media_label">MANAGE_MEDIA · allow</string>
+    <string name="trigger_manage_media_desc">Android 12+: the app can manage media sessions of other apps. On Android 15, linked to the mediaProcessing foreground service type.</string>
+    <string name="trigger_exact_alarm_label">%1$s granted (Android 12+)</string>
+    <string name="trigger_exact_alarm_desc_use">Android 12+: the app holds permission for exact alarm triggers regardless of App Standby bucket. USE_EXACT_ALARM is granted only to system/privileged apps.</string>
+    <string name="trigger_exact_alarm_desc_schedule">Android 12+: the app holds permission for exact alarm triggers regardless of App Standby bucket. SCHEDULE_EXACT_ALARM requires explicit user approval.</string>
     
     <string name="triggers_status_label_prefix">App status:</string>
     <string name="triggers_status_active">Active</string>
