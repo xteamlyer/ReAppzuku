@@ -17,7 +17,7 @@
 - [Settings](#settings)
   - [Information](#-information)
   - [Appearance](#-appearance)
-  - [Automation](#️-automation)
+  - [App Stability](#️-app-stability)
   - [Auto-Kill Settings](#-auto-kill-settings)
   - [Advanced Tools](#-advanced-tools)
   - [About](#ℹ️-about)
@@ -31,21 +31,19 @@
 
 **ReAppzuku** is utility for background process diagnostics and management. It offers wide selection of restriction scenarios for every app.
 
-`Why even need ReAppzuku if modern Android handles app control well on its own?` — yes, it does, but not perfectly. OS developers actively improve and modernize system mechanisms for process management. Meanwhile, numerous loopholes allow apps to remain active in background. These range from simple receivers to aggressive Alarms, Wakelocks, and other retention mechanisms. Ultimately, they prevent devices from entering deep standby mode, overload CPU/RAM, and gladly drain battery power.
+`Why even need ReAppzuku if modern Android handles app control well on its own?` — yes, it does, but not perfectly. OS developers actively improve and modernize system mechanisms for process management. Meanwhile, numerous loopholes allow apps to remain active in background. These range from harmless receivers to aggressive Alarms, Wakelocks, and other retention mechanisms. Ultimately, they prevent devices from entering deep standby mode, overload CPU/RAM, and gladly drain battery power.
 
 ---
 
 ## Requirements
 
-| Requirement | Details |
-|---|---|
-| **Android** | 6.0 or higher. Background restrictions only available on Android 11+ |
-| **Root** or **Shizuku** | One of two is required |
+- **Android** — 6.0 or higher. Background restrictions only available on Android 11+
+- **Root** or **Shizuku** — one of two is required
 
 ### Root vs Shizuku
 
-- **Root** — preferred mode, used automatically if available.
-- **Shizuku** — root-free alternative. Installed from Play Store, requires initial setup via ADB or developer mode.
+- **Root** — preferred mode, used automatically if available
+- **Shizuku** — root-free alternative. Installed from Play Store, requires initial setup via ADB or MIUI/HyperOS developer mode
 
 > Current operating mode is always shown in **Settings → Information → Operating Mode**
 
@@ -64,6 +62,7 @@ Most important step. If not disabled, system will periodically kill ReAppzuku.
 **Settings → Apps → ReAppzuku → Battery → Unrestricted**
 
 Or via system dialog:
+
 **Settings → Battery → Battery Optimization → All Apps → ReAppzuku → Don't Optimize**
 
 ---
@@ -80,15 +79,19 @@ Open recent apps (square button or swipe from bottom), find ReAppzuku, and tap *
 <summary>Expand instructions</summary>
 
 **Autostart:**
+
 Settings → Apps → Manage Apps → ReAppzuku → Autostart → Enable
 
 **Background activity:**
+
 Settings → Apps → Manage Apps → ReAppzuku → Battery Saver → No restrictions
 
 **Lock in recents:**
+
 Recents → long-press ReAppzuku card → tap lock icon
 
 **Additional (MIUI 12+):**
+
 Settings → Apps → Manage Apps → ReAppzuku → Other permissions → Run in background → Allow
 
 </details>
@@ -101,12 +104,15 @@ Settings → Apps → Manage Apps → ReAppzuku → Other permissions → Run in
 <summary>Expand instructions</summary>
 
 **Allow background activity:**
+
 Settings → Device Care → Battery → Background usage limits → Sleeping apps → make sure ReAppzuku is not listed
 
 **Disable Adaptive Battery:**
+
 Settings → Device Care → Battery → More battery settings → Adaptive Battery → Off (optional, if issues persist)
 
 **Autostart:**
+
 Settings → Apps → ReAppzuku → Battery → Unrestricted
 
 </details>
@@ -119,12 +125,15 @@ Settings → Apps → ReAppzuku → Battery → Unrestricted
 <summary>Expand instructions</summary>
 
 **Autostart:**
+
 Settings → App Management → ReAppzuku → Autostart → Enable
 
 **Background activity:**
+
 Settings → App Management → ReAppzuku → Battery Saver → Don't restrict
 
 **Additional:**
+
 Settings → Battery → Battery Optimization → ReAppzuku → Don't Optimize
 
 </details>
@@ -137,12 +146,15 @@ Settings → Battery → Battery Optimization → ReAppzuku → Don't Optimize
 <summary>Expand instructions</summary>
 
 **Autostart:**
+
 Settings → Permissions → Autostart → ReAppzuku → Enable
 
 **Background activity:**
+
 Settings → Permissions → Background execution → ReAppzuku → Enable
 
 **App security:**
+
 Security Center → Permission Manager → ReAppzuku → enable all permissions
 
 </details>
@@ -155,9 +167,11 @@ Security Center → Permission Manager → ReAppzuku → enable all permissions
 <summary>Expand instructions</summary>
 
 **Autostart:**
+
 Settings → Apps → Manage Apps → ReAppzuku → Permissions → Autostart → Enable
 
 **Background activity:**
+
 Settings → Apps → Manage Apps → ReAppzuku → Power Consumption → High Background Performance
 
 </details>
@@ -170,9 +184,11 @@ Settings → Apps → Manage Apps → ReAppzuku → Power Consumption → High B
 <summary>Expand instructions</summary>
 
 **Autostart:**
+
 Settings → Apps → App Launch → ReAppzuku → Manual → Autostart, Background Activity
 
 **Battery:**
+
 Settings → Battery → App Launch → ReAppzuku → Don't restrict
 
 </details>
@@ -206,10 +222,8 @@ After setup:
 
 Added to notification shade:
 
-| Tile | Action |
-|---|---|
-| **Kill App** | Kills current foreground app |
-| **Kill Background Apps** | Runs Auto-Kill with your whitelist/blacklist settings |
+- **Kill App** — kills current foreground app
+- **Kill Background Apps** — runs Auto-Kill with your whitelist/blacklist settings
 
 ### Widget
 
@@ -229,11 +243,9 @@ Main screen shows all active background apps with real-time RAM and CPU usage. T
 
 Three buttons in toolbar:
 
-| Button | Action |
-|---|---|
-| 🔍 Search | Filter list by app name or package |
-| 🔽 Sort | Configure display order |
-| ☑️ Select All | Select all apps for Kill in one tap |
+- 🔍 **Search** — filter list by app name or package
+- 🔽 **Sort** — configure display order
+- ☑️ **Select All** — select all apps for Kill in one tap
 
 ### Sort
 
@@ -262,11 +274,11 @@ Tapping app in list opens quick action menu:
 
 Triggers is a deep diagnostic tool that analyzes **real reasons** for an app's background activity at system level. Instead of guesswork — precise technical facts: what's keeping app in memory, how often it wakes up, and whether it has active network connections right now.
 
-Analyzes **62 independent factors (42 main and 20 additional ones depending on Android version)** via system commands in real time.
+Analyzes **62 independent factors (42 main and 20 additional ones depending Android version)** via system commands in real time.
 
 ---
 
-#### App Status (active / background / cached)
+**App Status (active / background / cached)**
 
 Determined by process priority in Linux kernel (oom_score_adj) — same value Android uses to decide which processes to kill when memory is low.
 - **Active** — app is in foreground or holds a system resource (service, alarm, etc.).
@@ -275,7 +287,7 @@ Determined by process priority in Linux kernel (oom_score_adj) — same value An
 
 ---
 
-#### Aggression Score
+**Aggression Score**
 
 Evaluated on a 100-point scale based on triggers.
 - Active triggers: + **6 points** each.
@@ -285,7 +297,7 @@ Evaluated on a 100-point scale based on triggers.
 
 > 💡 What you can do based on aggression score:
 > - 0–40 — system can handle this on its own. No urgent need for restrictions.
-> - 41–65 — medium level. Auto-Kill or Soft type of Background Restrictions may be enough.
+> - 41–65 — medium level. Auto-Kill or Soft ,type of Background Restrictions may be enough.
 > - 66+ — ideal candidate for Auto-Kill, Hard or Manual type of Background Restrictions, or Sleep Mode.
 
 > ℹ️ This note is provided for informational purposes only and should not be treated as a recommendation. Decide whether to apply restrictions to an app based on factors such as:
@@ -296,9 +308,9 @@ Evaluated on a 100-point scale based on triggers.
 
 ---
 
-**Trigger types:**
+#### Trigger types:
 
-#### Actual
+**Actual**
 
 App is consuming resources **right now**.
 
@@ -370,7 +382,7 @@ Android 11–13: app has permission to receive location data from background at 
 
 ---
 
-#### Can Wake Up at Any Time
+**Can Wake Up at Any Time**
 
 System **may start or resume** app without any user action.
 
@@ -421,7 +433,7 @@ Android 12–13: app has permission for exact alarms that fire at a specified ti
 
 ---
 
-#### Other Triggers
+**Other Triggers**
 
 Passive factors that affect background behavior but don't indicate current activity directly.
 
@@ -522,95 +534,75 @@ Android 11–13: device is in Deep Doze or Light Doze. Wakelocks, network, jobs,
 
 ### 🔵 Information
 
-#### ReAppzuku Access Mode
-
+**ReAppzuku Access Mode**\
 Shows current access mode: **Root**, **Shizuku**, or **No Access**. Read-only.
 
-#### Help
-
+**Help**\
 Link to this FAQ.
 
 ---
 
 ### 🎨 Appearance
 
-#### App Theme
-
+**App Theme**\
 Choose a theme: system default, light, dark, or AMOLED.
 
-#### Accent Color
-
+**Accent Color**\
 Choose accent color: indigo, crimson, forest green, amber, and other shades.
 
-#### Notifications
-
+**Notifications**\
 Configure notification behavior. Critical notifications cover background service status and permission errors.
 
 ---
 
-### ⚙️ Automation
+### ⚙️ App stability
 
-> ⚠️ All features in this section require **Background Service** to be enabled
-
-#### Background Service
-
-Main automation toggle. Starts persistent ReAppzuku background process. Without it, periodic Auto-Kill and screen-off Auto-Kill won't work.
-
-#### Periodic Auto-Kill
-
-Automatically kills apps at set interval while background service runs.
-
-#### Auto-Kill Interval
-
-| Interval | Description |
-|---|---|
-| 10 seconds | Maximum aggressive cleanup |
-| **18 seconds** | Default |
-| 30 seconds | Moderate cleanup |
-| 1 minute | Light cleanup |
-| 5 minutes | Minimal intervention |
-
-#### Kill on Screen Off
-
-Runs Kill moment screen locks. Useful for cleaning up every time you put your phone down.
-
-#### Kill at RAM Load
-
-Additional condition — Kill only fires **if** RAM exceeds selected threshold. Applies to both periodic Kill and screen-off Kill.
-
-| Threshold | Description |
-|---|---|
-| 75% | Early cleanup |
-| **80%** | Default |
-| 85–95% | Cleanup only when memory is genuinely low |
-| 100% | Critical situations only |
+**Background Service**\
+Main automation toggle. Starts persistent ReAppzuku background process. Required for most of app's features to work, including collecting statistics.
 
 ---
 
 ### 🎯 Auto-Kill Settings
 
-#### Auto-Kill Mode
+**Periodic Auto-Kill**\
+Automatically kills apps at set interval while background service runs.
 
-Determines **which** apps get targeted by Auto-Kill.
+**Auto-Kill Interval:**
+- **10 seconds** — maximum aggressive cleanup
+- **18 seconds** — default
+- **30 seconds** — moderate cleanup
+- **1 minute** — light cleanup
+- **5 minutes** — minimal intervention
 
-**🛡️ Whitelist** — kills all background apps **except** those on whitelist. Use for maximum cleanup.
+**Kill on Screen Off**\
+Runs Kill moment screen locks. Useful for cleaning up every time you put your phone down.
 
-**🎯 Blacklist (default)** — kills **only** apps on blacklist. Use to stop specific apps without touching everything else.
+**Kill at RAM Load**\
+Additional condition — Kill only fires **if** RAM exceeds selected threshold. Applies to both periodic Kill and screen-off Kill.
 
-#### Auto-Kill Type
+- **75%** — early cleanup
+- **80%** — default
+- **85–95%** — cleanup only when memory is genuinely low
+- **100%** — critical situations only
 
+**Auto-Kill Type**\
 Only relevant if ReAppzuku conflicts with your firmware. If you notice unusual behavior in other apps, try switching to `am kill`.
 
-#### Whitelist / Blacklist
+**Auto-Kill Mode**\
+Determines **which** apps get targeted by Auto-Kill.
 
-App list for selected mode. One of юtwo lists is shown depending on mode.
+- **🛡️ Whitelist** — kills all background apps **except** those on whitelist. Use for maximum cleanup.
+
+- **🎯 Blacklist (default)** — kills **only** apps on blacklist. Use to stop specific apps without touching everything else.
+
+**Whitelist / Blacklist**\
+App list for selected mode. One of two lists is shown depending on mode.
 
 ---
 
 ### 🔧 Advanced Tools
 
-#### Background Restrictions
-
+**Background Restrictions**
 > Available on **Android 11+** only
 
 Uses Android's `appops` to **block an app from running in background at OS level**. Deeper than regular Kill.
@@ -623,6 +615,7 @@ Uses Android's `appops` to **block an app from running in background at OS level
 | Requires Android 11+ | ❌ No | ✅ Yes |
 
 **Restriction types:**
+
 - **Soft** (RUN_ANY_IN_BACKGROUND ignore)\
 Blocks autostart at a stricter level than standard activity settings.\
 **How it works**: If you open app and switch away — it keeps running (while in recents). But on its own (overnight or in background) it won't wake up until you open it.
@@ -636,51 +629,52 @@ You choose which restrictions to apply.\
 **How it works**: ReAppzuku applies only restrictions you select.
 
 ---
+
 **Available restrictions:**
 
-- **RUN_ANY_IN_BACKGROUND**
+- **RUN_ANY_IN_BACKGROUND**\
 Prevents app from starting background processes or services without explicit user interaction. Primary and broadest restriction — used in **Soft** mode.\
 **Blocks:** background service starts, sync, deferred tasks (JobScheduler, WorkManager).\
 **Does not block:** foreground services (with notification), already-running processes.
 
-- **RUN_IN_BACKGROUND**
+- **RUN_IN_BACKGROUND**\
 More targeted background execution restriction. Blocks service starts via `startService()` when app is in background.\
 **Blocks:** background services started by app itself without user involvement.\
 **Does not block:** foreground services, alarm-triggered tasks, broadcast receivers.
 
-- **START_FOREGROUND**
+- **START_FOREGROUND**\
 Prevents app from promoting service to foreground (persistent notification). Without this, app can't show "running in background" notification or hold process alive.\
 **Blocks:** calls to `startForeground()` — app can't create sticky notification or keep service alive.\
 **Does not block:** regular app notifications, background tasks via JobScheduler.
 
-- **START_FOREGROUND_SERVICES_FROM_BACKGROUND**
+- **START_FOREGROUND_SERVICES_FROM_BACKGROUND**\
 Prevents starting foreground service when app is in background. Added in Android 12 on top of `START_FOREGROUND`.\
 **Blocks:** attempts to start foreground service while app isn't visible on screen.\
 **Does not block:** foreground services started while app is in foreground.
 
-- **WAKE_LOCK**
+- **WAKE_LOCK**\
 Prevents app from keeping CPU active with screen off. Without wake lock, system can sleep CPU and stop background operations.\
 **Blocks:** CPU hold via `PowerManager.WakeLock` — app can't prevent phone from sleeping.\
 **Does not block:** app running while screen is on.
 
-- **ALARM_WAKEUP**
+- **ALARM_WAKEUP**\
 Prevents app from waking device via exact timers (`AlarmManager.setExactAndAllowWhileIdle` and equivalents). Without this, alarms can't wake phone from deep sleep.\
 **Blocks:** exact alarm tasks that wake device — app can't schedule forced wakeup by timer.\
 **Does not block:** inexact timers, JobScheduler tasks.
 
-- **RECEIVE_BOOT_COMPLETED**
+- **RECEIVE_BOOT_COMPLETED**\
 Prevents app from receiving `BOOT_COMPLETED` after reboot — mechanism most apps use to add themselves to autostart.\
 **Blocks:** autostart on system boot.\
 **Does not block:** manually launching app after reboot.
 
-- **INTERACT_ACROSS_PROFILES**
+- **INTERACT_ACROSS_PROFILES**\
 Prevents app from interacting with other work profiles. Primarily relevant on enterprise devices.\
 **Blocks:** cross-profile calls and data transfer between primary and work profiles.\
 **Does not block:** app operating within single profile.
 
 ---
 
-## Restriction types comparison
+### Restriction types comparison
 
 | Restriction | Soft | Hard | Manual |
 |---|:---:|:---:|:---:|
@@ -702,36 +696,35 @@ List statuses:
 
 > 👀 ReAppzuku periodically checks that Background Restrictions are still in place. If system resets any — they're restored automatically.
 
-#### Re-apply Background Restrictions
-
+**Re-apply Background Restrictions**\
 Manually re-applies all saved restrictions. After reboot this happens **automatically** when background service starts.
 
-#### Restriction Scheduler
+---
 
+**Restriction Scheduler**\
 Schedule when restrictions should be lifted and restored for specific apps.
-
-> Only apps with an active **Background Restriction** (soft or hard) appear here.
+> Only apps with an active **Background Restriction** (Soft / Hard / Manual) appear here.
 > Apps with scheduled entry show 🕐 icon with scheduled time.
 
 Tap app to open scheduler configuration:
 
-**Protect from**
+**Protect from**\
 Select which restrictions app will be temporarily exempted from.
 
-**Time window**
+**Time window**\
 Set start time (restrictions lifted) and end time (restrictions restored).
 App is force-stopped before restrictions are restored.
 
-**On activation**
+**On activation**\
 Action to take when restrictions are lifted:
-
 - **None** — no additional action.
 - **Launch component** — opens app's component picker (Activity, Service, Receiver, etc.).
 
 > Scheduled entries are limited to 15 apps to protect ReAppzuku itself.
 
-#### Sleep Mode
+---
 
+**Sleep Mode**\
 Completely **freezes** selected apps when device is idle. Unlike background restrictions — app simply can't start; fully suspended by system.
 
 How it works:
@@ -745,36 +738,31 @@ How it works:
 
 > 💡 If target app was on home screen, its icon may disappear or move after Sleep Mode activates. Expected Android behavior with pm disable/enable.
 
-#### Sleep Mode App List
-
+**Sleep Mode App List**\
 Select apps to freeze in Sleep Mode.
 
-#### Freeze Timer
-
+**Freeze Timer**\
 Idle period after which freezing triggers: **5 to 60 minutes** (default: 60 minutes).
 
-#### Clear Cache for All Apps
+---
 
+**Clear Cache for All Apps**\
 Runs `pm trim-caches` — clears cache of all apps at once.
 
-#### Hidden Apps
-
+**Hidden Apps**\
 Apps here don't appear on main screen and are never touched by Auto-Kill. Useful for service processes you don't need to see.
 
-#### Backup & Restore
-
+**Backup & Restore**\
 Export and import all settings as JSON. Covers whitelist, blacklist, hidden apps, background restrictions, Sleep Mode, and all automation settings.
 
 ---
 
 ### ℹ️ About
 
-#### Source Code
-
+**Source Code**\
 Link to GitHub repository.
 
-#### Check for Updates
-
+**Check for Updates**\
 Manually checks GitHub for a new release and shows it if found.
 Automatic update checks run once a day.
 
@@ -784,31 +772,25 @@ Automatic update checks run once a day.
 
 Statistics & Logs are available as a **separate screen** with detailed data for all tracked apps.
 
-#### ReAppzuku Consumption
-
+**ReAppzuku Consumption**\
 Top of screen shows **ReAppzuku's own resource usage** — RAM, CPU, and battery — so you can assess its impact on device.
 
-#### Resource Usage Charts
-
+**Resource Usage Charts**\
 Interactive charts of RAM, CPU, and battery usage across tracked apps. Switch between chart types with **arrows**.
 
-| Period | Description |
-|---|---|
-| 2 hours | Last 2 hours |
-| 6 hours | Last 6 hours |
-| 12 hours | Last 12 hours |
-| 24 hours | Last 24 hours |
+- **2 hours** — last 2 hours
+- **6 hours** — last 6 hours
+- **12 hours** — last 12 hours
+- **24 hours** — last 24 hours
 
 > 💡 Tap an **app in chart legend** to open its **personal activity graph**
 
-#### Auto-Kill Log
-
+**Auto-Kill Log**\
 Shows activity for last **12 hours**: Auto-Kill count, restarts, RAM freed, and last event time per app.
 
 > 💡 Apps restarting more than 3 times are good candidates for Background Restrictions.
 
-#### Top Offenders
-
+**Top Offenders**\
 Ranks apps by combined score (kills + restarts + RAM usage). Filter by: 12 hours / 24 hours / 7 days / all time.
 
 > 💡 Score shows how aggressively app interferes with background management.\
@@ -821,8 +803,7 @@ Ranks apps by combined score (kills + restarts + RAM usage). Filter by: 12 hours
 
 > ℹ️ Freed RAM is counted only if app isn't found running at next Auto-Kill cycle. If it restarts, it reclaims same RAM — net gain 0%.
 
-#### Background Restrictions Log
-
+**Background Restrictions Log**\
 Detailed log of background restriction operations. Stored in cache, 200 entries max.
 
 | Status | Meaning |
@@ -836,10 +817,10 @@ Detailed log of background restriction operations. Stored in cache, 200 entries 
 | `Removed from whitelist` | App removed from battery optimization exceptions |
 | `Restored to whitelist` | App restored to battery optimization exceptions |
 
-#### Sleep Mode Log
+**Sleep Mode Log**\
 Logs date and time of freeze/unfreeze for target apps.
 
-#### Scheduler Log 
+**Scheduler Log**\
 Contains records of Restriction Scheduler activity. Each entry shows:
 - Date and time restrictions were lifted/restored.
 - How successfully restrictions were restored (OK / PARTIAL / FAILED).
@@ -852,8 +833,7 @@ Contains records of Restriction Scheduler activity. Each entry shows:
 
 These apps are **never affected** by Auto-Kill or other restrictions, regardless of settings:
 
-### Android Core & Google
-- **ReAppzuku** (app itself)
+**Android Core & Google**
 - Google Play Services and Google Services Framework
 - System UI
 - Android Settings
@@ -868,17 +848,17 @@ These apps are **never affected** by Auto-Kill or other restrictions, regardless
 - NFC
 - Network stack, tethering stack, DNS resolver, VPN dialogs
 
-### Shizuku
+**Shizuku**
 - Shizuku (both variants: `rikka.shizuku.common` and `moe.shizuku.privileged.api`)
 
-### Root Managers
+**Root Managers**
 - Magisk
 - KernelSU
 - KernelSU Next
 - APatch
 - SukiSU / SukiSU Ultra
 
-### Manufacturer System Apps
+**Manufacturer System Apps**
 | Manufacturer | Protected Apps |
 |---|---|
 | **Xiaomi / MIUI / HyperOS** | Security Center, home launcher, wallpaper, camera, system protection, core services, PowerKeeper |
@@ -887,7 +867,7 @@ These apps are **never affected** by Auto-Kill or other restrictions, regardless
 | **Vivo / iQOO (Funtouch / OriginOS)** | iManager, Vivo launcher |
 | **Huawei / Honor (EMUI / MagicOS)** | System Optimizer, Huawei Home, Honor System Manager |
 
-### Dynamically Determined
+**Dynamically Determined**
 - Current keyboard (detected automatically at runtime)
 - Current launcher (detected automatically at runtime)
 
