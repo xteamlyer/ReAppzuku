@@ -919,5 +919,6 @@
     <string name="update_dialog_close">Close</string>
     <string name="update_up_to_date">Latest version (%s)</string>
     <string name="update_check_failed">Update check failed</string>
+    <string name="easter_egg_hunter">🐱 Easter Egg Hunter!</string>
 
 </resources>
