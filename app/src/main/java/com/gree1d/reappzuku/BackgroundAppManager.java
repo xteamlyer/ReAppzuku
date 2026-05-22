@@ -97,7 +97,7 @@ public class BackgroundAppManager {
         executor.execute(() -> {
             List<AppModel> result = new ArrayList<>();
             PackageManager packageManager = context.getPackageManager();
-            Set<String> runningPackagesFromPs = new HashSet<>();
+            Map<String, long[]> psAggregated = new HashMap<>();
             Set<String> hiddenApps = getHiddenApps();
             Set<String> whitelistedApps = getWhitelistedApps();
             Set<String> desiredBackgroundRestrictedApps = getBackgroundRestrictedApps();
@@ -114,13 +114,23 @@ public class BackgroundAppManager {
                                 String[] parts = line.trim().split("\\s+");
                                 if (parts.length >= 3) {
                                     String packageName = parts[2].trim();
-                                    String appRam = parts[1].trim();
-                                    String pid = parts[0].trim();
                                     if (!packageName.isEmpty() && packageName.contains(".")
                                             && !packageName.startsWith("ERROR:")) {
                                         try {
                                             packageManager.getApplicationInfo(packageName, 0);
-                                            runningPackagesFromPs.add(packageName + ":" + appRam + ":" + pid);
+                                            long rss = 0;
+                                            int pid = -1;
+                                            try { rss = Long.parseLong(parts[1].trim()); } catch (NumberFormatException ignored) {}
+                                            try { pid = Integer.parseInt(parts[0].trim()); } catch (NumberFormatException ignored) {}
+                                            long[] existing = psAggregated.get(packageName);
+                                            if (existing == null) {
+                                                psAggregated.put(packageName, new long[]{rss, pid});
+                                            } else {
+                                                existing[0] += rss;
+                                                if (pid != -1 && (existing[1] == -1 || pid < existing[1])) {
+                                                    existing[1] = pid;
+                                                }
+                                            }
                                         } catch (PackageManager.NameNotFoundException ignored) {
                                         }
                                     }
@@ -138,21 +148,10 @@ public class BackgroundAppManager {
                 }
             }
 
-            for (String packageEntry : runningPackagesFromPs) {
-                String[] parts = packageEntry.split(":");
-                String packageName = parts[0];
-                long ramUsage = 0;
-                int pid = -1;
-                try {
-                    ramUsage = parts.length > 1 ? Long.parseLong(parts[1]) : 0;
-                } catch (NumberFormatException e) {
-                    Log.w(TAG, "Failed to parse RAM value for " + packageName, e);
-                }
-                try {
-                    pid = parts.length > 2 ? Integer.parseInt(parts[2]) : -1;
-                } catch (NumberFormatException e) {
-                    Log.w(TAG, "Failed to parse PID for " + packageName, e);
-                }
+            for (Map.Entry<String, long[]> entry : psAggregated.entrySet()) {
+                String packageName = entry.getKey();
+                long ramUsage = entry.getValue()[0];
+                int pid = (int) entry.getValue()[1];
 
                 try {
                     if (hiddenApps.contains(packageName)) {
