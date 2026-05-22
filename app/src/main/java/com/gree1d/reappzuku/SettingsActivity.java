@@ -73,6 +73,8 @@ public class SettingsActivity extends BaseActivity {
     private RestrictionsScheduler scheduler;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private int easterEggClickCount = 0;
+    private static final int EASTER_EGG_THRESHOLD = 5;
 
     private final ActivityResultLauncher<String> createBackupLauncher = registerForActivityResult(
             new ActivityResultContracts.CreateDocument("application/json"),
@@ -399,6 +401,13 @@ public class SettingsActivity extends BaseActivity {
         binding.layoutGithub.setOnClickListener(v -> openUrl("https://github.com/gree1d/ReAppzuku"));
         binding.layoutCheckUpdates.setOnClickListener(v -> UpdateChecker.checkForUpdatesManual(this));
         binding.layoutTelegram.setOnClickListener(v -> openUrl("https://t.me/AkM0o"));
+        binding.textVersion.setOnClickListener(v -> {
+            easterEggClickCount++;
+            if (easterEggClickCount == EASTER_EGG_THRESHOLD) {
+                easterEggClickCount = 0;
+                showEasterEggDialog();
+            }
+        });
 
         updateKillModeVisibility();
         applyServiceDependentState(isServiceEnabled());
@@ -1786,6 +1795,38 @@ public class SettingsActivity extends BaseActivity {
             stopService(new Intent(this, ShappkyService.class));
             AutoKillWorker.cancel(this);
         }
+    }
+
+    private void showEasterEggDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(android.view.Gravity.CENTER);
+        int pad = (int) (getResources().getDisplayMetrics().density * 24);
+        layout.setPadding(pad, pad, pad, pad);
+
+        ImageView imageView = new ImageView(this);
+        imageView.setImageResource(R.drawable.settings_page_info);
+        int size = (int) (getResources().getDisplayMetrics().density * 220);
+        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(size, size);
+        imageView.setLayoutParams(imgParams);
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        layout.addView(imageView);
+
+        TextView textView = new TextView(this);
+        textView.setText(getString(R.string.easter_egg_hunter));
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        textView.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        tvParams.topMargin = (int) (getResources().getDisplayMetrics().density * 16);
+        textView.setLayoutParams(tvParams);
+        layout.addView(textView);
+
+        new AlertDialog.Builder(this)
+                .setView(layout)
+                .setPositiveButton(getString(R.string.dialog_ok), null)
+                .show();
     }
 
     @Override
