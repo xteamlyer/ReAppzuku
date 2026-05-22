@@ -9,6 +9,7 @@ import android.app.NotificationManager;
 import android.content.SharedPreferences;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -98,7 +99,12 @@ public class ShappkyService extends Service {
                 .setOngoing(true)
                 .build();
 
-        startForeground(NOTIFICATION_ID_SERVICE, notification);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID_SERVICE, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else {
+            startForeground(NOTIFICATION_ID_SERVICE, notification);
+        }
         isRunning = true;
 
         screenOffReceiver = new KillTriggerReceiver();
