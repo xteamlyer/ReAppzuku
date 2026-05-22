@@ -58,7 +58,7 @@
     <string name="main_removed_from_blacklist">Removed from blacklist</string>
     <string name="main_app_hidden">App hidden</string>
     <string name="main_app_visible">App visible again</string>
-    <string name="main_open_app_info_error">Can't open app info</string>
+    <string name="main_open_app_info_error">Can\'t open app info</string>
 
     <!-- Uninstall dialog -->
     <string name="main_uninstall_title">Uninstall %1$s</string>
@@ -71,11 +71,11 @@
 
     <!-- Background restriction sync dialogs -->
     <string name="main_restriction_out_of_sync_title">Background restriction out of sync</string>
-    <string name="main_restriction_out_of_sync_message">%1$s is in ReAppzuku's restriction list, but Android isn't restricting it.\n\nResume restriction or remove from list?</string>
+    <string name="main_restriction_out_of_sync_message">%1$s is in ReAppzuku\'s restriction list, but Android isn\'t restricting it.\n\nResume restriction or remove from list?</string>
     <string name="main_restriction_resume">Resume</string>
     <string name="main_restriction_remove_from_list">Remove from list</string>
     <string name="main_restriction_external_title">Restriction not applied by ReAppzuku</string>
-    <string name="main_restriction_external_message">%1$s is restricted by Android, but not in ReAppzuku's app list.\n\nAdd to ReAppzuku or lift restriction?</string>
+    <string name="main_restriction_external_message">%1$s is restricted by Android, but not in ReAppzuku\'s app list.\n\nAdd to ReAppzuku or lift restriction?</string>
     <string name="main_restriction_add_to_reappzuku">Add to ReAppzuku</string>
     <string name="main_restriction_remove">Lift restriction</string>
     <string name="main_restriction_menu_out_of_sync">Background restriction (out of sync)</string>
@@ -173,7 +173,7 @@
     <string name="service_notification_title" translatable="false">ReAppzuku Service</string>
     <string name="service_notification_text">Monitoring background apps</string>
     <string name="service_shizuku_lost_title">ReAppzuku services</string>
-    <string name="service_shizuku_lost_text">No Shizuku access — app can't continue.</string>
+    <string name="service_shizuku_lost_text">No Shizuku access — app can\'t continue.</string>
     <string name="service_channel_foreground_name" translatable="false">ReAppzuku Foreground Service</string>
     <string name="service_channel_actions_name">ReAppzuku Notifications</string>
 
@@ -296,7 +296,7 @@
     <string name="settings_auto_kill_type_kill">am kill</string>
     <string name="settings_auto_kill_type_help_button">What is this?</string>
     <string name="settings_auto_kill_type_help_title">Auto-Kill Type</string>
-    <string name="settings_auto_kill_type_help_message">On some ROMs, am force-stop may be interpreted by the system as a signal to reclaim RAM immediately — forcing all apps to close on every Auto-Kill run, regardless of settings.\n\nIf you hit this issue, switch to am kill. It's a softer command, less aggressive toward the system.</string>
+    <string name="settings_auto_kill_type_help_message">On some ROMs, am force-stop may be interpreted by the system as a signal to reclaim RAM immediately — forcing all apps to close on every Auto-Kill run, regardless of settings.\n\nIf you hit this issue, switch to am kill. It\'s a softer command, less aggressive toward the system.</string>
 
     <!-- ── Advanced tools ── -->
     <string name="settings_section_advanced_tools">Advanced tools</string>
@@ -354,18 +354,18 @@
 
     <!-- ── System apps warning dialog ── -->
     <string name="settings_system_apps_warning_title">⚠️ Warning: system apps</string>
-    <string name="settings_system_apps_warning_message">System apps are critical for device stability. Blocking or stopping them (e.g. Security on Xiaomi) may cause crashes, boot loops, or malfunction.\n\nOnly do this if you know what you're doing.</string>
+    <string name="settings_system_apps_warning_message">System apps are critical for device stability. Blocking or stopping them (e.g. Security on Xiaomi) may cause crashes, boot loops, or malfunction.\n\nOnly do this if you know what you\'re doing.</string>
     <string name="settings_system_apps_i_understand">I understand</string>
 
     <!-- ── Background restriction warnings ── -->
     <string name="settings_restriction_system_apps_title">System apps selected</string>
-    <string name="settings_restriction_system_apps_message">You've selected %1$d system app(s) for background restriction.\n\nThis may break notifications, widgets, VPN, keyboards, accessibility, device pairing, or cause instability.\n\nContinue?</string>
+    <string name="settings_restriction_system_apps_message">You\'ve selected %1$d system app(s) for background restriction.\n\nThis may break notifications, widgets, VPN, keyboards, accessibility, device pairing, or cause instability.\n\nContinue?</string>
     <string name="settings_restriction_system_apps_confirm">Yes, apply</string>
     <string name="settings_restriction_warning_title">Background restriction warning</string>
     <string name="settings_restriction_warning_message">Apps with background restrictions may stop syncing, miss notifications, stop updating widgets, or fail background tasks until opened again.\n\nContinue?</string>
 
     <!-- Background restriction mode explanation -->
-    <string name="settings_bgrest_help_button">What's the difference?</string>
+    <string name="settings_bgrest_help_button">What\'s the difference?</string>
     <string name="dialog_backgroundrest_title">Background restriction types</string>
     <string name="bgrest_help_soft_title">SOFT</string>
     <string name="bgrest_help_soft_body">Limits background activity while keeping basic functionality.\n\u2022 Prevents standard background services from starting.\n\u2022 App can still show important notifications.\n\u2022 Good for messengers and email clients.\n\nCommands used:\ncmd appops set RUN_ANY_IN_BACKGROUND ignore</string>
@@ -374,7 +374,7 @@
 
     <!-- ── Misc toasts ── -->
     <string name="settings_no_saved_restrictions">No saved background restrictions to re-apply.</string>
-    <string name="settings_open_app_info_error">Can't open app info</string>
+    <string name="settings_open_app_info_error">Can\'t open app info</string>
 
     <!-- ── Backup &amp; Restore ── -->
     <string name="settings_backup_restore_title">Backup &amp; Restore</string>
@@ -559,7 +559,7 @@
     <string name="triggers_loading">Analyzing…</string>
     <string name="triggers_none_title">No triggers found</string>
     <string name="triggers_none_detail">No active background triggers detected</string>
-    <string name="triggers_none_explanation">App may be in memory but isn't actively keeping itself alive.</string>
+    <string name="triggers_none_explanation">App may be in memory but isn\'t actively keeping itself alive.</string>
 
     <!-- Category names -->
     <string name="triggers_cat_fg_service">Foreground Service</string>
@@ -633,7 +633,7 @@
 
     <!-- Sync Adapter -->
     <string name="triggers_sync_detail">%1$d account(s)</string>
-    <string name="triggers_sync_explanation">App has a Sync Adapter registered with system. Android periodically launches it to sync account data, even when app isn't running.</string>
+    <string name="triggers_sync_explanation">App has a Sync Adapter registered with system. Android periodically launches it to sync account data, even when app isn\'t running.</string>
 
     <!-- Chain Launch -->
     <string name="triggers_chain_direct_detail">Direct call from %s</string>
@@ -816,7 +816,7 @@
     <!-- ====================================================== -->
     <string name="triggers_cat_multiproc">Multiple Processes</string>
     <string name="triggers_multiproc_count">%d processes running</string>
-    <string name="triggers_multiproc_explanation">App is running in multiple OS processes. Sub-processes (e.g. :sync, :remote) can stay alive independently and aren't always stopped when main process is killed.</string>
+    <string name="triggers_multiproc_explanation">App is running in multiple OS processes. Sub-processes (e.g. :sync, :remote) can stay alive independently and aren\'t always stopped when main process is killed.</string>
 
     <!-- ====================================================== -->
     <!-- Accessibility / IME                                    -->
@@ -836,7 +836,7 @@
     <string name="triggers_device_admin_owner_device">Device Owner</string>
     <string name="triggers_device_admin_owner_profile">Profile Owner</string>
     <string name="triggers_device_admin_active">Active device admin</string>
-    <string name="triggers_device_admin_owner_explanation">App is Device Owner or Profile Owner. Can't be force-stopped or uninstalled by normal means, runs with elevated permissions.</string>
+    <string name="triggers_device_admin_owner_explanation">App is Device Owner or Profile Owner. Can\'t be force-stopped or uninstalled by normal means, runs with elevated permissions.</string>
     <string name="triggers_device_admin_explanation">App is active Device Administrator. Has elevated privileges — protected from force-stop via standard battery restriction mechanisms.</string>
 
     <!-- AppOps -->
@@ -868,7 +868,7 @@
     <string name="triggers_fgs_blocked_detail">FGS blocked when starting from background</string>
     <string name="triggers_fgs_blocked_explanation">Android 12+: attempt to start FGS from background without allowed exemption. Service did not start.</string>
     <string name="triggers_network_bg_blocked_detail">Background network access blocked (Data Saver)</string>
-    <string name="triggers_network_bg_blocked_explanation">User enabled Data Saver or restricted background network. App can't use network in background on mobile data.</string>
+    <string name="triggers_network_bg_blocked_explanation">User enabled Data Saver or restricted background network. App can\'t use network in background on mobile data.</string>
     <string name="triggers_network_bg_allowed_detail">Background network access: explicitly allowed (Data Saver exemption)</string>
     <string name="triggers_network_bg_allowed_explanation">App was whitelisted in Data Saver settings — has unrestricted network access in background.</string>
     <string name="triggers_bg_location_detail">ACCESS_BACKGROUND_LOCATION granted</string>
@@ -882,7 +882,7 @@
     <string name="triggers_receiver_exported_detail">exported=true · Android 13 requires explicit flag</string>
     <string name="triggers_receiver_exported_explanation">Android 13+: dynamically registered receiver with exported=true is accessible to other apps. Can receive broadcasts from any sender.</string>
     <string name="triggers_fgs_boot_blocked_detail">FGS blocked at boot · FGS_BOOT_COMPLETED_RESTRICTIONS</string>
-    <string name="triggers_fgs_boot_blocked_explanation">Android 14+: BOOT_COMPLETED receiver can't start FGS of type MICROPHONE (API 34) or PHONE_CALL (API 35). App is trying to bypass this restriction.</string>
+    <string name="triggers_fgs_boot_blocked_explanation">Android 14+: BOOT_COMPLETED receiver can\'t start FGS of type MICROPHONE (API 34) or PHONE_CALL (API 35). App is trying to bypass this restriction.</string>
     <string name="triggers_fgs_boot_exception_detail">ForegroundServiceStartNotAllowedException at boot</string>
     <string name="triggers_fgs_boot_exception_explanation">Android 15: attempt to start FGS from BOOT_COMPLETED resulted in exception. Service type (dataSync/mediaProcessing/phoneCall) is forbidden from launching at boot.</string>
     <string name="triggers_doze_battery_opt_detail">Battery optimization disabled · RUN_ANY_IN_BACKGROUND=allow</string>
@@ -891,9 +891,9 @@
     <string name="triggers_doze_battery_exempt_explanation">App is in battery manager exemptions list.</string>
     <string name="triggers_bucket_restricted_explanation">RESTRICTED bucket (Android 12+): Jobs and Alarms are completely blocked. On Android 14, even ALLOW_WHILE_IDLE alarms are ignored. App restricted due to excessive background consumption.</string>
     <string name="triggers_bucket_never_explanation">NEVER bucket: background execution entirely disabled by system.</string>
-    <string name="triggers_restricted_confirmed_explanation">Android 12+: system confirmed RESTRICTED bucket via appops. Jobs and Alarms blocked. App can't launch itself independently.</string>
+    <string name="triggers_restricted_confirmed_explanation">Android 12+: system confirmed RESTRICTED bucket via appops. Jobs and Alarms blocked. App can\'t launch itself independently.</string>
     <string name="triggers_doze_state_prefix">Android 11+: device is in Doze mode (%1$s). </string>
-    <string name="triggers_doze_state_suffix">Wakelocks, Network, Jobs, and Alarms (except ALLOW_WHILE_IDLE) are blocked. Apps without Doze exemption can't run in background.</string>
+    <string name="triggers_doze_state_suffix">Wakelocks, Network, Jobs, and Alarms (except ALLOW_WHILE_IDLE) are blocked. Apps without Doze exemption can\'t run in background.</string>
     <string name="triggers_appops_schedule_exact_alarm_explanation">Permission to schedule exact alarm triggers. Android 14: denied by default for new installs. If allowed — app can precisely wake device via timer.</string>
     <string name="triggers_appops_full_screen_intent_explanation">Permission to display notifications over lock screen. Android 14+: allowed only for alarm/call apps. Presence in a third-party app is suspicious.</string>
     <string name="triggers_appops_manage_media_explanation">Management of media sessions of other apps. Associated with mediaProcessing FGS type on Android 15.</string>
