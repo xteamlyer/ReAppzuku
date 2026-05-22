@@ -308,7 +308,7 @@ Evaluated on a 100-point scale based on triggers.
 
 ---
 
-####Trigger types:
+#### Trigger types:
 
 **Actual**
 
