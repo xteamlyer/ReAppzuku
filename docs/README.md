@@ -28,7 +28,7 @@ Root or Shizuku privileges are required.
 * **Manual controls** *(no background service required)*:
   * Main screen: view all active background processes with RAM usage, select and kill in bulk.
   * Quick Tiles: "Stop app" kills current foreground app; "Stop background apps" runs Auto-Kill with your lists.
-  * Home screen widget: one tap runs Auto-Kill and shows current RAM state.
+  * Home screen widget: displays current RAM usage and Auto-Kill statistics for last 12 hours. 
   * App shortcut: long-press app icon to kill current foreground app instantly.
 * **Background restrictions** (Android 11+):
   * Soft mode: blocks auto-start at OS level — app keeps running if you opened it, but won't wake up on its own.
@@ -36,7 +36,7 @@ Root or Shizuku privileges are required.
   * Manual mode: manually select and apply required restrictions to app.
 * **Restriction Scheduler:** set a time window to temporarily lift restrictions, with optional component launch on activation.
 * **Sleep Mode:** full freeze of selected apps after a set inactivity timer (5–60 min), automatic unfreeze on screen unlock.
-* **App Triggers:** deep diagnostic tool analyzing real causes of background activity — foreground services, sticky services, wakelocks, alarms, job scheduler, network connections, boot receivers, and 32 more factors.
+* **App Triggers:** deep diagnostic tool analyzing real causes of background activity — foreground services, sticky services, wakelocks, alarms, job scheduler, network connections, boot receivers, and 54 more factors (Depends on Android version).
 * **Analytics & Logs:**
   * Auto-Kill log for last 12 hours: kills, restarts, freed RAM per app.
   * Top offenders ranking by RAM consumption and restart frequency (12h / 24h / 7d / all time).
