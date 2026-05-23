@@ -476,7 +476,7 @@ public class MainActivity extends BaseActivity {
                     new AlertDialog.Builder(this)
                             .setTitle(getString(R.string.scansystem_dialog_title))
                             .setMessage(getString(R.string.scansystem_no_load))
-                            .setPositiveButton(getString(R.string.dialog_ok), null)
+                            .setPositiveButton(getString(R.string.dialog_close), null)
                             .show();
                     return;
                 }
@@ -491,7 +491,7 @@ public class MainActivity extends BaseActivity {
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.scansystem_dialog_title))
                         .setView(dialogView)
-                        .setPositiveButton(getString(R.string.dialog_ok), null)
+                        .setPositiveButton(getString(R.string.dialog_close), null)
                         .show();
             });
         });
