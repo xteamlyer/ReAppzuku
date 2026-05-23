@@ -87,11 +87,15 @@ public class ScanSystem {
             AppLoad load = new AppLoad(app.getPackageName(), app.getAppName());
 
             for (AppTriggersAnalyzer.TriggerInfo t : triggers) {
+                android.util.Log.d("ScanSystem",
+                        "[" + app.getPackageName() + "] cat='" + t.category + "' detail='" + t.detail + "'");
                 Category cat = resolveCategory(t.category,
                         catWakelock, catNetwork,
                         catFgService, catSticky, catBindings,
                         catAlarms, catWakeups,
                         catSensors, catLocation);
+                android.util.Log.d("ScanSystem",
+                        "  → mapped to: " + cat);
                 if (cat != null) load.findings.add(new Finding(cat, t.detail));
             }
 
