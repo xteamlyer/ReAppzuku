@@ -604,7 +604,6 @@ public class AppTriggerAnalyzersExt {
         int alarmW=0, jobW=0, gcmW=0, bcastW=0;
         List<String> alarmTags = new ArrayList<>();
 
-
         Pattern ap = Pattern.compile(
                 "Wakeup alarm\\s+([\\w./]+):\\s*(\\d+)\\s+times", Pattern.CASE_INSENSITIVE);
         Pattern jp = Pattern.compile(
@@ -613,8 +612,21 @@ public class AppTriggerAnalyzersExt {
                 "(?:GCM|FCM|push).*?wakeup.*?:\\s*(\\d+)",        Pattern.CASE_INSENSITIVE);
         Pattern bp = Pattern.compile(
                 "Broadcast\\s+\\S+.*?\\((\\d+)\\s+times\\)",      Pattern.CASE_INSENSITIVE);
+        Pattern pkgSectionPat = Pattern.compile(
+                "^\\s{2}(?:u\\d+[a-z]\\d+|Package)\\s+" + Pattern.quote(packageName));
+
+        boolean inPkgSection = false;
 
         for (String line : output.split("\n")) {
+            if (pkgSectionPat.matcher(line).find()) {
+                inPkgSection = true;
+                continue;
+            }
+            if (inPkgSection && line.matches("^\\s{2}(?:u\\d+[a-z]\\d+|Package)\\s+\\S+.*")) {
+                break;
+            }
+            if (!inPkgSection && !line.contains(packageName)) continue;
+
             try {
                 Matcher m;
                 if ((m=ap.matcher(line)).find()) {
@@ -622,7 +634,6 @@ public class AppTriggerAnalyzersExt {
                     alarmW += cnt;
                     if (alarmTags.size() < 3) {
                         String tag = m.group(1);
-
                         if (tag.contains("/")) tag = tag.substring(tag.indexOf('/') + 1);
                         if (tag.startsWith(".")) tag = tag.substring(1);
                         if (tag.startsWith(packageName + ".")) tag = tag.substring(packageName.length() + 1);
