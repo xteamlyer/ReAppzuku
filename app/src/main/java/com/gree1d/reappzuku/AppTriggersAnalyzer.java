@@ -1822,9 +1822,12 @@ public class AppTriggersAnalyzer {
                     "dumpsys batterystats --history");
             if (history == null || history.trim().isEmpty()) return;
 
-            Pattern eventPat = Pattern.compile(
+            Pattern wakePat = Pattern.compile(
                     "\\+(\\d+)h(\\d+)m(\\d+)s(?:(\\d+)ms)?\\s.*?([+-])wake_lock[^=]*=\\S*"
                     + Pattern.quote(packageName) + "\\S*");
+            Pattern procPat = Pattern.compile(
+                    "\\+(\\d+)h(\\d+)m(\\d+)s(?:(\\d+)ms)?\\s.*?(?:Died|proc).*?"
+                    + Pattern.quote(packageName));
             Pattern timePat = Pattern.compile("RESET:TIME:\\s*(\\d+)");
 
             long baseUnixMs = 0;
@@ -1837,23 +1840,36 @@ public class AppTriggersAnalyzer {
                 baseOffsetMs = parseHistoryOffset(line);
             }
 
+            List<Long> deathOffsets = new ArrayList<>();
+            for (String line : history.split("\n")) {
+                Matcher mp = procPat.matcher(line);
+                if (mp.find()) deathOffsets.add(parseHistoryOffset(line));
+            }
+
             List<long[]> pairs = new ArrayList<>();
             long pendingAcquire = -1;
 
             for (String line : history.split("\n")) {
-                Matcher me = eventPat.matcher(line);
+                Matcher me = wakePat.matcher(line);
                 if (!me.find()) continue;
                 long offsetMs = parseHistoryOffset(line);
                 char sign = me.group(5).charAt(0);
                 if (sign == '+') {
                     pendingAcquire = offsetMs;
                 } else if (sign == '-' && pendingAcquire >= 0) {
-                    pairs.add(new long[]{pendingAcquire, offsetMs});
+                    pairs.add(new long[]{pendingAcquire, offsetMs, 0});
                     pendingAcquire = -1;
                 }
             }
             if (pendingAcquire >= 0) {
-                pairs.add(new long[]{pendingAcquire, -1});
+                long deathOffset = -1;
+                for (long d : deathOffsets) {
+                    if (d >= pendingAcquire) {
+                        deathOffset = d;
+                        break;
+                    }
+                }
+                pairs.add(new long[]{pendingAcquire, deathOffset, deathOffset >= 0 ? 1 : -1});
             }
 
             if (pairs.isEmpty()) return;
@@ -1868,8 +1884,14 @@ public class AppTriggersAnalyzer {
             for (long[] pair : last5) {
                 long acqUnix = baseUnixMs + pair[0] - baseOffsetMs;
                 String acqTime = sdf.format(new java.util.Date(acqUnix));
-                if (pair[1] < 0) {
-                    sb.append(acqTime).append(" → now\n");
+                if (pair[2] == 1) {
+                    long relUnix = baseUnixMs + pair[1] - baseOffsetMs;
+                    String relTime = sdf.format(new java.util.Date(relUnix));
+                    long durMs = pair[1] - pair[0];
+                    sb.append(acqTime).append(" → ").append(relTime)
+                      .append("  (").append(formatDuration(durMs)).append(") released by system\n");
+                } else if (pair[2] == -1) {
+                    sb.append(acqTime).append(" → ?\n");
                 } else {
                     long relUnix = baseUnixMs + pair[1] - baseOffsetMs;
                     String relTime = sdf.format(new java.util.Date(relUnix));
