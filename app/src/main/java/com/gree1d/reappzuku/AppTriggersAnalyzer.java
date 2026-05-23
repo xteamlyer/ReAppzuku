@@ -987,7 +987,7 @@ public class AppTriggersAnalyzer {
         }
 
         boolean activeNow = list.stream().anyMatch(
-                t -> t.getGroup() == TriggerInfo.Group.ACTIVE_NOW);
+                t -> t.group() == TriggerInfo.Group.ACTIVE_NOW);
         appendWakelockHistory(list, packageName, activeNow);
 
         return list;
