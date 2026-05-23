@@ -904,7 +904,8 @@
     <string name="trigger_exact_alarm_label">%1$s granted (Android 12+)</string>
     <string name="trigger_exact_alarm_desc_use">Android 12+: app holds permission for exact alarm triggers regardless of App Standby bucket. USE_EXACT_ALARM is granted only to system/privileged apps.</string>
     <string name="trigger_exact_alarm_desc_schedule">Android 12+: app holds permission for exact alarm triggers regardless of App Standby bucket. SCHEDULE_EXACT_ALARM requires explicit user approval.</string>
-    
+
+    <!-- App Status + Aggression Score -->
     <string name="triggers_status_label_prefix">App status:</string>
     <string name="triggers_status_active">Active</string>
     <string name="triggers_status_background">Background</string>
@@ -920,5 +921,19 @@
     <string name="update_up_to_date">Latest version (%s)</string>
     <string name="update_check_failed">Update check failed</string>
     <string name="easter_egg_hunter">🐱 Easter Egg Hunter!</string>
-
+    
+    <!-- Scan System -->
+    <string name="scansystem_menu_title">Сканировать</string>
+    <string name="scansystem_dialog_title">Системная нагрузка</string>
+    <string name="scansystem_scanning">Сканирование…</string>
+    <string name="scansystem_no_load">Нет приложений с активной нагрузкой</string>    
+    <string name="scansystem_reason_wakelock">Удерживает CPU (wakelock)</string>
+    <string name="scansystem_reason_network">Активная сетевая активность</string>
+    <string name="scansystem_reason_fgs">Foreground Service</string>
+    <string name="scansystem_reason_fgs_typed">Foreground Service (тип %1$s)</string>
+    <string name="scansystem_reason_alarm">Wakeup-будильники: %1$d срабатываний</string>
+    <string name="scansystem_reason_sensor">Активный датчик</string>
+    <string name="scansystem_reason_location">Запросы геолокации</string>
+    <string name="scansystem_reason_location_provider">Геолокация: %1$s</string>
+    
 </resources>
