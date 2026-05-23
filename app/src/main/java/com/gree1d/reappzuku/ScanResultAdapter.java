@@ -13,18 +13,23 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.ViewHolder> {
 
     private final Context                  context;
     private final List<ScanSystem.AppLoad> items;
     private final PackageManager           pm;
+    private final float                    dp;
 
     public ScanResultAdapter(Context context, List<ScanSystem.AppLoad> items) {
         this.context = context;
         this.items   = items;
         this.pm      = context.getPackageManager();
+        this.dp      = context.getResources().getDisplayMetrics().density;
     }
 
     @NonNull
@@ -39,7 +44,7 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ScanSystem.AppLoad load = items.get(position);
 
-        boolean expanded = holder.reasonsContainer.getVisibility() == View.VISIBLE;
+        boolean expanded = holder.findingsContainer.getVisibility() == View.VISIBLE;
         holder.appName.setText((expanded ? "▼ " : "▶ ") + load.appName);
 
         try {
@@ -49,29 +54,73 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
             holder.appIcon.setImageResource(android.R.drawable.sym_def_app_icon);
         }
 
-        holder.reasonsContainer.removeAllViews();
-        for (String reason : load.reasons) {
-            TextView tv = new TextView(context);
-            tv.setText("• " + reason);
-            tv.setTextAppearance(context, android.R.style.TextAppearance_Small);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            lp.topMargin = (int) (2 * context.getResources().getDisplayMetrics().density);
-            tv.setLayoutParams(lp);
-            holder.reasonsContainer.addView(tv);
-        }
+        holder.findingsContainer.removeAllViews();
+        buildFindingsView(holder.findingsContainer, load.findings);
 
         holder.header.setOnClickListener(v -> {
-            boolean isExpanded = holder.reasonsContainer.getVisibility() == View.VISIBLE;
+            boolean isExpanded = holder.findingsContainer.getVisibility() == View.VISIBLE;
             if (isExpanded) {
-                holder.reasonsContainer.setVisibility(View.GONE);
+                holder.findingsContainer.setVisibility(View.GONE);
                 holder.appName.setText("▶ " + load.appName);
             } else {
-                holder.reasonsContainer.setVisibility(View.VISIBLE);
+                holder.findingsContainer.setVisibility(View.VISIBLE);
                 holder.appName.setText("▼ " + load.appName);
             }
         });
+    }
+
+    private void buildFindingsView(LinearLayout container, List<ScanSystem.Finding> findings) {
+        Map<ScanSystem.Category, List<String>> grouped = new LinkedHashMap<>();
+        for (ScanSystem.Finding f : findings) {
+            if (!grouped.containsKey(f.category)) grouped.put(f.category, new ArrayList<>());
+            grouped.get(f.category).add(f.detail);
+        }
+
+        for (Map.Entry<ScanSystem.Category, List<String>> entry : grouped.entrySet()) {
+            TextView title = new TextView(context);
+            title.setText(categoryTitle(entry.getKey()));
+            title.setTextSize(13f);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            titleLp.topMargin    = (int) (8 * dp);
+            titleLp.bottomMargin = (int) (2 * dp);
+            title.setLayoutParams(titleLp);
+            container.addView(title);
+
+            for (String detail : entry.getValue()) {
+                TextView sub = new TextView(context);
+                sub.setText(detail);
+                sub.setTextSize(12f);
+                int secondaryColor = resolveTextColorSecondary();
+                sub.setTextColor(secondaryColor);
+                LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                subLp.topMargin = (int) (1 * dp);
+                sub.setLayoutParams(subLp);
+                container.addView(sub);
+            }
+        }
+    }
+
+    private String categoryTitle(ScanSystem.Category cat) {
+        switch (cat) {
+            case WAKELOCK: return context.getString(R.string.scansystem_cat_wakelock);
+            case NETWORK:  return context.getString(R.string.scansystem_cat_network);
+            case FGS:      return context.getString(R.string.scansystem_cat_fgs);
+            case ALARM:    return context.getString(R.string.scansystem_cat_alarm);
+            case SENSOR:   return context.getString(R.string.scansystem_cat_sensor);
+            case LOCATION: return context.getString(R.string.scansystem_cat_location);
+            default:       return cat.name();
+        }
+    }
+
+    private int resolveTextColorSecondary() {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        context.getTheme().resolveAttribute(android.R.attr.textColorSecondary, tv, true);
+        return tv.data;
     }
 
     @Override
@@ -83,14 +132,14 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
         final LinearLayout header;
         final ImageView    appIcon;
         final TextView     appName;
-        final LinearLayout reasonsContainer;
+        final LinearLayout findingsContainer;
 
         ViewHolder(View itemView) {
             super(itemView);
-            header           = itemView.findViewById(R.id.scan_app_header);
-            appIcon          = itemView.findViewById(R.id.scan_app_icon);
-            appName          = itemView.findViewById(R.id.scan_app_name);
-            reasonsContainer = itemView.findViewById(R.id.scan_reasons_container);
+            header            = itemView.findViewById(R.id.scan_app_header);
+            appIcon           = itemView.findViewById(R.id.scan_app_icon);
+            appName           = itemView.findViewById(R.id.scan_app_name);
+            findingsContainer = itemView.findViewById(R.id.scan_reasons_container);
         }
     }
 }
