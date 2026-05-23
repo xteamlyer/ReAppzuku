@@ -74,19 +74,32 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
             grouped.get(f.category).add(f.detail);
         }
 
-        LayoutInflater inflater = LayoutInflater.from(container.getContext());
+        Context ctx = container.getContext();
+        float   dp  = ctx.getResources().getDisplayMetrics().density;
 
         for (Map.Entry<ScanSystem.Category, List<String>> entry : grouped.entrySet()) {
-            TextView title = (TextView) inflater.inflate(
-                    R.layout.item_scan_category_title, container, false);
+            TextView title = new TextView(ctx);
             title.setText(categoryTitle(entry.getKey()));
+            title.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            titleLp.topMargin    = (int) (8 * dp);
+            titleLp.bottomMargin = (int) (2 * dp);
+            title.setLayoutParams(titleLp);
             container.addView(title);
 
             for (String detail : entry.getValue()) {
                 if (detail == null || detail.trim().isEmpty()) continue;
-                TextView sub = (TextView) inflater.inflate(
-                        R.layout.item_scan_category_detail, container, false);
+                TextView sub = new TextView(ctx);
                 sub.setText(detail);
+                sub.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+                LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                subLp.topMargin = (int) (2 * dp);
+                sub.setLayoutParams(subLp);
                 container.addView(sub);
             }
         }
