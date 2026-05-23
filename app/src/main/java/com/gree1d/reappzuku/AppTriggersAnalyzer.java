@@ -986,7 +986,9 @@ public class AppTriggersAnalyzer {
             list.addAll(analyzeKernelWakelocksFallback(packageName));
         }
 
-        appendWakelockHistory(list, packageName);
+        boolean activeNow = list.stream().anyMatch(
+                t -> t.getGroup() == TriggerInfo.Group.ACTIVE_NOW);
+        appendWakelockHistory(list, packageName, activeNow);
 
         return list;
     }
@@ -1816,7 +1818,7 @@ public class AppTriggersAnalyzer {
         return list;
     }
 
-    private void appendWakelockHistory(List<TriggerInfo> list, String packageName) {
+    private void appendWakelockHistory(List<TriggerInfo> list, String packageName, boolean activeNow) {
         try {
             String history = shellManager.runShellCommandAndGetFullOutput(
                     "dumpsys batterystats --history");
@@ -1864,15 +1866,20 @@ public class AppTriggersAnalyzer {
             if (pendingAcquire >= 0) {
                 long deathOffset = -1;
                 for (long d : deathOffsets) {
-                    if (d >= pendingAcquire) {
-                        deathOffset = d;
-                        break;
-                    }
+                    if (d >= pendingAcquire) { deathOffset = d; break; }
                 }
                 pairs.add(new long[]{pendingAcquire, deathOffset, deathOffset >= 0 ? 1 : -1});
             }
 
-            if (pairs.isEmpty()) return;
+            boolean historyHasOpen = pairs.stream().anyMatch(p -> p[2] == -1);
+            String syntheticLine = null;
+            if (activeNow && !historyHasOpen) {
+                java.text.SimpleDateFormat nowSdf = new java.text.SimpleDateFormat(
+                        "HH:mm:ss", java.util.Locale.getDefault());
+                syntheticLine = nowSdf.format(new java.util.Date()) + " → now  (active, confirmed by AppOps)";
+            }
+
+            if (pairs.isEmpty() && syntheticLine == null) return;
 
             int from = Math.max(0, pairs.size() - 5);
             List<long[]> last5 = pairs.subList(from, pairs.size());
@@ -1900,6 +1907,8 @@ public class AppTriggersAnalyzer {
                       .append("  (").append(formatDuration(durMs)).append(")\n");
                 }
             }
+
+            if (syntheticLine != null) sb.append(syntheticLine).append("\n");
 
             String detail = sb.toString().trim();
             if (detail.isEmpty()) return;
