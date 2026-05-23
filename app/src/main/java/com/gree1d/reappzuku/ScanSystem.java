@@ -187,7 +187,7 @@ public class ScanSystem {
             if (rxBytes + txBytes < 10 * 1024) continue;
 
             entry.getValue().findings.add(new Finding(Category.NETWORK,
-                    "RX " + formatBytes(rxBytes) + " / TX " + formatBytes(txBytes)));
+                    "↓ " + formatBytes(rxBytes) + " / ↑ " + formatBytes(txBytes)));
         }
     }
 
@@ -267,7 +267,7 @@ public class ScanSystem {
             if (fgType != null && !"NONE".equals(fgType)) detail.append(" [").append(fgType).append("]");
             if (chan    != null) detail.append(" · ch:").append(chan);
             if (imp     != null) detail.append(" · notif:").append(imp);
-            detail.append(" · ").append(killable ? "можно убить" : "protected");
+            detail.append(" · ").append(killable ? "can stop" : "protected");
             load.findings.add(new Finding(Category.FGS, detail.toString()));
         } else if (isSticky) {
             load.findings.add(new Finding(Category.FGS,
@@ -483,7 +483,7 @@ public class ScanSystem {
             StringBuilder detail = new StringBuilder(reqCount + " request" + (reqCount > 1 ? "s" : ""));
             if (bestAcc != null) detail.append(" · ").append(bestAcc);
             detail.append(" · ").append(hasFg && hasBg ? "fg+bg" : hasFg ? "foreground" : "background");
-            if (minIvMs != Long.MAX_VALUE) detail.append(", каждые ").append(formatInterval(minIvMs));
+            if (minIvMs != Long.MAX_VALUE) detail.append(", every ").append(formatInterval(minIvMs));
             if (activeGps > 0) detail.append(" · GPS ").append(formatDuration(activeGps));
 
             entry.getValue().findings.add(new Finding(Category.LOCATION, detail.toString()));
@@ -637,7 +637,7 @@ public class ScanSystem {
                     java.text.SimpleDateFormat nowSdf = new java.text.SimpleDateFormat(
                             "HH:mm:ss", java.util.Locale.getDefault());
                     syntheticLine = nowSdf.format(new java.util.Date())
-                            + " → now  (active, not in history buffer)";
+                            + " → now  (active, confirmed by AppOps)";
                 }
                 if (pairs.isEmpty() && syntheticLine == null) continue;
 
