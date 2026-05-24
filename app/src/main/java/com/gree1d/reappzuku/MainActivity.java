@@ -1170,7 +1170,7 @@ public class MainActivity extends BaseActivity {
         if (selectionActive) {
             trigger.setIcon(R.drawable.ic_unselect_all);
         } else {
-            trigger.setIcon(R.drawable.ic_menu_more);
+            trigger.setIcon(android.R.drawable.ic_menu_more);
         }
         if (trigger.getIcon() != null) trigger.getIcon().setTint(iconColor);
     }
