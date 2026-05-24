@@ -72,7 +72,6 @@ public class MainActivity extends BaseActivity {
     private MenuItem selectAllMenuItem;
     private MenuItem scanMenuItem;
     private QuarterCircleMenu quarterCircleMenu;
-    private SearchView searchView;
     private View quarterCircleOverlay;
     private android.widget.FrameLayout quarterCircleContainer;
     private boolean quarterMenuOpen = false;
@@ -933,11 +932,41 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+
+        applyToolbarIconTint(menu);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        if (searchItem != null) {
+            SearchView searchView = (SearchView) searchItem.getActionView();
+            searchView.setQueryHint(getString(R.string.main_search_hint));
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    filterApps(query);
+                    return true;
+                }
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    filterApps(newText);
+                    return true;
+                }
+            });
+        }
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_quarter_trigger) {
+            if (selectionActive) {
+                unselectAll();
+            } else {
+                if (quarterMenuOpen) hideQuarterMenu(); else showQuarterMenu();
+            }
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -1031,6 +1060,10 @@ public class MainActivity extends BaseActivity {
         } else {
             color = isLightAccent() ? Color.BLACK : Color.WHITE;
         }
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            if (item.getIcon() != null) item.getIcon().setTint(color);
+        }
         binding.toolbar.setTitleTextColor(color);
     }
     private void setupQuarterCircleMenu() {
@@ -1073,12 +1106,9 @@ public class MainActivity extends BaseActivity {
                     if (hasSelection) unselectAll(); else selectAll();
                     break;
                 case 3:
-                    if (searchView != null) {
-                        binding.toolbar.setTitle("");
-                        searchView.setVisibility(View.VISIBLE);
-                        searchView.requestFocus();
-                        searchView.setIconified(false);
-                    }
+                    MenuItem searchItem = binding.toolbar.getMenu() != null
+                            ? binding.toolbar.getMenu().findItem(R.id.action_search) : null;
+                    if (searchItem != null) searchItem.expandActionView();
                     break;
             }
         });
@@ -1111,19 +1141,8 @@ public class MainActivity extends BaseActivity {
         getWindowManager().addView(rootFrame, wlp);
         quarterCircleContainer = rootFrame;
 
-        binding.toolbar.post(this::setupTriggerButton);
     }
 
-    private void setupTriggerButton() {
-        searchView = new SearchView(this);
-        searchView.setQueryHint(getString(R.string.main_search_hint));
-        searchView.setVisibility(View.GONE);
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                filterApps(query);
-                return true;
-            }
             @Override
             public boolean onQueryTextChange(String newText) {
                 filterApps(newText);
@@ -1141,6 +1160,7 @@ public class MainActivity extends BaseActivity {
         binding.toolbar.addView(searchView, slp);
 
         android.widget.ImageButton trigger = binding.toolbar.findViewById(R.id.action_quarter_trigger);
+        android.util.Log.d("QCMenu", "setupTriggerButton trigger=" + trigger);
         if (trigger == null) return;
         trigger.setOnClickListener(v -> {
             if (selectionActive) {
@@ -1166,21 +1186,22 @@ public class MainActivity extends BaseActivity {
 
     private void updateQuarterMenuTrigger() {
         if (binding == null || binding.toolbar == null) return;
-        View trigger = binding.toolbar.findViewById(R.id.action_quarter_trigger);
-        if (!(trigger instanceof android.widget.ImageButton)) return;
-        android.widget.ImageButton btn = (android.widget.ImageButton) trigger;
-        if (selectionActive) {
-            btn.setImageResource(R.drawable.ic_unselect_all);
-        } else {
-            btn.setImageResource(android.R.drawable.ic_menu_more);
-        }
+        Menu menu = binding.toolbar.getMenu();
+        if (menu == null) return;
+        MenuItem trigger = menu.findItem(R.id.action_quarter_trigger);
+        if (trigger == null) return;
         int iconColor = isLightAccent() ? Color.BLACK : Color.WHITE;
         int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
         if (accent == ACCENT_CUSTOM) {
             iconColor = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE) == ACCENT_ON_BLACK
                     ? Color.BLACK : Color.WHITE;
         }
-        btn.setColorFilter(iconColor);
+        if (selectionActive) {
+            trigger.setIcon(R.drawable.ic_unselect_all);
+        } else {
+            trigger.setIcon(R.drawable.ic_menu_more);
+        }
+        if (trigger.getIcon() != null) trigger.getIcon().setTint(iconColor);
     }
 
 
