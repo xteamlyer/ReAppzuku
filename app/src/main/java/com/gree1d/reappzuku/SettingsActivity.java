@@ -1386,6 +1386,7 @@ public class SettingsActivity extends BaseActivity {
         android.widget.RadioGroup rgAction = dialogView.findViewById(R.id.scheduler_rg_action);
         LinearLayout componentContainer   = dialogView.findViewById(R.id.scheduler_component_container);
         TextView btnComponent             = dialogView.findViewById(R.id.scheduler_btn_component);
+        CheckBox cbSetBucket              = dialogView.findViewById(R.id.scheduler_cb_set_bucket_active);
 
 
         boolean hadLaunch = onActivateAction[0] != RestrictionsScheduler.ON_ACTIVATE_NOTHING
@@ -1395,6 +1396,7 @@ public class SettingsActivity extends BaseActivity {
         btnComponent.setText(selectedComponent[0] != null
                 ? shortComponentName(selectedComponent[0])
                 : getString(R.string.scheduler_component_not_selected));
+        cbSetBucket.setChecked(src != null && src.setBucketActive);
 
         rgAction.setOnCheckedChangeListener((rg, id) -> {
             if (id == R.id.scheduler_rb_launch) {
@@ -1435,6 +1437,7 @@ public class SettingsActivity extends BaseActivity {
             cbAutoKill.setButtonTintList(tint);
             cbBg.setButtonTintList(tint);
             cbSleep.setButtonTintList(tint);
+            cbSetBucket.setButtonTintList(tint);
             for (int i = 0; i < rgAction.getChildCount(); i++) {
                 android.view.View child = rgAction.getChildAt(i);
                 if (child instanceof android.widget.RadioButton)
@@ -1471,6 +1474,7 @@ public class SettingsActivity extends BaseActivity {
             e.onActivateAction = onActivateAction[0];
             e.componentName    = (onActivateAction[0] != RestrictionsScheduler.ON_ACTIVATE_NOTHING)
                     ? selectedComponent[0] : null;
+            e.setBucketActive  = cbSetBucket.isChecked();
             e.enabled          = true;
 
             boolean ok = (src != null) ? scheduler.updateSchedule(e) : scheduler.addSchedule(e);
@@ -1600,6 +1604,7 @@ public class SettingsActivity extends BaseActivity {
         dst.endMinute        = src.endMinute;
         dst.protectFlags     = src.protectFlags;
         dst.onActivateAction = src.onActivateAction;
+        dst.setBucketActive  = src.setBucketActive;
         dst.enabled          = src.enabled;
         return dst;
     }

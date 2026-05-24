@@ -82,11 +82,14 @@ public class RestrictionsScheduler {
 
         public boolean enabled;
 
+        public boolean setBucketActive;
+
         public ScheduleEntry() {
             this.id               = System.currentTimeMillis();
             this.protectFlags     = PROTECT_ALL;
             this.onActivateAction = ON_ACTIVATE_NOTHING;
             this.enabled          = true;
+            this.setBucketActive  = false;
         }
 
 
@@ -134,6 +137,7 @@ public class RestrictionsScheduler {
             obj.put("onActivate",     onActivateAction);
             obj.put("componentName",  componentName != null ? componentName : "");
             obj.put("enabled",        enabled);
+            obj.put("setBucketActive", setBucketActive);
             return obj;
         }
 
@@ -150,6 +154,7 @@ public class RestrictionsScheduler {
             String comp        = obj.optString("componentName", "");
             e.componentName    = comp.isEmpty() ? null : comp;
             e.enabled          = obj.optBoolean("enabled", true);
+            e.setBucketActive  = obj.optBoolean("setBucketActive", false);
             return e;
         }
     }
@@ -541,6 +546,10 @@ public class RestrictionsScheduler {
 
                     handler.postDelayed(() -> launchComponent(component, action), 500);
                 }
+
+                if (entry.setBucketActive) {
+                    setAppBucketActive(pkg);
+                }
             }
 
 
@@ -569,6 +578,16 @@ public class RestrictionsScheduler {
         });
     }
 
+
+    private void setAppBucketActive(String packageName) {
+        try {
+            String cmd = "am set-standby-bucket " + packageName + " active";
+            shellManager.runShellCommandForResult(cmd);
+            Log.d(TAG, "setAppBucketActive: " + packageName);
+        } catch (Exception e) {
+            Log.w(TAG, "setAppBucketActive failed for " + packageName, e);
+        }
+    }
 
     private void stopApp(String packageName, boolean forceStop) {
         String cmd = (forceStop ? "am force-stop " : "am kill ") + packageName;
