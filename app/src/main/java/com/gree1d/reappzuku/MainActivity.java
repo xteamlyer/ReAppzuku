@@ -929,6 +929,17 @@ public class MainActivity extends BaseActivity {
         item.getIcon().setTint(isLightAccent() ? android.graphics.Color.BLACK : android.graphics.Color.WHITE);
     }
 
+    private boolean triggerSetupDone = false;
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (!triggerSetupDone) {
+            setupTriggerButton();
+            triggerSetupDone = true;
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
@@ -1122,7 +1133,6 @@ public class MainActivity extends BaseActivity {
         quarterCircleMenu.setVisibility(View.GONE);
         decorView.addView(quarterCircleMenu, menuLp);
 
-        setupTriggerButton();
     }
 
     private void setupTriggerButton() {
