@@ -6,6 +6,7 @@ import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,7 @@ public class ScanSystem {
         Future<Void> fHistory   = pool.submit(() -> { scanWakelockHistory(map);      return null; });
 
         pool.shutdown();
-        for (Future<Void> f : new Future[]{fWakelocks, fNetwork, fServices, fAlarms, fSensors, fLocation, fHistory}) {
+        for (Future<Void> f : Arrays.asList(fWakelocks, fNetwork, fServices, fAlarms, fSensors, fLocation, fHistory)) {
             try { f.get(); } catch (Exception e) { Log.w(TAG, "scan task failed: " + e.getMessage()); }
         }
 
