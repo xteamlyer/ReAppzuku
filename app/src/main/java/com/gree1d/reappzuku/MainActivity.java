@@ -464,7 +464,7 @@ public class MainActivity extends BaseActivity {
 
         List<AppModel> snapshot = fullAppsList.stream()
                 .filter(app -> !app.isProtected())
-                .filter(app -> !app.isPersistent())
+                .filter(app -> !app.isPersistentApp())
                 .filter(app -> !app.isWhitelisted())
                 .filter(app -> !app.getPackageName().equals(getPackageName()))
                 .collect(Collectors.toList());
