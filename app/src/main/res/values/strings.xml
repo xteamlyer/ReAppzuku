@@ -351,6 +351,7 @@
     <string name="scheduler_action_launch_main">Launch %s</string>
     <string name="scheduler_component_picker_title">Select component</string>
     <string name="scheduler_component_none_found">No exported components</string>
+    <string name="scheduler_set_bucket_active">Set Bucket: Active</string>
 
     <!-- ── System apps warning dialog ── -->
     <string name="settings_system_apps_warning_title">⚠️ Warning: system apps</string>
@@ -923,15 +924,15 @@
     <string name="easter_egg_hunter">🐱 Easter Egg Hunter!</string>
     
     <!-- Scan System -->
-    <string name="scansystem_menu_title">Сканировать</string>
-    <string name="scansystem_dialog_title">Системная нагрузка</string>
-    <string name="scansystem_scanning">Сканирование…</string>
-    <string name="scansystem_no_load">Нет приложений с активной нагрузкой</string>    
-    <string name="scansystem_cat_wakelock">Удерживает CPU</string>
-    <string name="scansystem_cat_network">Удерживает сеть</string>
+    <string name="scansystem_menu_title">Scan</string>
+    <string name="scansystem_dialog_title">Current Load</string>
+    <string name="scansystem_scanning">Scanning…</string>
+    <string name="scansystem_no_load">No apps with active load</string>
+    <string name="scansystem_cat_wakelock">Keeping CPU awake</string>
+    <string name="scansystem_cat_network">Holding network</string>
     <string name="scansystem_cat_fgs">Foreground Service</string>
-    <string name="scansystem_cat_alarm">Будит устройство</string>
-    <string name="scansystem_cat_sensor">Держит датчики</string>
-    <string name="scansystem_cat_location">Держит геолокацию</string>
+    <string name="scansystem_cat_alarm">Waking the device</string>
+    <string name="scansystem_cat_sensor">Holding sensors</string>
+    <string name="scansystem_cat_location">Holding location</string>
     <string name="scansystem_wakelock_history">WakeLock History</string>
 </resources>
