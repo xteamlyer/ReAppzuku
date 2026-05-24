@@ -929,17 +929,6 @@ public class MainActivity extends BaseActivity {
         item.getIcon().setTint(isLightAccent() ? android.graphics.Color.BLACK : android.graphics.Color.WHITE);
     }
 
-    private boolean triggerSetupDone = false;
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        if (!triggerSetupDone) {
-            setupTriggerButton();
-            triggerSetupDone = true;
-        }
-        return super.onPrepareOptionsMenu(menu);
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
@@ -1128,12 +1117,15 @@ public class MainActivity extends BaseActivity {
         quarterCircleMenu.setVisibility(View.GONE);
         coordinator.addView(quarterCircleMenu, menuLp);
 
+        binding.toolbar.post(this::setupTriggerButton);
     }
 
     private void setupTriggerButton() {
         android.widget.ImageButton trigger = binding.toolbar.findViewById(R.id.action_quarter_trigger);
+        android.util.Log.d("QCMenu", "setupTriggerButton: trigger=" + trigger);
         if (trigger == null) return;
         trigger.setOnClickListener(v -> {
+            android.util.Log.d("QCMenu", "trigger clicked, selectionActive=" + selectionActive + " quarterMenuOpen=" + quarterMenuOpen);
             if (selectionActive) {
                 unselectAll();
             } else {
@@ -1145,6 +1137,7 @@ public class MainActivity extends BaseActivity {
 
     private void showQuarterMenu() {
         quarterMenuOpen = true;
+        android.util.Log.d("QCMenu", "showQuarterMenu: overlay=" + quarterCircleOverlay + " menu=" + quarterCircleMenu);
         quarterCircleOverlay.setVisibility(View.VISIBLE);
         quarterCircleMenu.setVisibility(View.VISIBLE);
     }
