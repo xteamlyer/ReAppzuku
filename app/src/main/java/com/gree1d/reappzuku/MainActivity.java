@@ -1126,9 +1126,9 @@ public class MainActivity extends BaseActivity {
     private void setupToolbarButtons() {
         int color = getToolbarIconColor();
 
-        android.widget.ImageButton btnSearch = binding.toolbar.findViewById(R.id.btn_search);
-        android.widget.ImageButton btnTrigger = binding.toolbar.findViewById(R.id.btn_menu_trigger);
-        androidx.appcompat.widget.SearchView searchView = binding.toolbar.findViewById(R.id.toolbar_search);
+        android.widget.ImageButton btnSearch = binding.getRoot().findViewById(R.id.btn_search);
+        android.widget.ImageButton btnTrigger = binding.getRoot().findViewById(R.id.btn_menu_trigger);
+        androidx.appcompat.widget.SearchView searchView = binding.getRoot().findViewById(R.id.toolbar_search);
 
         if (btnSearch != null) {
             btnSearch.setColorFilter(color);
@@ -1162,9 +1162,9 @@ public class MainActivity extends BaseActivity {
             });
             searchView.setOnCloseListener(() -> {
                 searchView.setVisibility(View.GONE);
-                binding.toolbar.findViewById(R.id.btn_search).setVisibility(View.VISIBLE);
-                binding.toolbar.findViewById(R.id.btn_menu_trigger).setVisibility(View.VISIBLE);
-                android.widget.TextView title = binding.toolbar.findViewById(R.id.toolbar_title);
+                binding.getRoot().findViewById(R.id.btn_search).setVisibility(View.VISIBLE);
+                binding.getRoot().findViewById(R.id.btn_menu_trigger).setVisibility(View.VISIBLE);
+                android.widget.TextView title = binding.getRoot().findViewById(R.id.toolbar_title);
                 if (title != null) title.setVisibility(View.VISIBLE);
                 return false;
             });
@@ -1172,10 +1172,10 @@ public class MainActivity extends BaseActivity {
     }
 
     private void openSearch() {
-        androidx.appcompat.widget.SearchView searchView = binding.toolbar.findViewById(R.id.toolbar_search);
-        android.widget.ImageButton btnSearch = binding.toolbar.findViewById(R.id.btn_search);
-        android.widget.ImageButton btnTrigger = binding.toolbar.findViewById(R.id.btn_menu_trigger);
-        android.widget.TextView title = binding.toolbar.findViewById(R.id.toolbar_title);
+        androidx.appcompat.widget.SearchView searchView = binding.getRoot().findViewById(R.id.toolbar_search);
+        android.widget.ImageButton btnSearch = binding.getRoot().findViewById(R.id.btn_search);
+        android.widget.ImageButton btnTrigger = binding.getRoot().findViewById(R.id.btn_menu_trigger);
+        android.widget.TextView title = binding.getRoot().findViewById(R.id.toolbar_title);
         if (searchView != null) {
             if (title != null) title.setVisibility(View.GONE);
             if (btnSearch != null) btnSearch.setVisibility(View.GONE);
@@ -1187,7 +1187,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void updateTriggerIcon() {
-        android.widget.ImageButton btnTrigger = binding.toolbar.findViewById(R.id.btn_menu_trigger);
+        android.widget.ImageButton btnTrigger = binding.getRoot().findViewById(R.id.btn_menu_trigger);
         if (btnTrigger == null) return;
         btnTrigger.setImageResource(selectionActive ? R.drawable.ic_unselect_all : R.drawable.ic_select_all);
         btnTrigger.setColorFilter(getToolbarIconColor());
