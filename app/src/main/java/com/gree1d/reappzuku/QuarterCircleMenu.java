@@ -18,7 +18,7 @@ public class QuarterCircleMenu extends View {
     }
 
     private static final int   SEGMENT_COUNT = 4;
-    private static final float START_ANGLE   = 180f;
+    private static final float START_ANGLE   = 90f;
     private static final float SWEEP_ANGLE   = 90f;
 
     private final Paint   segmentPaint   = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -108,7 +108,7 @@ public class QuarterCircleMenu extends View {
 
     private Path buildSegmentPath(float startAngle, float sweepAngle) {
         Path path = new Path();
-        float cx = 0f, cy = 0f;
+        float cx = getWidth(), cy = 0f;
 
         double startRad = Math.toRadians(startAngle);
         float ix = cx + (float)(innerRadius * Math.cos(startRad));
@@ -135,7 +135,7 @@ public class QuarterCircleMenu extends View {
 
         float iconRadius = (radius + innerRadius) / 2f;
         double rad = Math.toRadians(midAngle);
-        float cx = (float)(iconRadius * Math.cos(rad));
+        float cx = getWidth() + (float)(iconRadius * Math.cos(rad));
         float cy = (float)(iconRadius * Math.sin(rad));
 
         float dp = getResources().getDisplayMetrics().density;
@@ -182,10 +182,12 @@ public class QuarterCircleMenu extends View {
     }
 
     private int getSegmentAt(float x, float y) {
-        float dist = (float) Math.sqrt(x * x + y * y);
+        float dx = x - getWidth();
+        float dy = y;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
         if (dist < innerRadius || dist > radius) return -1;
 
-        double angle = Math.toDegrees(Math.atan2(y, x));
+        double angle = Math.toDegrees(Math.atan2(dy, dx));
         if (angle < 0) angle += 360;
 
         double relative = angle - START_ANGLE;
