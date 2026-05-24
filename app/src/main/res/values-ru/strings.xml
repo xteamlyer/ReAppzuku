@@ -78,11 +78,6 @@
     <string name="main_restriction_menu_external">Фоновое ограничение (внешнее)</string>
     <string name="main_restriction_menu_saved">Фоновое ограничение (сохранено)</string>
     <string name="main_restriction_menu_default">Фоновое ограничение</string>
-    <string name="restriction_badge_manual">Ручное</string>
-    <string name="filter_restriction_manual_option">Ручное</string>
-    <string name="filter_manual_ops_dialog_title">Ограничения: %1$s</string>
-    <string name="bgrest_help_manual_title">РУЧНОЕ</string>
-    <string name="bgrest_help_manual_body">Позволяет выбрать конкретные appops вручную. Подходит когда нужно заблокировать только часть возможностей приложения.</string>
 
     <string name="manual_op_run_any_in_background">RUN_ANY_IN_BACKGROUND</string>
     <string name="manual_op_run_in_background">RUN_IN_BACKGROUND</string>
@@ -368,7 +363,9 @@
     <string name="bgrest_help_soft_body">Ограничивает фоновую активность, сохраняя базовую функциональность.\n\u2022 Запрещает запуск стандартных фоновых сервисов.\n\u2022 Позволяет приложению показывать важные уведомления.\n\u2022 Подходит для мессенджеров и почты.\n\nИспользуемые команды:\ncmd appops set RUN_ANY_IN_BACKGROUND ignore</string>
     <string name="bgrest_help_hard_title">ЖЕСТКОЕ</string>
     <string name="bgrest_help_hard_body">Максимальная изоляция. Приложение полностью \u00abзасыпает\u00bb.\n\u2022 Запрещает запуск даже приоритетных (Foreground) сервисов.\n\u2022 Блокирует пробуждение через Wake-locks.\n\u2022 Полностью исключает автозапуск после перезагрузки устройства.\n\u2022 Удаляет приложение из белого списка оптимизации батареи.\n\nИспользуемые команды:\ncmd appops set START_FOREGROUND ignore\ncmd appops set RECEIVE_BOOT_COMPLETED ignore\ncmd appops set ALARM_WAKEUP ignore\ncmd deviceidle whitelist\nINTERACT_ACROSS_PROFILES ignore</string>
-
+    <string name="bgrest_help_manual_title">РУЧНОЕ</string>
+    <string name="bgrest_help_manual_body">Позволяет выбрать конкретные appops вручную. Подходит когда нужно заблокировать только часть возможностей приложения.</string>
+    
     <!-- ── Разные тосты ── -->
     <string name="settings_no_saved_restrictions">Нет сохраненных ограничений фонового режима, которые нужно было бы применять повторно.</string>
     <string name="settings_open_app_info_error">Невозможно открыть информацию о приложении</string>
@@ -408,13 +405,18 @@
     <!-- Бейджи типов ограничений -->
     <string name="restriction_badge_hard">Жёсткое</string>
     <string name="restriction_badge_soft">Мягкое</string>
+    <string name="restriction_badge_medium">Среднее</string>
+    <string name="restriction_badge_manual">Ручное</string>
     <string name="restriction_badge_removed">Снято</string>
     <string name="restriction_badge_retry">Повтор</string>
 
     <!-- Диалог типа ограничения -->
     <string name="filter_restriction_type_dialog_title">Тип ограничения</string>
-    <string name="filter_restriction_soft_option">Мягкое (по умолчанию) — запрет автозапуска (RUN_ANY_IN_BACKGROUND)</string>
-    <string name="filter_restriction_hard_option">Жёсткое — запрет любой работы в фоне (Мягкое + START_FOREGROUND + RECEIVE_BOOT_COMPLETED + INTERACT_ACROSS_PROFILES + удаление из whitelist оптимизации батареи)</string>
+    <string name="filter_restriction_soft_option">Мягкое (по умолчанию)</string>
+    <string name="filter_restriction_medium_option">Среднее</string>
+    <string name="filter_restriction_hard_option">Жёсткое</string>
+    <string name="filter_restriction_manual_option">Ручное</string>
+    <string name="filter_manual_ops_dialog_title">Ограничения: %1$s</string>
 
     <!-- ══════════════════════════════════════════════
          ЭКРАН СТАТИСТИКИ И ЖУРНАЛОВ
