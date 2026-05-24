@@ -71,12 +71,6 @@ public class MainActivity extends BaseActivity {
     private int currentSortMode = AppConstants.SORT_MODE_DEFAULT;
     private MenuItem selectAllMenuItem;
     private MenuItem scanMenuItem;
-    private MenuItem quarterTriggerMenuItem;
-    private QuarterCircleMenu quarterCircleMenu;
-    private android.widget.FrameLayout quarterCircleContainer;
-    private android.view.WindowManager.LayoutParams quarterWlp;
-    private boolean quarterMenuOpen = false;
-    private boolean selectionActive = false;
 
     private int appliedAccent;
     private boolean appliedIsAmoled;
@@ -155,7 +149,6 @@ public class MainActivity extends BaseActivity {
         setupKillButton();
         setupBottomNavigation();
         setupListeners();
-        setupQuarterCircleMenu();
 
         binding.swiperefreshlayout1.post(this::recalculateListHeight);
         loadSettingsAndApplyToManager();
@@ -853,18 +846,8 @@ public class MainActivity extends BaseActivity {
     }
 
     private void updateSelectAllMenuItem() {
-        boolean hasSelection = fullAppsList.stream().anyMatch(AppModel::isSelected);
-        selectionActive = hasSelection;
-        if (quarterTriggerMenuItem != null) {
-            if (hasSelection) {
-                quarterTriggerMenuItem.setIcon(R.drawable.ic_unselect_all);
-                if (quarterMenuOpen) hideQuarterMenu();
-            } else {
-                quarterTriggerMenuItem.setIcon(R.drawable.ic_select_all);
-            }
-            tintMenuItem(quarterTriggerMenuItem);
-        }
         if (selectAllMenuItem == null) return;
+        boolean hasSelection = fullAppsList.stream().anyMatch(AppModel::isSelected);
         if (hasSelection) {
             selectAllMenuItem.setIcon(R.drawable.ic_unselect_all);
             selectAllMenuItem.setTitle(getString(R.string.menu_deselect_all));
@@ -961,8 +944,6 @@ public class MainActivity extends BaseActivity {
 
         selectAllMenuItem = menu.findItem(R.id.action_select_all);
         scanMenuItem = menu.findItem(R.id.action_scan);
-        quarterTriggerMenuItem = menu.findItem(R.id.action_quarter_trigger);
-        tintMenuItem(quarterTriggerMenuItem);
 
         applyToolbarIconTint(menu);
 
@@ -995,10 +976,6 @@ public class MainActivity extends BaseActivity {
             } else {
                 selectAll();
             }
-            return true;
-        } else if (itemId == R.id.action_quarter_trigger) {
-            if (selectionActive) { unselectAll(); return true; }
-            if (quarterMenuOpen) hideQuarterMenu(); else showQuarterMenu();
             return true;
         } else if (itemId == R.id.action_sort) {
             showSortDialog();
@@ -1101,7 +1078,7 @@ public class MainActivity extends BaseActivity {
             color = isLightAccent() ? Color.BLACK : Color.WHITE;
         }
 
-        int[] iconIds = {R.id.action_search, R.id.action_sort, R.id.action_select_all, R.id.action_scan, R.id.action_quarter_trigger};
+        int[] iconIds = {R.id.action_search, R.id.action_sort, R.id.action_select_all, R.id.action_scan};
         for (int id : iconIds) {
             MenuItem menuItem = menu.findItem(id);
             if (menuItem != null && menuItem.getIcon() != null) {
@@ -1110,106 +1087,4 @@ public class MainActivity extends BaseActivity {
         }
         binding.toolbar.setTitleTextColor(color);
     }
-
-    private void setupQuarterCircleMenu() {
-        float dp = getResources().getDisplayMetrics().density;
-        int menuSize = (int)(220 * dp);
-
-        View overlay = new View(this);
-        overlay.setBackgroundColor(0x00000000);
-        overlay.setVisibility(View.GONE);
-        overlay.setOnClickListener(v -> hideQuarterMenu());
-
-        quarterCircleMenu = new QuarterCircleMenu(this);
-
-        int iconColor = isLightAccent() ? Color.BLACK : Color.WHITE;
-        int segColor = resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
-        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-        if (accent == ACCENT_CUSTOM) {
-            segColor = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
-            iconColor = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE) == ACCENT_ON_BLACK
-                    ? Color.BLACK : Color.WHITE;
-        } else if (!sharedPreferences.getBoolean(KEY_AMOLED, false) && accent == ACCENT_SYSTEM) {
-            segColor = Color.parseColor("#0136FF");
-        }
-
-        quarterCircleMenu.setSegmentColor(segColor);
-        quarterCircleMenu.setIcon(0, ContextCompat.getDrawable(this, R.drawable.ic_sort));
-        quarterCircleMenu.setIcon(1, ContextCompat.getDrawable(this, R.drawable.ic_scan));
-        quarterCircleMenu.setIcon(2, ContextCompat.getDrawable(this, R.drawable.ic_select_all));
-        quarterCircleMenu.setIcon(3, ContextCompat.getDrawable(this, R.drawable.ic_search));
-        for (int i = 0; i < 4; i++) quarterCircleMenu.setIconTint(i, iconColor);
-
-        quarterCircleMenu.setOnItemClickListener(index -> {
-            hideQuarterMenu();
-            switch (index) {
-                case 0: showSortDialog(); break;
-                case 1: showSystemScanDialog(); break;
-                case 2:
-                    boolean hasSelection = fullAppsList.stream().anyMatch(AppModel::isSelected);
-                    if (hasSelection) unselectAll(); else selectAll();
-                    break;
-                case 3:
-                    MenuItem searchItem = binding.toolbar.getMenu().findItem(R.id.action_search);
-                    if (searchItem != null) searchItem.expandActionView();
-                    break;
-            }
-        });
-
-        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(this);
-
-        android.widget.FrameLayout.LayoutParams overlayLp = new android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT);
-        rootFrame.addView(overlay, overlayLp);
-
-        android.widget.FrameLayout.LayoutParams menuLp = new android.widget.FrameLayout.LayoutParams(menuSize, menuSize);
-        menuLp.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-        quarterCircleMenu.setVisibility(View.GONE);
-        rootFrame.addView(quarterCircleMenu, menuLp);
-
-        android.view.WindowManager.LayoutParams wlp = new android.view.WindowManager.LayoutParams(
-                android.view.WindowManager.LayoutParams.MATCH_PARENT,
-                android.view.WindowManager.LayoutParams.MATCH_PARENT,
-                android.view.WindowManager.LayoutParams.TYPE_APPLICATION,
-                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                        | android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                        | android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                        | android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                android.graphics.PixelFormat.TRANSLUCENT);
-        wlp.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
-        quarterWlp = wlp;
-        getWindowManager().addView(rootFrame, wlp);
-        quarterCircleContainer = rootFrame;
-    }
-
-    private void showQuarterMenu() {
-        quarterMenuOpen = true;
-        if (quarterCircleContainer != null && quarterWlp != null) {
-            quarterWlp.flags &= ~android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-            getWindowManager().updateViewLayout(quarterCircleContainer, quarterWlp);
-            quarterCircleContainer.getChildAt(0).setVisibility(View.VISIBLE);
-            quarterCircleMenu.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void hideQuarterMenu() {
-        quarterMenuOpen = false;
-        if (quarterCircleContainer != null && quarterWlp != null) {
-            quarterCircleContainer.getChildAt(0).setVisibility(View.GONE);
-            quarterCircleMenu.setVisibility(View.GONE);
-            quarterWlp.flags |= android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-            getWindowManager().updateViewLayout(quarterCircleContainer, quarterWlp);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (quarterCircleContainer != null) {
-            try { getWindowManager().removeView(quarterCircleContainer); } catch (Exception ignored) {}
-        }
-    }
-
-
 }
