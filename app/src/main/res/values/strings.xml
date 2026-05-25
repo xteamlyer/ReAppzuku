@@ -369,9 +369,11 @@
     <string name="settings_bgrest_help_button">What\'s the difference?</string>
     <string name="dialog_backgroundrest_title">Background restriction types</string>
     <string name="bgrest_help_soft_title">SOFT</string>
-    <string name="bgrest_help_soft_body">Limits background activity while keeping basic functionality.\n\u2022 Prevents standard background services from starting.\n\u2022 App can still show important notifications.\n\u2022 Good for messengers and email clients.\n\nCommands used:\ncmd appops set RUN_ANY_IN_BACKGROUND ignore</string>
+    <string name="bgrest_help_soft_body">Limits background activity while keeping basic functionality.\n\u2022 Prevents standard background services from starting.\n\u2022 App can still show important notifications.\n\u2022 Good for messengers and email.</string>
+    <string name="bgrest_help_medium_title">Medium</string>
+    <string name="bgrest_help_medium_body">Moves the app to the Rare standby bucket and blocks key background operations: launching services, scheduling jobs, and triggering alarms. The app works normally while on screen, but freezes as soon as you leave it.</string>
     <string name="bgrest_help_hard_title">HARD</string>
-    <string name="bgrest_help_hard_body">Maximum isolation. App goes fully \u201casleep\u201d.\n\u2022 Blocks even Foreground services.\n\u2022 Blocks Wake-locks.\n\u2022 Disables autostart on reboot.\n\u2022 Removes app from battery optimization whitelist.\n\nCommands used:\ncmd appops set START_FOREGROUND ignore\ncmd appops set RECEIVE_BOOT_COMPLETED ignore\ncmd appops set ALARM_WAKEUP ignore\ncmd deviceidle whitelist\nINTERACT_ACROSS_PROFILES ignore</string>
+    <string name="bgrest_help_hard_body">Maximum isolation. App goes fully \u201casleep\u201d.\n\u2022 Blocks even Foreground services.\n\u2022 Blocks Wake-locks.\n\u2022 Disables autostart on reboot.\n\u2022 Removes app from battery optimization whitelist.</string>
 
     <!-- ── Misc toasts ── -->
     <string name="settings_no_saved_restrictions">No saved background restrictions to re-apply.</string>
@@ -414,8 +416,11 @@
     <string name="restriction_badge_soft">Soft</string>
     <string name="restriction_badge_removed">Removed</string>
     <string name="restriction_badge_retry">Retry</string>
+    <string name="restriction_badge_medium">Medium</string>
 
     <!-- Restriction type dialog -->
+    <string name="manual_bucket_rare">Standby Bucket: Rare</string>
+    <string name="manual_bucket_restricted">Standby Bucket: Restricted</string>
     <string name="filter_restriction_type_dialog_title">Restriction type</string>
     <string name="filter_restriction_soft_option">Soft (default) — blocks auto-start (RUN_ANY_IN_BACKGROUND)</string>
     <string name="filter_restriction_hard_option">Hard — blocks all background activity (Soft + START_FOREGROUND + RECEIVE_BOOT_COMPLETED + INTERACT_ACROSS_PROFILES + removal from battery optimization whitelist)</string>
