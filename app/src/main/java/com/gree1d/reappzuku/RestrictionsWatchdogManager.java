@@ -9,7 +9,7 @@ import java.util.Set;
 public class RestrictionsWatchdogManager {
 
     private static final String TAG = "RestrictionsWatchdog";
-    private static final long WATCHDOG_INTERVAL_MS = 35 * 60 * 1000L;
+    private static final long WATCHDOG_INTERVAL_MS = 35 * 60 * 1000L; // 35 minutes
 
     private final Context context;
     private final Handler handler;
@@ -77,6 +77,47 @@ public class RestrictionsWatchdogManager {
         checkAndRepairBuckets(desired);
     }
 
+    private boolean isMediumLikeManual(String packageName) {
+        int mask = appManager.getManualOpsMask(packageName);
+        int mediumMask = 0;
+        for (int i = 0; i < BackgroundAppManager.ALL_OPS.length; i++) {
+            for (String medOp : BackgroundAppManager.MEDIUM_OPS) {
+                if (BackgroundAppManager.ALL_OPS[i].equals(medOp)) {
+                    mediumMask |= (1 << i);
+                    break;
+                }
+            }
+        }
+        int overlap = Integer.bitCount(mask & mediumMask);
+        return overlap >= 3;
+    }
+
+    private boolean isAppForeground(String packageName) {
+        android.app.ActivityManager am =
+                (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) return false;
+        for (android.app.ActivityManager.RunningAppProcessInfo info : am.getRunningAppProcesses()) {
+            if (info.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                    && java.util.Arrays.asList(info.pkgList).contains(packageName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isAppForegroundService(String packageName) {
+        android.app.ActivityManager am =
+                (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) return false;
+        for (android.app.ActivityManager.RunningAppProcessInfo info : am.getRunningAppProcesses()) {
+            if (info.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE
+                    && java.util.Arrays.asList(info.pkgList).contains(packageName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void checkAndRepairBuckets(Set<String> desired) {
         Set<String> hardSet   = appManager.getHardRestrictedApps();
         Set<String> mediumSet = appManager.getMediumRestrictedApps();
@@ -90,11 +131,27 @@ public class RestrictionsWatchdogManager {
 
             int required;
             if (hardSet.contains(pkg)) {
+                if (isAppForeground(pkg)) {
+                    Log.d(TAG, "watchdog bucket SKIP (foreground): " + pkg);
+                    continue;
+                }
                 required = 45;
             } else if (mediumSet.contains(pkg)) {
+                if (isAppForeground(pkg) || isAppForegroundService(pkg)) {
+                    Log.d(TAG, "watchdog bucket SKIP (foreground/fgs): " + pkg);
+                    continue;
+                }
                 required = 40;
             } else if (manualSet.contains(pkg)) {
+                if (isAppForeground(pkg)) {
+                    Log.d(TAG, "watchdog bucket SKIP (foreground): " + pkg);
+                    continue;
+                }
                 required = appManager.getManualBucket(pkg);
+                if (required == 40 && isMediumLikeManual(pkg) && isAppForegroundService(pkg)) {
+                    Log.d(TAG, "watchdog bucket SKIP (fgs, medium-like manual): " + pkg);
+                    continue;
+                }
             } else {
                 continue;
             }
