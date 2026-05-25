@@ -407,12 +407,18 @@ public class AppTriggersAnalyzer {
         return results;
     }
 
-    public enum AppStatus { ACTIVE, BACKGROUND, CACHED }
+    public enum AppStatus {
+        ACTIVE,
+        BACKGROUND,
+        BACKGROUND_SERVICE,
+        CACHED_WITH_SERVICE,
+        CACHED_RECENT,
+        CACHED_IDLE
+    }
 
     public AppStatus resolveAppStatus(String packageName) {
         Log.d(TAG, "resolveAppStatus: start pkg=" + packageName);
         try {
-
             String psOutput = shellManager.runShellCommandAndGetFullOutput(
                     "ps -eo pid,name | grep " + packageName);
             Log.d(TAG, "resolveAppStatus: ps output=" + (psOutput != null ? psOutput.trim() : "null"));
@@ -426,13 +432,8 @@ public class AppTriggersAnalyzer {
             for (String line : psOutput.trim().split("\n")) {
                 String[] parts = line.trim().split("\\s+");
                 if (parts.length < 2) continue;
-                if (parts[1].equals(packageName)) {
-                    pid = parts[0];
-                    break;
-                }
-                if (pid == null && parts[1].startsWith(packageName)) {
-                    pid = parts[0];
-                }
+                if (parts[1].equals(packageName)) { pid = parts[0]; break; }
+                if (pid == null && parts[1].startsWith(packageName)) pid = parts[0];
             }
 
             if (pid == null) {
@@ -445,7 +446,6 @@ public class AppTriggersAnalyzer {
             Log.d(TAG, "resolveAppStatus: pid=" + pid + " oom_score_adj=" + (adjStr != null ? adjStr.trim() : "null"));
 
             if (adjStr == null || adjStr.trim().isEmpty()) {
-
                 Log.d(TAG, "resolveAppStatus: result=null (oom_score_adj unreadable)");
                 return null;
             }
@@ -456,12 +456,26 @@ public class AppTriggersAnalyzer {
                 Log.d(TAG, "resolveAppStatus: result=ACTIVE (adj=" + adj + ")");
                 return AppStatus.ACTIVE;
             }
+
             if (adj <= 499) {
-                Log.d(TAG, "resolveAppStatus: result=BACKGROUND (adj=" + adj + ")");
-                return AppStatus.BACKGROUND;
+                boolean hasFgs = hasActiveService(packageName);
+                Log.d(TAG, "resolveAppStatus: adj=" + adj + " hasFgs=" + hasFgs);
+                return hasFgs ? AppStatus.BACKGROUND_SERVICE : AppStatus.BACKGROUND;
             }
-            Log.d(TAG, "resolveAppStatus: result=CACHED (adj=" + adj + ")");
-            return AppStatus.CACHED;
+
+            boolean hasService = hasActiveService(packageName);
+            if (hasService) {
+                Log.d(TAG, "resolveAppStatus: result=CACHED_WITH_SERVICE (adj=" + adj + ")");
+                return AppStatus.CACHED_WITH_SERVICE;
+            }
+
+            if (adj < 920) {
+                Log.d(TAG, "resolveAppStatus: result=CACHED_RECENT (adj=" + adj + ")");
+                return AppStatus.CACHED_RECENT;
+            }
+
+            Log.d(TAG, "resolveAppStatus: result=CACHED_IDLE (adj=" + adj + ")");
+            return AppStatus.CACHED_IDLE;
 
         } catch (NumberFormatException e) {
             Log.w(TAG, "resolveAppStatus: oom_score_adj parse error: " + e.getMessage());
@@ -469,6 +483,18 @@ public class AppTriggersAnalyzer {
         } catch (Exception e) {
             Log.w(TAG, "resolveAppStatus failed: " + e.getMessage());
             return null;
+        }
+    }
+
+    private boolean hasActiveService(String packageName) {
+        try {
+            String out = shellManager.runShellCommandAndGetFullOutput(
+                    "dumpsys activity services " + packageName);
+            if (out == null) return false;
+            return out.contains("ServiceRecord") && out.contains(packageName);
+        } catch (Exception e) {
+            Log.w(TAG, "hasActiveService failed: " + e.getMessage());
+            return false;
         }
     }
 

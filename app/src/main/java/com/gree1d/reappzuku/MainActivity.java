@@ -510,21 +510,52 @@ public class MainActivity extends BaseActivity {
 
         if (status != null) {
             String statusLabel;
+            String statusHint;
             switch (status) {
-                case ACTIVE:     statusLabel = getString(R.string.triggers_status_active);     break;
-                case BACKGROUND: statusLabel = getString(R.string.triggers_status_background); break;
-                default:         statusLabel = getString(R.string.triggers_status_cached);     break;
+                case ACTIVE:
+                    statusLabel = getString(R.string.triggers_status_active);
+                    statusHint  = getString(R.string.app_status_hint_foreground);
+                    break;
+                case BACKGROUND_SERVICE:
+                    statusLabel = getString(R.string.triggers_status_background);
+                    statusHint  = getString(R.string.app_status_hint_fgs);
+                    break;
+                case BACKGROUND:
+                    statusLabel = getString(R.string.triggers_status_background);
+                    statusHint  = null;
+                    break;
+                case CACHED_WITH_SERVICE:
+                    statusLabel = getString(R.string.triggers_status_cached);
+                    statusHint  = getString(R.string.app_status_hint_cached_service);
+                    break;
+                case CACHED_RECENT:
+                    statusLabel = getString(R.string.triggers_status_cached);
+                    statusHint  = getString(R.string.app_status_hint_cached_recent);
+                    break;
+                default:
+                    statusLabel = getString(R.string.triggers_status_cached);
+                    statusHint  = getString(R.string.app_status_hint_cached_idle);
+                    break;
             }
 
             TextView statusView = new TextView(this);
             String labelPart = getString(R.string.triggers_status_label_prefix);
-            String fullText = labelPart + " " + statusLabel;
+            String fullText = statusHint != null
+                    ? labelPart + " " + statusLabel + "  •  " + statusHint
+                    : labelPart + " " + statusLabel;
             SpannableString spannable = new SpannableString(fullText);
             int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
             int primaryColor = (accent == ACCENT_CUSTOM)
                     ? sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
                     : resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
             spannable.setSpan(new ForegroundColorSpan(primaryColor), 0, labelPart.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (statusHint != null) {
+                int hintStart = labelPart.length() + 1 + statusLabel.length() + 3;
+                int hintEnd   = fullText.length();
+                spannable.setSpan(
+                        new ForegroundColorSpan(resolveColorAttr(android.R.attr.textColorSecondary)),
+                        hintStart, hintEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
             statusView.setText(spannable);
             statusView.setTextSize(13f);
             LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(
