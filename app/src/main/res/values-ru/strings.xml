@@ -913,6 +913,12 @@
     <string name="triggers_status_active">Активное</string>
     <string name="triggers_status_background">Фоновое</string>
     <string name="triggers_status_cached">Кэшированное</string>
+    <string name="app_status_hint_foreground">на экране</string>
+    <string name="app_status_hint_fgs">активная служба</string>
+    <string name="app_status_hint_cached_service">держит службу</string>
+    <string name="app_status_hint_cached_recent">недавно использовалось</string>
+    <string name="app_status_hint_cached_idle">неактивно</string>
+    <string name="app_status_hint_not_running">не запущено</string>
     <string name="triggers_aggression_label_prefix">Агрессивность:</string>
     
     <!-- ══════════════════════════════════════════════
