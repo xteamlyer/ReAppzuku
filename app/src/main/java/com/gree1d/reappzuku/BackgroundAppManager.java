@@ -666,17 +666,20 @@ public class BackgroundAppManager {
         return "cmd appops set --user current " + packageName + " " + BOOT_RESTRICTION_OP + " " + mode;
     }
 
-
     private boolean applyBucket(String packageName, int bucket) {
-        return shellManager.runShellCommandForResult(
+        boolean ok = shellManager.runShellCommandForResult(
                 "am set-standby-bucket " + packageName + " " + bucket)
                 .succeeded();
+        Log.d(TAG, "applyBucket " + packageName + " bucket=" + bucket + " ok=" + ok);
+        return ok;
     }
-
+    
     private boolean resetBucket(String packageName) {
-        return shellManager.runShellCommandForResult(
+        boolean ok = shellManager.runShellCommandForResult(
                 "am set-standby-bucket " + packageName + " active")
                 .succeeded();
+        Log.d(TAG, "resetBucket " + packageName + " ok=" + ok);
+        return ok;
     }
 
     int[] applyMediumOps(String packageName, String mode) {
