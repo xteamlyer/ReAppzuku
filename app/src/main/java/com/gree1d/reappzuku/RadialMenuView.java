@@ -23,7 +23,7 @@ public class RadialMenuView extends View {
     private static final int DIVIDER_COLOR = Color.BLACK;
     private static final int ICON_TINT     = Color.WHITE;
 
-    private static final float START_ANGLE  = 270f;
+    private static final float START_ANGLE  = 90f;
     private static final float SWEEP        = 90f;
 
     private static final float INNER_RADIUS_DP = 28f;
