@@ -9,7 +9,7 @@ import java.util.Set;
 public class RestrictionsWatchdogManager {
 
     private static final String TAG = "RestrictionsWatchdog";
-    private static final long WATCHDOG_INTERVAL_MS = 35 * 60 * 1000L; // 35 minutes
+    private static final long WATCHDOG_INTERVAL_MS = 35 * 60 * 1000L;
 
     private final Context context;
     private final Handler handler;
@@ -74,5 +74,53 @@ public class RestrictionsWatchdogManager {
         }
 
         appManager.checkAndRepairRestrictions(desired, scheduler);
+        checkAndRepairBuckets(desired);
+    }
+
+    private void checkAndRepairBuckets(Set<String> desired) {
+        Set<String> hardSet   = appManager.getHardRestrictedApps();
+        Set<String> mediumSet = appManager.getMediumRestrictedApps();
+        Set<String> manualSet = appManager.getManualRestrictedApps();
+
+        for (String pkg : desired) {
+            if (scheduler != null
+                    && scheduler.isProtected(pkg, RestrictionsScheduler.PROTECT_BG_RESTRICTIONS)) {
+                continue;
+            }
+
+            int required;
+            if (hardSet.contains(pkg)) {
+                required = 45;
+            } else if (mediumSet.contains(pkg)) {
+                required = 40;
+            } else if (manualSet.contains(pkg)) {
+                required = appManager.getManualBucket(pkg);
+            } else {
+                continue;
+            }
+            if (required == 0) continue;
+
+            String out = shellManager.runShellCommandAndGetFullOutput(
+                    "am get-standby-bucket " + pkg);
+            if (out == null || out.trim().isEmpty()) continue;
+
+            int current;
+            try {
+                current = Integer.parseInt(out.trim());
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "bucket parse error: " + pkg + " out=" + out.trim());
+                continue;
+            }
+
+            if (current == required) continue;
+
+            Log.w(TAG, "watchdog bucket drift: " + pkg
+                    + " current=" + current + " required=" + required);
+            boolean ok = shellManager.runShellCommandForResult(
+                    "am set-standby-bucket " + pkg + " " + required).succeeded();
+            BackgroundRestrictionLog.log(context, pkg, "watchdog-bucket",
+                    ok ? "ok" : "failed",
+                    "was=" + current + " set=" + required);
+        }
     }
 }

@@ -562,15 +562,14 @@ public class RestrictionsScheduler {
 
                 if ((entry.protectFlags & PROTECT_BG_RESTRICTIONS) != 0) {
                     String outcome = backgroundAppManager.restoreRestrictionsForScheduler(pkg);
+                    if (!entry.setBucketActive) {
+                        restoreRestrictionBucket(pkg);
+                    }
                     SchedulerLog.logRestore(context, pkg, outcome, forceStop, use24h);
                 } else if ((entry.protectFlags & PROTECT_AUTO_KILL) != 0) {
-
-
                     stopApp(pkg, forceStop);
                     SchedulerLog.logRestore(context, pkg, "ok", forceStop, use24h);
                 }
-
-
             }
 
 
@@ -587,6 +586,27 @@ public class RestrictionsScheduler {
         } catch (Exception e) {
             Log.w(TAG, "setAppBucketActive failed for " + packageName, e);
         }
+    }
+
+    private void restoreRestrictionBucket(String packageName) {
+        BackgroundAppManager.RestrictionType type = backgroundAppManager.getRestrictionType(packageName);
+        int bucket;
+        switch (type) {
+            case HARD:
+                bucket = 45;
+                break;
+            case MEDIUM:
+                bucket = 40;
+                break;
+            case MANUAL:
+                bucket = backgroundAppManager.getManualBucket(packageName);
+                break;
+            default:
+                return;
+        }
+        if (bucket == 0) return;
+        shellManager.runShellCommandForResult("am set-standby-bucket " + packageName + " " + bucket);
+        Log.d(TAG, "restoreRestrictionBucket: " + packageName + " bucket=" + bucket);
     }
 
     private void stopApp(String packageName, boolean forceStop) {

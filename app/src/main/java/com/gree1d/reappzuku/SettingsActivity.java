@@ -766,15 +766,19 @@ public class SettingsActivity extends BaseActivity {
             List<AppModel> allApps = filterOutProtected(rawApps);
             Set<String> desiredRestrictedApps = appManager.getBackgroundRestrictedApps();
             Set<String> hardRestrictedApps    = appManager.getHardRestrictedApps();
+            Set<String> mediumRestrictedApps  = appManager.getMediumRestrictedApps();
             Set<String> manualRestrictedApps  = appManager.getManualRestrictedApps();
             java.util.Map<String, Integer> initialMasks = buildInitialManualMasks(manualRestrictedApps);
+            java.util.Map<String, Integer> initialBuckets = buildInitialManualBuckets(manualRestrictedApps);
 
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(
                     this, allApps,
                     desiredRestrictedApps,
                     hardRestrictedApps,
+                    mediumRestrictedApps,
                     manualRestrictedApps,
-                    initialMasks);
+                    initialMasks,
+                    initialBuckets);
             if (sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM) == ACCENT_CUSTOM)
                 filterAdapter.setAccentColor(sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR));
             listView.setAdapter(filterAdapter);
@@ -802,16 +806,23 @@ public class SettingsActivity extends BaseActivity {
             });
 
             Runnable doApply = () -> {
-                Set<String> targetPackages = filterAdapter.getSelectedPackages();
-                Set<String> hardPackages   = filterAdapter.getHardRestrictedPackages();
-                Set<String> manualPackages = filterAdapter.getManualRestrictedPackages();
-                java.util.Map<String, Integer> opsMasks = filterAdapter.getManualOpsMasks();
-
+                Set<String> targetPackages  = filterAdapter.getSelectedPackages();
+                Set<String> hardPackages    = filterAdapter.getHardRestrictedPackages();
+                Set<String> mediumPackages  = filterAdapter.getMediumRestrictedPackages();
+                Set<String> manualPackages  = filterAdapter.getManualRestrictedPackages();
+                java.util.Map<String, Integer> opsMasks    = filterAdapter.getManualOpsMasks();
+                java.util.Map<String, Integer> buckets     = filterAdapter.getManualBuckets();
 
                 for (java.util.Map.Entry<String, Integer> e : opsMasks.entrySet()) {
                     appManager.saveManualOpsMask(e.getKey(), e.getValue());
                 }
+                for (java.util.Map.Entry<String, Integer> e : buckets.entrySet()) {
+                    appManager.saveManualBucket(e.getKey(), e.getValue());
+                }
 
+                Set<String> newMediumSet = new java.util.HashSet<>(mediumPackages);
+                newMediumSet.retainAll(targetPackages);
+                appManager.saveMediumRestrictedApps(newMediumSet);
 
                 Set<String> newManualSet = new java.util.HashSet<>(manualPackages);
                 newManualSet.retainAll(targetPackages);
@@ -859,12 +870,25 @@ public class SettingsActivity extends BaseActivity {
         return masks;
     }
 
+    private java.util.Map<String, Integer> buildInitialManualBuckets(Set<String> manualPackages) {
+        java.util.Map<String, Integer> buckets = new java.util.HashMap<>();
+        for (String pkg : manualPackages) {
+            int bucket = appManager.getManualBucket(pkg);
+            if (bucket != 0) buckets.put(pkg, bucket);
+        }
+        return buckets;
+    }
+
     private void showRestrictionTypeHelpDialog(Runnable onBack) {
         SpannableStringBuilder sb = new SpannableStringBuilder();
         int start = sb.length();
         sb.append(getString(R.string.bgrest_help_soft_title));
         sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, sb.length(), 0);
         sb.append("\n").append(getString(R.string.bgrest_help_soft_body)).append("\n\n\n\n");
+        start = sb.length();
+        sb.append(getString(R.string.bgrest_help_medium_title));
+        sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, sb.length(), 0);
+        sb.append("\n").append(getString(R.string.bgrest_help_medium_body)).append("\n\n\n\n");
         start = sb.length();
         sb.append(getString(R.string.bgrest_help_hard_title));
         sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, sb.length(), 0);
