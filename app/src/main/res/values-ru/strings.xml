@@ -944,4 +944,17 @@
     <string name="scansystem_cat_location">Держит геолокацию</string>
     <string name="scansystem_wakelock_history">История WakeLock</string>
 
+    <!-- Background Restrictions Log Detail -->
+    <string name="settings_open_app_info">Инфо о приложении</string>
+    <string name="log_detail_action">Действие</string>
+    <string name="log_detail_outcome">Результат</string>
+    <string name="log_detail_appops">AppOps</string>
+    <string name="log_detail_force_stop">Принудительная остановка</string>
+    <string name="log_detail_ops_missing">Сброшенные ops</string>
+    <string name="log_detail_ops_repaired">Восстановлено</string>
+    <string name="log_detail_ops_failed">Не применились</string>
+    <string name="log_detail_bucket_was">Bucket был</string>
+    <string name="log_detail_bucket_set">Bucket установлен</string>
+    <string name="log_detail_bucket_restored">Bucket восстановлен</string>
+
 </resources>
