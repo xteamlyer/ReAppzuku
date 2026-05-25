@@ -549,13 +549,6 @@ public class MainActivity extends BaseActivity {
                     ? sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
                     : resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
             spannable.setSpan(new ForegroundColorSpan(primaryColor), 0, labelPart.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            if (statusHint != null) {
-                int hintStart = labelPart.length() + 1 + statusLabel.length() + 3;
-                int hintEnd   = fullText.length();
-                spannable.setSpan(
-                        new ForegroundColorSpan(resolveColorAttr(android.R.attr.textColorSecondary)),
-                        hintStart, hintEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
             statusView.setText(spannable);
             statusView.setTextSize(13f);
             LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(
