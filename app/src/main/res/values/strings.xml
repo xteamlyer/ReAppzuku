@@ -422,8 +422,9 @@
     <string name="manual_bucket_rare">Standby Bucket: Rare</string>
     <string name="manual_bucket_restricted">Standby Bucket: Restricted</string>
     <string name="filter_restriction_type_dialog_title">Restriction type</string>
-    <string name="filter_restriction_soft_option">Soft (default) — blocks auto-start (RUN_ANY_IN_BACKGROUND)</string>
-    <string name="filter_restriction_hard_option">Hard — blocks all background activity (Soft + START_FOREGROUND + RECEIVE_BOOT_COMPLETED + INTERACT_ACROSS_PROFILES + removal from battery optimization whitelist)</string>
+    <string name="filter_restriction_soft_option">Soft (default) — blocks auto-start</string>
+    <string name="filter_restriction_soft_option">Medium — blocks some background activity</string>
+    <string name="filter_restriction_hard_option">Hard — blocks all background activity</string>
 
     <!-- ══════════════════════════════════════════════
          STATISTICS & LOGS SCREEN
