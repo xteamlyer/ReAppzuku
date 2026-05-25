@@ -4,14 +4,14 @@
 
     <item
         android:id="@+id/action_search"
-        android:title="@string/menu_search"
+        android:title="Search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="collapseActionView|never" />
 
     <item
         android:id="@+id/action_menu_trigger"
         android:icon="@android:drawable/ic_menu_more"
-        android:title="@string/menu_open"
+        android:title="Menu"
         app:showAsAction="always" />
 
 </menu>
