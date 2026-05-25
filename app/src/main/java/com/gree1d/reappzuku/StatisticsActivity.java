@@ -809,12 +809,12 @@ public class StatisticsActivity extends BaseActivity {
         SettingsListContent content = createSettingsListContent(
                 getString(R.string.settings_restriction_log_empty), false);
         SettingsSurfaceAdapter adapter = new SettingsSurfaceAdapter();
+        final List<BackgroundRestrictionLog.LogEntry> logEntryRef = new ArrayList<>();
         content.listView.setAdapter(adapter);
         content.listView.setEmptyView(content.emptyView);
-        List<BackgroundRestrictionLog.LogEntry> logEntriesRef = new ArrayList<>();
         content.listView.setOnItemClickListener((parent, view, position, id) -> {
-            if (position < logEntriesRef.size()) {
-                showRestrictionLogEntryDetails(logEntriesRef.get(position));
+            if (position >= 0 && position < logEntryRef.size()) {
+                showRestrictionLogEntryDetails(logEntryRef.get(position));
             }
         });
         content.loading.setVisibility(View.VISIBLE);
@@ -834,8 +834,8 @@ public class StatisticsActivity extends BaseActivity {
             List<SettingsSurfaceRow> rows = buildRestrictionLogRows(entries);
             String summary = getString(R.string.settings_restriction_log_summary, rows.size());
             handler.post(() -> {
-                logEntriesRef.clear();
-                logEntriesRef.addAll(entries);
+                logEntryRef.clear();
+                logEntryRef.addAll(entries);
                 adapter.setItems(rows);
                 content.summaryText.setText(summary);
                 content.loading.setVisibility(View.GONE);
@@ -853,108 +853,133 @@ public class StatisticsActivity extends BaseActivity {
     }
 
     private void showRestrictionLogEntryDetails(BackgroundRestrictionLog.LogEntry entry) {
-        StringBuilder message = new StringBuilder();
+        StringBuilder body = new StringBuilder();
+        body.append(entry.timestamp).append("\n\n");
 
-        message.append(getString(R.string.log_detail_package)).append(" ").append(entry.packageName).append("\n");
-        message.append(getString(R.string.log_detail_time)).append(" ").append(entry.timestamp).append("\n");
-        message.append(getString(R.string.log_detail_action)).append(" ").append(humanizeLogAction(entry.action)).append("\n");
-        message.append(getString(R.string.log_detail_outcome)).append(" ").append(humanizeLogOutcome(entry.outcome)).append("\n");
+        String actionLabel = humanizeLogAction(entry.action);
+        String outcomeLabel = humanizeLogOutcome(entry.outcome);
+        body.append(getString(R.string.log_detail_action)).append(": ").append(actionLabel).append("\n");
+        body.append(getString(R.string.log_detail_outcome)).append(": ").append(outcomeLabel).append("\n");
 
-        boolean isWatchdog = "watchdog".equalsIgnoreCase(entry.action);
-        String detail = entry.detail != null ? entry.detail.trim() : "";
+        String detail = entry.detail != null ? entry.detail : "";
 
-        if (isWatchdog) {
-            message.append("\n");
-            if ("skipped".equalsIgnoreCase(entry.outcome)) {
-                message.append(getString(R.string.log_detail_watchdog_skipped));
-            } else {
-                java.util.regex.Matcher mOps      = java.util.regex.Pattern.compile("ops=\\[([^]]*)]").matcher(detail);
-                java.util.regex.Matcher mRepaired = java.util.regex.Pattern.compile("repaired=(\\d+)/(\\d+)").matcher(detail);
-                java.util.regex.Matcher mFailed   = java.util.regex.Pattern.compile("failed=\\[([^]]*)]").matcher(detail);
+        boolean isWatchdogBucket = "watchdog-bucket".equals(entry.action);
+        boolean isWatchdog = "watchdog".equals(entry.action);
 
-                String[] allDriftedOps = mOps.find() && !mOps.group(1).isEmpty()
-                        ? mOps.group(1).split(",") : new String[0];
-                int repaired = 0, total = 0;
-                if (mRepaired.find()) {
-                    repaired = Integer.parseInt(mRepaired.group(1));
-                    total    = Integer.parseInt(mRepaired.group(2));
-                }
-                String[] failedOps = mFailed.find() && !mFailed.group(1).isEmpty()
-                        ? mFailed.group(1).split(",") : new String[0];
-
-                message.append(getString(R.string.log_detail_watchdog_drifted, total)).append("\n");
-                for (String op : allDriftedOps) {
-                    String trimmed = op.trim();
-                    boolean opFailed = false;
-                    for (String f : failedOps) { if (f.trim().equals(trimmed)) { opFailed = true; break; } }
-                    message.append(opFailed ? "  ✗ " : "  ✓ ").append(trimmed).append("\n");
-                }
-                message.append(getString(R.string.log_detail_watchdog_repaired, repaired, total)).append("\n");
-
-                if (detail.contains("battery-whitelist=removed")) {
-                    message.append(getString(R.string.log_detail_watchdog_battery_removed)).append("\n");
-                }
-
-                if ("ok".equalsIgnoreCase(entry.outcome)) {
-                    message.append(getString(R.string.log_detail_watchdog_restored_ok));
-                } else if ("partial".equalsIgnoreCase(entry.outcome)) {
-                    message.append(getString(R.string.log_detail_watchdog_restored_partial));
-                } else {
-                    message.append(getString(R.string.log_detail_watchdog_restored_failed));
+        if (isWatchdogBucket) {
+            body.append("\n");
+            String was = extractDetailValue(detail, "was");
+            String set = extractDetailValue(detail, "set");
+            if (was != null) body.append(getString(R.string.log_detail_bucket_was)).append(": ").append(bucketBucketName(was)).append("\n");
+            if (set != null) body.append(getString(R.string.log_detail_bucket_set)).append(": ").append(bucketBucketName(set)).append("\n");
+            body.append(getString(R.string.log_detail_bucket_restored)).append(": ")
+                    .append("ok".equals(entry.outcome) ? getString(R.string.log_outcome_ok) : getString(R.string.log_outcome_failed))
+                    .append("\n");
+        } else if (isWatchdog) {
+            body.append("\n");
+            String missing = extractDetailValue(detail, "missing");
+            String repaired = extractDetailValue(detail, "repaired");
+            if (missing != null) body.append(getString(R.string.log_detail_ops_missing)).append(": ").append(missing).append("\n");
+            if (repaired != null) body.append(getString(R.string.log_detail_ops_repaired)).append(": ").append(repaired).append("\n");
+            List<String> failedOps = extractOpsList(detail, "failedOps");
+            if (!failedOps.isEmpty()) {
+                body.append("\n").append(getString(R.string.log_detail_ops_failed)).append(":\n");
+                for (String op : failedOps) {
+                    body.append("  ✗ ").append(op).append("\n");
                 }
             }
-        } else if (!detail.isEmpty()) {
-            message.append("\n");
-
-            java.util.regex.Matcher mAppOps =
-                    java.util.regex.Pattern.compile("appops=(ok|failed|partial)\\((\\d+)/(\\d+)\\)").matcher(detail);
-            if (mAppOps.find()) {
-                String status  = mAppOps.group(1);
-                int ok    = Integer.parseInt(mAppOps.group(2));
-                int total = Integer.parseInt(mAppOps.group(3));
-                int failed = total - ok;
-                message.append(getString(R.string.log_detail_appops_header)).append("\n");
-                if (ok > 0)     message.append("  ✓ ").append(getString(R.string.log_detail_appops_applied, ok)).append("\n");
-                if (failed > 0) {
-                    message.append("  ✗ ").append(getString(R.string.log_detail_appops_failed, failed)).append("\n");
-                    java.util.regex.Matcher mFailedOps =
-                            java.util.regex.Pattern.compile("failed=\\[([^]]+)]").matcher(detail);
-                    if (mFailedOps.find()) {
-                        for (String op : mFailedOps.group(1).split(",")) {
-                            message.append("      ").append(op.trim()).append("\n");
-                        }
+        } else {
+            boolean hasOpsInfo = detail.contains("appops=");
+            if (hasOpsInfo) {
+                body.append("\n");
+                List<String> failedOps = extractOpsList(detail, "failedOps");
+                boolean allOk     = detail.contains("appops=ok(");
+                boolean allFailed = detail.contains("appops=failed(0/");
+                body.append(getString(R.string.log_detail_appops)).append(":\n");
+                for (String op : BackgroundAppManager.ALL_OPS) {
+                    if (allOk) {
+                        body.append("  ✓ ").append(op).append("\n");
+                    } else if (allFailed) {
+                        body.append("  ✗ ").append(op).append("\n");
+                    } else {
+                        boolean failed = failedOps.contains(op);
+                        body.append(failed ? "  ✗ " : "  ✓ ").append(op).append("\n");
                     }
                 }
-                if ("ok".equals(status))           message.append("  → ").append(getString(R.string.log_detail_appops_result_ok));
-                else if ("partial".equals(status)) message.append("  → ").append(getString(R.string.log_detail_appops_result_partial));
-                else                               message.append("  → ").append(getString(R.string.log_detail_appops_result_failed));
-                message.append("\n");
-            } else if (detail.startsWith("appops=")) {
-                String rawStatus = detail.replace("appops=", "").split("\\s")[0];
-                message.append(getString(R.string.log_detail_appops_header)).append("\n");
-                message.append("  → ").append(rawStatus).append("\n");
             }
-
-            java.util.regex.Matcher mStop =
-                    java.util.regex.Pattern.compile("force-stop=(ok|failed)(\\[.*?])?").matcher(detail);
-            if (mStop.find()) {
-                boolean stopOk = "ok".equals(mStop.group(1));
-                message.append(stopOk
-                        ? getString(R.string.log_detail_forcestop_ok)
-                        : getString(R.string.log_detail_forcestop_failed)).append("\n");
-            }
-
-            if (!mAppOps.reset().find() && !detail.startsWith("appops=") && !mStop.reset().find()) {
-                message.append(detail);
+            String forceStop = extractDetailValue(detail, "force-stop");
+            if (forceStop != null) {
+                body.append("\n").append(getString(R.string.log_detail_force_stop)).append(": ").append(forceStop).append("\n");
             }
         }
 
-        new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.log_detail_title))
-                .setMessage(message.toString().trim())
-                .setPositiveButton(getString(R.string.dialog_close), null)
-                .setNeutralButton(getString(R.string.log_detail_open_app_info), (d, w) -> openAppInfo(entry.packageName))
-                .show();
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+        TextView textView = new TextView(this);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        textView.setPadding(pad, pad, pad, pad);
+        textView.setTextSize(13f);
+        textView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        textView.setText(body.toString().trim());
+        scrollView.addView(textView);
+
+        String title = (entry.packageName == null || entry.packageName.equals("-"))
+                ? humanizeLogAction(entry.action) : entry.packageName;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setView(scrollView)
+                .setNegativeButton(getString(R.string.dialog_close), (d, w) -> d.dismiss());
+
+        if (entry.packageName != null && entry.packageName.contains(".")) {
+            builder.setPositiveButton(getString(R.string.settings_open_app_info), (d, w) -> openAppInfo(entry.packageName));
+        }
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
+        }
+        dialog.show();
+    }
+
+    private String extractDetailValue(String detail, String key) {
+        if (detail == null) return null;
+        if (key == null) return null;
+        String prefix = key + "=";
+        int start = detail.indexOf(prefix);
+        if (start < 0) return null;
+        start += prefix.length();
+        int end = detail.indexOf(' ', start);
+        return end < 0 ? detail.substring(start) : detail.substring(start, end);
+    }
+
+    private List<String> extractOpsList(String detail, String key) {
+        List<String> result = new ArrayList<>();
+        if (detail == null) return result;
+        String prefix = key + "=[";
+        int start = detail.indexOf(prefix);
+        if (start < 0) return result;
+        start += prefix.length();
+        int end = detail.indexOf(']', start);
+        if (end < 0) return result;
+        String inner = detail.substring(start, end).trim();
+        if (inner.isEmpty()) return result;
+        for (String op : inner.split(",")) {
+            String trimmed = op.trim();
+            if (!trimmed.isEmpty()) result.add(trimmed);
+        }
+        return result;
+    }
+
+    private String bucketBucketName(String value) {
+        switch (value) {
+            case "40": return "RARE (40)";
+            case "45": return "RESTRICTED (45)";
+            case "30": return "WORKING_SET (30)";
+            case "20": return "FREQUENT (20)";
+            case "10": return "ACTIVE (10)";
+            default:   return value;
+        }
     }
 
     private void showSleepModeLogDialog() {
