@@ -71,12 +71,10 @@ public class RadialMenuView extends View {
         invalidate();
     }
 
-    public void setCenter(float x, float y) {
+    public void setCenter(float x, float y, float radius) {
         centerX = x;
         centerY = y;
-        float distRight  = getWidth() - centerX;
-        float distBottom = getHeight() - centerY;
-        outerRadius = (float) Math.sqrt(distRight * distRight + distBottom * distBottom);
+        outerRadius = radius;
         invalidate();
     }
 

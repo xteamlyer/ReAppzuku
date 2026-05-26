@@ -236,17 +236,20 @@ public class MainActivity extends BaseActivity {
 
     private void openRadialMenu() {
         View anchor = binding.toolbar.findViewById(R.id.action_menu_trigger);
+        float cx, cy;
         if (anchor == null) {
-            binding.radialMenu.setCenter(binding.coordinator.getWidth(), 0f);
+            cx = binding.coordinator.getWidth();
+            cy = binding.toolbar.getHeight() / 2f;
         } else {
             int[] anchorLoc = new int[2];
             anchor.getLocationOnScreen(anchorLoc);
-            int[] viewLoc = new int[2];
-            binding.radialMenu.getLocationOnScreen(viewLoc);
-            float cx = anchorLoc[0] + anchor.getWidth() / 2f - viewLoc[0];
-            float cy = anchorLoc[1] + anchor.getHeight() / 2f - viewLoc[1];
-            binding.radialMenu.setCenter(cx, cy);
+            int[] rootLoc = new int[2];
+            binding.coordinator.getLocationOnScreen(rootLoc);
+            cx = anchorLoc[0] + anchor.getWidth() / 2f - rootLoc[0];
+            cy = anchorLoc[1] + anchor.getHeight() / 2f - rootLoc[1];
         }
+        float outerRadius = binding.toolbar.getWidth();
+        binding.radialMenu.setCenter(cx, cy, outerRadius);
         binding.radialMenu.setVisibility(View.VISIBLE);
     }
 
