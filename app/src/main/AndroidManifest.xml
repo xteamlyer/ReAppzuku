@@ -106,7 +106,7 @@
         </receiver>
 
         <receiver
-            android:name=".ServiceRestartReceiver"
+            android:name=".ShappkyService$RestartReceiver"
             android:exported="false" />
 
         <receiver
