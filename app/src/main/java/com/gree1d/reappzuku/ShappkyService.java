@@ -426,14 +426,15 @@ public class ShappkyService extends Service {
     }
     
     public static class RestartReceiver extends BroadcastReceiver {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        if (!ShappkyService.isRunning()) {
-            Intent service = new Intent(context, ShappkyService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(service);
-            } else {
-                context.startService(service);
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!ShappkyService.isRunning()) {
+                Intent service = new Intent(context, ShappkyService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(service);
+                } else {
+                    context.startService(service);
+                }
             }
         }
     }
