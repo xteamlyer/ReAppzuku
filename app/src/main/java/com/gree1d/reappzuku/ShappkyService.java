@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
 import static com.gree1d.reappzuku.PreferenceKeys.*;
