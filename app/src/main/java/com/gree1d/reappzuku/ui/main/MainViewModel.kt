@@ -12,7 +12,6 @@ import com.gree1d.reappzuku.AutoKillManager
 import com.gree1d.reappzuku.BackgroundAppManager
 import com.gree1d.reappzuku.CpuMonitor
 import com.gree1d.reappzuku.PreferenceKeys
-import com.gree1d.reappzuku.RamMonitor
 import com.gree1d.reappzuku.ShellManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +20,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UI state
+// ─────────────────────────────────────────────────────────────────────────────
 
 data class MainUiState(
     // app list
@@ -41,6 +43,9 @@ data class MainUiState(
     val selectedCount: Int           = 0,
 )
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ViewModel
+// ─────────────────────────────────────────────────────────────────────────────
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -56,13 +61,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val cpuMonitor = CpuMonitor(handler, executor, shellManager)
 
+    // ── State flow ──────────────────────────────────────────────────────────
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    // ── RAM callback (called by RamMonitor, bridged to state) ──────────────
     fun onRamUpdate(percent: Float, label: String) {
         _uiState.update { it.copy(ramPercent = percent, ramLabel = label) }
     }
 
+    // ── Init ────────────────────────────────────────────────────────────────
 
     init {
         loadSettingsFromPrefs()
@@ -79,6 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ── Load apps ───────────────────────────────────────────────────────────
 
     fun loadBackgroundApps() {
         _uiState.update { it.copy(isRefreshing = true) }
@@ -107,6 +116,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ── Search ──────────────────────────────────────────────────────────────
 
     fun onSearchQueryChange(query: String) {
         val filtered = filter(_uiState.value.fullApps, query, _uiState.value.sortMode)
@@ -118,6 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (!active) onSearchQueryChange("")
     }
 
+    // ── Sort ────────────────────────────────────────────────────────────────
 
     fun applySortAndFilters(
         sortMode: Int,
@@ -137,6 +148,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadBackgroundApps()
     }
 
+    // ── Selection ───────────────────────────────────────────────────────────
 
     fun onAppClick(app: AppModel) {
         if (app.isProtected || app.isWhitelisted) return
@@ -158,14 +170,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun refreshSelectedCount() {
         val count = _uiState.value.fullApps.count { it.isSelected }
+        // Re-emit filteredApps to trigger recomposition of selection highlight
         _uiState.update { s ->
             s.copy(
                 selectedCount = count,
-                filteredApps  = s.filteredApps.toList(),
+                filteredApps  = s.filteredApps.toList(), // new list reference → Compose sees change
             )
         }
     }
 
+    // ── Kill ─────────────────────────────────────────────────────────────────
 
     fun killSelected() {
         val pkgs = _uiState.value.fullApps
@@ -179,6 +193,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         autoKillManager.killApp(app.packageName) { loadBackgroundApps() }
     }
 
+    // ── Generic list membership toggle (whitelist / blacklist / hidden) ─────
 
     fun toggleListMembership(app: AppModel, listType: String) {
         val packageName = app.packageName
@@ -204,6 +219,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { s -> s.copy(filteredApps = s.filteredApps.toList()) }
     }
 
+    // ── Whitelist toggle (from list item) ────────────────────────────────────
 
     fun toggleWhitelist(app: AppModel): Boolean {
         val isNow = autoKillManager.toggleWhitelist(app.packageName)
@@ -212,10 +228,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return isNow
     }
 
+    // ── CPU monitoring lifecycle ──────────────────────────────────────────────
 
     fun startCpuMonitor() = cpuMonitor.startMonitoring()
     fun stopCpuMonitor()  = cpuMonitor.stopMonitoring()
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun filter(
         source: List<AppModel>,
