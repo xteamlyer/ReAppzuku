@@ -70,7 +70,6 @@ public class MainActivity extends BaseActivity {
     private String currentSearchQuery = "";
     private int currentSortMode = AppConstants.SORT_MODE_DEFAULT;
     private MenuItem selectAllMenuItem;
-    private MenuItem scanMenuItem;
 
     private int appliedAccent;
     private boolean appliedIsAmoled;
@@ -236,6 +235,7 @@ public class MainActivity extends BaseActivity {
     private void setupListeners() {
         binding.swiperefreshlayout1.setOnRefreshListener(this::loadBackgroundApps);
         binding.killButton.setOnClickListener(view -> killSelectedApps());
+        binding.scanButtonLayout.setOnClickListener(v -> showSystemScanDialog());
 
         listAdapter.setOnAppActionListener(new BackgroundAppsRecyclerViewAdapter.OnAppActionListener() {
             @Override
@@ -967,7 +967,6 @@ public class MainActivity extends BaseActivity {
         getMenuInflater().inflate(R.menu.main, menu);
 
         selectAllMenuItem = menu.findItem(R.id.action_select_all);
-        scanMenuItem = menu.findItem(R.id.action_scan);
 
         applyToolbarIconTint(menu);
 
@@ -1003,9 +1002,6 @@ public class MainActivity extends BaseActivity {
             return true;
         } else if (itemId == R.id.action_sort) {
             showSortDialog();
-            return true;
-        } else if (itemId == R.id.action_scan) {
-            showSystemScanDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -1102,7 +1098,7 @@ public class MainActivity extends BaseActivity {
             color = isLightAccent() ? Color.BLACK : Color.WHITE;
         }
 
-        int[] iconIds = {R.id.action_search, R.id.action_sort, R.id.action_select_all, R.id.action_scan};
+        int[] iconIds = {R.id.action_search, R.id.action_sort, R.id.action_select_all};
         for (int id : iconIds) {
             MenuItem menuItem = menu.findItem(id);
             if (menuItem != null && menuItem.getIcon() != null) {
