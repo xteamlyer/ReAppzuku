@@ -81,7 +81,7 @@ public class AutoKillManager {
             }
 
             String psOutput = shellManager.runShellCommandAndGetFullOutput(
-                    "ps -A -o rss,name | grep '\\.' | grep -v '[-:@]'");
+                    "ps -A -o rss,name | grep '\\.'");
             Log.d(TAG, "ps output length: " + (psOutput == null ? "null" : psOutput.trim().length()));
             if (psOutput == null || psOutput.trim().isEmpty()) {
                 Log.w(TAG, "ps returned null/empty — aborting kill");
@@ -99,6 +99,9 @@ public class AutoKillManager {
                     String[] parts = line.trim().split("\\s+", 2);
                     if (parts.length != 2) continue;
                     String packageName = parts[1].trim();
+                    if (packageName.contains(":")) {
+                        packageName = packageName.substring(0, packageName.indexOf(":"));
+                    }
                     if (!packageName.isEmpty() && packageName.contains(".")) {
                         try {
                             pm.getApplicationInfo(packageName, 0);

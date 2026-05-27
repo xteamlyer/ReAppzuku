@@ -111,7 +111,7 @@ public class BackgroundAppManager {
             BackgroundRestrictionState backgroundRestrictionState = getBackgroundRestrictionState();
 
             if (shellManager.hasAnyShellPermission()) {
-                String command = "ps -A -o pid,rss,name | grep '\\.' | grep -v '[-:@]'";
+                String command = "ps -A -o pid,rss,name | grep '\\.'";
                 try {
                     String fullOutput = runPs(command);
                     if (fullOutput != null) {
@@ -121,6 +121,9 @@ public class BackgroundAppManager {
                                 String[] parts = line.trim().split("\\s+");
                                 if (parts.length >= 3) {
                                     String packageName = parts[2].trim();
+                                    if (packageName.contains(":")) {
+                                        packageName = packageName.substring(0, packageName.indexOf(":"));
+                                    }
                                     if (!packageName.isEmpty() && packageName.contains(".")
                                             && !packageName.startsWith("ERROR:")) {
                                         try {
