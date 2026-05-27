@@ -276,140 +276,68 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showAppOptionsMenu(AppModel app, View anchor) {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        LinearLayout popupRoot = (LinearLayout) inflater.inflate(R.layout.popup_app_options, null);
+            String packageName = app.getPackageName();
     
-        boolean isDark = sharedPreferences.getBoolean(KEY_AMOLED, false)
-                || sharedPreferences.getInt(KEY_THEME,
-                        androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-                        == androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
+            AppOptionsBottomSheet sheet = AppOptionsBottomSheet.newInstance(
+                    app,
+                    appManager.getWhitelistedApps().contains(packageName),
+                    autoKillManager.getBlacklistedApps().contains(packageName),
+                    appManager.getHiddenApps().contains(packageName),
+                    appManager.supportsBackgroundRestriction(),
+                    getBackgroundRestrictionMenuTitle(app)
+            );
     
-        String packageName = app.getPackageName();
+            try {
+                android.graphics.drawable.Drawable icon = getPackageManager()
+                        .getApplicationIcon(packageName);
+                sheet.setAppIcon(icon);
+            } catch (android.content.pm.PackageManager.NameNotFoundException ignored) {}
     
-        addPopupItem(inflater, popupRoot, getString(R.string.menu_app_info), false, false, () -> {
-            openAppInfo(packageName);
-        });
+            sheet.setListener(new AppOptionsBottomSheet.Listener() {
+                @Override
+                public void onAppInfo() {
+                    openAppInfo(packageName);
+                }
     
-        addPopupItem(inflater, popupRoot, getString(R.string.menu_app_triggers), false, false, () -> {
-            showAppTriggersDialog(app);
-        });
+                @Override
+                public void onAppTriggers() {
+                    showAppTriggersDialog(app);
+                }
     
-        if (app.isProtected()) {
-            addPopupItem(inflater, popupRoot, getString(R.string.menu_hidden), true,
-                    appManager.getHiddenApps().contains(packageName), () -> {
-                        toggleListMembership(app, "hidden");
-                    });
-        } else {
-            if (!app.isSystemApp()) {
-                addPopupItem(inflater, popupRoot, getString(R.string.menu_uninstall), false, false, () -> {
+                @Override
+                public void onUninstall() {
                     showUninstallConfirmation(app);
-                });
-            }
+                }
     
-            View groupHeader = inflater.inflate(R.layout.popup_menu_group_header, popupRoot, false);
-            TextView groupTitle = groupHeader.findViewById(R.id.group_title);
-            ImageView groupArrow = groupHeader.findViewById(R.id.group_arrow);
-            groupTitle.setText(getString(R.string.menu_add_to));
+                @Override
+                public void onToggleHiddenSingle() {
+                    toggleListMembership(app, "hidden");
+                }
     
-            LinearLayout subContainer = new LinearLayout(this);
-            subContainer.setOrientation(LinearLayout.VERTICAL);
-            subContainer.setVisibility(View.GONE);
+                @Override
+                public void onToggleWhitelist(boolean nowChecked) {
+                    toggleListMembership(app, "whitelist");
+                }
     
-            addPopupItemToContainer(inflater, subContainer, getString(R.string.settings_mode_whitelist), true,
-                    appManager.getWhitelistedApps().contains(packageName), () -> {
-                        toggleListMembership(app, "whitelist");
-                    });
+                @Override
+                public void onToggleBlacklist(boolean nowChecked) {
+                    toggleListMembership(app, "blacklist");
+                }
     
-            addPopupItemToContainer(inflater, subContainer, getString(R.string.settings_mode_blacklist), true,
-                    autoKillManager.getBlacklistedApps().contains(packageName), () -> {
-                        toggleListMembership(app, "blacklist");
-                    });
+                @Override
+                public void onToggleHidden(boolean nowChecked) {
+                    toggleListMembership(app, "hidden");
+                }
     
-            addPopupItemToContainer(inflater, subContainer, getString(R.string.menu_hidden), true,
-                    appManager.getHiddenApps().contains(packageName), () -> {
-                        toggleListMembership(app, "hidden");
-                    });
-    
-            if (appManager.supportsBackgroundRestriction()) {
-                addPopupItemToContainer(inflater, subContainer, getBackgroundRestrictionMenuTitle(app), true,
-                        app.isBackgroundRestrictionDesired(), () -> {
-                            toggleBackgroundRestriction(app);
-                        });
-            }
-    
-            groupHeader.setOnClickListener(v -> {
-                if (subContainer.getVisibility() == View.GONE) {
-                    subContainer.setVisibility(View.VISIBLE);
-                    groupArrow.setRotation(180f);
-                } else {
-                    subContainer.setVisibility(View.GONE);
-                    groupArrow.setRotation(0f);
+                @Override
+                public void onToggleBackgroundRestriction(boolean nowChecked) {
+                    toggleBackgroundRestriction(app);
                 }
             });
     
-            popupRoot.addView(groupHeader);
-            popupRoot.addView(subContainer);
+            sheet.show(getSupportFragmentManager(), "app_options");
         }
-    
-        PopupWindow popupWindow = new PopupWindow(popupRoot,
-                (int) (220 * getResources().getDisplayMetrics().density),
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                true);
-        popupWindow.setElevation(12f);
-        popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
-    
-        popupRoot.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-    
-        int[] location = new int[2];
-        anchor.getLocationOnScreen(location);
-        int anchorX = location[0];
-        int anchorY = location[1];
-        int anchorHeight = anchor.getHeight();
-        int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        int popupHeight = popupRoot.getMeasuredHeight();
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        int popupWidth = (int) (220 * getResources().getDisplayMetrics().density);
-    
-        int x = Math.min(anchorX, screenWidth - popupWidth - 8);
-        int y;
-        if (anchorY + anchorHeight + popupHeight <= screenHeight) {
-            y = anchorY + anchorHeight;
-        } else {
-            y = anchorY - popupHeight;
-        }
-    
-        popupWindow.showAtLocation(anchor, android.view.Gravity.NO_GRAVITY, x, y);
-    }
-    
-    private void addPopupItem(LayoutInflater inflater, LinearLayout container,
-                               String title, boolean checkable, boolean checked, Runnable action) {
-        addPopupItemToContainer(inflater, container, title, checkable, checked, action);
-    }
-    
-    private void addPopupItemToContainer(LayoutInflater inflater, LinearLayout container,
-                                          String title, boolean checkable, boolean checked, Runnable action) {
-        View item = inflater.inflate(R.layout.popup_menu_item, container, false);
-        TextView tv = item.findViewById(R.id.item_title);
-        CheckBox cb = item.findViewById(R.id.item_checkbox);
-        tv.setText(title);
-        if (checkable) {
-            cb.setVisibility(View.VISIBLE);
-            cb.setChecked(checked);
-            int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-            if (accent == ACCENT_CUSTOM) {
-                int color = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
-                cb.setButtonTintList(android.content.res.ColorStateList.valueOf(color));
-            }
-        }
-        item.setOnClickListener(v -> {
-            if (checkable) {
-                cb.setChecked(!cb.isChecked());
-            }
-            action.run();
-        });
-        container.addView(item);
-    }
+
 
     private void openAppInfo(String packageName) {
         try {
