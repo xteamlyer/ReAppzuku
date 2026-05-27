@@ -8,6 +8,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,16 +25,15 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -47,10 +49,8 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +60,15 @@ import com.gree1d.reappzuku.AppModel
 import com.gree1d.reappzuku.R
 import com.gree1d.reappzuku.ui.theme.LocalOnAccentColor
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Nav destinations
+// ─────────────────────────────────────────────────────────────────────────────
+
 enum class NavDestination { MAIN, SETTINGS, STATISTICS }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen state
+// ─────────────────────────────────────────────────────────────────────────────
 
 data class MainScreenState(
     val apps: List<AppModel>    = emptyList(),
@@ -71,6 +79,10 @@ data class MainScreenState(
     val searchQuery: String     = "",
     val isSearchActive: Boolean = false,
 )
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MainScreen
+// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +107,10 @@ fun MainScreen(
     val hasSelection = state.selectedCount > 0
     val pullState    = rememberPullToRefreshState()
     val listState    = rememberLazyListState()
+    val selectionMode = state.selectedCount > 0
+
+    // Высота системного навбара для корректного отступа kill button
+    val navBarInsets = WindowInsets.navigationBars
 
     Scaffold(
         modifier  = modifier,
@@ -112,12 +128,15 @@ fun MainScreen(
                 contentColor         = onAccent,
             )
         },
+        // Навбар или kill button внизу — никогда оба одновременно
         bottomBar = {
             AnimatedVisibility(
                 visible = !hasSelection,
                 enter   = slideInVertically(tween(200)) { it } + fadeIn(tween(200)),
                 exit    = slideOutVertically(tween(200)) { it } + fadeOut(tween(200)),
             ) {
+                // windowInsetsPadding внутри NavigationBar обеспечивает
+                // корректный отступ для жестовой навигации и кнопочной
                 AppNavigationBar(current = NavDestination.MAIN, onNavigate = onNavigate)
             }
         },
@@ -128,9 +147,13 @@ fun MainScreen(
                 .padding(innerPadding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                RamBar(percent = state.ramPercent, label = state.ramLabel)
-                AppCountRow(count = state.apps.size, onScanClick = onScanClick)
 
+                // ── Строка: кол-во приложений + кнопка Scan + RAM bar ─────
+                // Порядок как в оригинале: счётчик → RAM → список
+                AppCountRow(count = state.apps.size, onScanClick = onScanClick)
+                RamBar(percent = state.ramPercent, label = state.ramLabel)
+
+                // ── Список приложений ─────────────────────────────────────
                 PullToRefreshBox(
                     state        = pullState,
                     isRefreshing = state.isRefreshing,
@@ -143,10 +166,10 @@ fun MainScreen(
                             key   = { _, app -> app.packageName }
                         ) { _, app ->
                             AppListItem(
-                                app           = app,
-                                selectionMode = state.selectedCount > 0,
-                                onKillApp     = { onKillApp(app) },
-                                onAppClick    = { onAppClick(app) },
+                                app             = app,
+                                selectionMode   = selectionMode,
+                                onKillApp       = { onKillApp(app) },
+                                onAppClick      = { onAppClick(app) },
                                 onOverflowClick = { onAppOverflow(app) },
                             )
                         }
@@ -154,19 +177,27 @@ fun MainScreen(
                 }
             }
 
+            // ── Kill button — поверх списка, прижат к низу ───────────────
+            // Точно как в оригинале: высота 64dp + высота системного навбара
             AnimatedVisibility(
                 visible  = hasSelection,
                 enter    = slideInVertically(tween(220)) { it } + fadeIn(tween(220)),
                 exit     = slideOutVertically(tween(180)) { it } + fadeOut(tween(180)),
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                KillButton(count = state.selectedCount, onClick = onKillSelected)
+                KillButton(
+                    count        = state.selectedCount,
+                    onClick      = onKillSelected,
+                    navBarInsets = navBarInsets,
+                )
             }
         }
     }
 }
 
-// ── TopAppBar ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// TopAppBar
+// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,7 +236,6 @@ private fun MainTopBar(
                 Text(text = title, fontWeight = FontWeight.SemiBold, color = contentColor)
             },
             actions = {
-                // Search
                 IconButton(onClick = { onSearchActiveChange(true) }) {
                     Icon(
                         imageVector        = Icons.Default.Search,
@@ -213,7 +243,6 @@ private fun MainTopBar(
                         tint               = contentColor,
                     )
                 }
-                // Sort — using drawable resource, no material-icons-extended needed
                 IconButton(onClick = onSortClick) {
                     Icon(
                         painter            = painterResource(R.drawable.ic_sort),
@@ -222,7 +251,6 @@ private fun MainTopBar(
                         modifier           = Modifier.size(22.dp),
                     )
                 }
-                // Select all / deselect all
                 IconButton(onClick = onSelectAllToggle) {
                     Icon(
                         painter = painterResource(
@@ -246,43 +274,16 @@ private fun MainTopBar(
     }
 }
 
-// ── RAM bar ───────────────────────────────────────────────────────────────────
-
-@Composable
-private fun RamBar(percent: Float, label: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text       = label,
-            fontSize   = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color      = MaterialTheme.colorScheme.onSurface,
-            modifier   = Modifier.padding(end = 6.dp),
-        )
-        LinearProgressIndicator(
-            progress   = { percent },
-            modifier   = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
-            strokeCap  = StrokeCap.Round,
-            color      = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
-    }
-}
-
-// ── App count + Scan row ──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// App count + Scan row
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun AppCountRow(count: Int, onScanClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 4.dp),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -293,7 +294,6 @@ private fun AppCountRow(count: Int, onScanClick: () -> Unit, modifier: Modifier 
         )
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onScanClick)
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -301,7 +301,7 @@ private fun AppCountRow(count: Int, onScanClick: () -> Unit, modifier: Modifier 
             Icon(
                 painter            = painterResource(R.drawable.ic_scan),
                 contentDescription = null,
-                modifier           = Modifier.size(20.dp),
+                modifier           = Modifier.size(18.dp),
                 tint               = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.width(4.dp))
@@ -314,12 +314,88 @@ private fun AppCountRow(count: Int, onScanClick: () -> Unit, modifier: Modifier 
     }
 }
 
-// ── Kill button ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// RAM bar — воспроизводит progress_bar.xml:
+// background #33FFFFFF, track #55FFFFFF, progress #5C6BC0 (Indigo)
+// при наличии акцента — прогресс берётся из primary
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RAM виджет — крупный акцентный блок
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun KillButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun RamBar(percent: Float, label: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier      = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        shape         = RoundedCornerShape(16.dp),
+        color         = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text       = "RAM",
+                    fontSize   = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 1.sp,
+                )
+                Text(
+                    text      = label,
+                    fontSize  = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color     = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            // Прогресс-бар
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(percent.coerceIn(0f, 1f))
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary,
+                                )
+                            ),
+                            shape = RoundedCornerShape(3.dp),
+                        )
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kill button
+// Логика из оригинала: высота = 64dp + systemNavBar.bottom
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun KillButton(
+    count: Int,
+    onClick: () -> Unit,
+    navBarInsets: WindowInsets,
+    modifier: Modifier = Modifier,
+) {
     val onAccent      = LocalOnAccentColor.current
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val navBarPadding = navBarInsets.asPaddingValues().calculateBottomPadding()
     val label = if (count >= 2)
         "${stringResource(R.string.fab_kill_apps)} ($count)"
     else
@@ -330,6 +406,7 @@ private fun KillButton(count: Int, onClick: () -> Unit, modifier: Modifier = Mod
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primary, RectangleShape)
             .clickable(onClick = onClick)
+            // padding снизу = высота системного навбара (жестовая / кнопочная)
             .padding(bottom = navBarPadding)
             .height(64.dp),
         contentAlignment = Alignment.Center,
@@ -338,7 +415,11 @@ private fun KillButton(count: Int, onClick: () -> Unit, modifier: Modifier = Mod
     }
 }
 
-// ── Bottom nav bar ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom NavigationBar
+// windowInsetsPadding внутри NavigationBar обеспечивает правильный padding
+// для системных кнопок навигации
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun AppNavigationBar(
@@ -347,8 +428,10 @@ private fun AppNavigationBar(
     modifier: Modifier = Modifier,
 ) {
     NavigationBar(
-        modifier = modifier.height(64.dp),
+        modifier    = modifier,
+        tonalElevation = 0.dp,   // без тонального оттенка — как в оригинале
     ) {
+        // windowInsetsPadding уже применяется внутри NavigationBar автоматически
         NavigationBarItem(
             selected = current == NavDestination.MAIN,
             onClick  = { onNavigate(NavDestination.MAIN) },
@@ -375,8 +458,11 @@ private fun AppNavigationBar(
 
 @Composable
 private fun navItemColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor   = MaterialTheme.colorScheme.primary,
-    selectedTextColor   = MaterialTheme.colorScheme.primary,
+    // Активная иконка и текст — onSurface (белый/чёрный), не primary
+    // Это поведение оригинала: selected иконка окрашивается в цвет текста навбара
+    selectedIconColor   = MaterialTheme.colorScheme.onSurface,
+    selectedTextColor   = MaterialTheme.colorScheme.onSurface,
+    // Индикатор под иконкой — primaryContainer (цветной пузырь)
     indicatorColor      = MaterialTheme.colorScheme.primaryContainer,
     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
