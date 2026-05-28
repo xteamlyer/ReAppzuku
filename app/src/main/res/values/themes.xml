@@ -476,7 +476,7 @@
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
         <item name="shapeAppearance">@style/ShapeAppearance.App.ScanButton</item>
-        <item name="app:strokeWidth">1dp</item>
+        <item name="strokeWidth">1dp</item>
     </style>
 
     <style name="ShapeAppearance.App.ScanButton" parent="ShapeAppearance.Material3.Corner.Full">
