@@ -23,6 +23,7 @@
     <string name="dialog_close">Закрыть</string>
     <string name="dialog_ok">Ок</string>
     <string name="dialog_ok_got_it">Понятно</string>
+    <string name="filter_sort_button">Сортировка</string>
 
     <!-- Единицы измерения -->
     <string name="unit_kb">%d KB</string>
