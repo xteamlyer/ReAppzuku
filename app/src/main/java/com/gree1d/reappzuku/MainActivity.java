@@ -549,7 +549,7 @@ public class MainActivity extends BaseActivity {
                 .create();
         triggersDialog.show();
         tintDialogButtons(triggersDialog);
-        int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.95f);
+        int dialogWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.98f);
         if (triggersDialog.getWindow() != null) {
             triggersDialog.getWindow().setLayout(dialogWidth, android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
