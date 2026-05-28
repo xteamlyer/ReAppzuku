@@ -549,6 +549,13 @@ public class MainActivity extends BaseActivity {
                 .create();
         triggersDialog.show();
         tintDialogButtons(triggersDialog);
+        handler.post(() -> {
+            if (triggersDialog.getWindow() != null) {
+                int margin = (int) (getResources().getDisplayMetrics().density * 1);
+                int width = getResources().getDisplayMetrics().widthPixels - margin * 2;
+                triggersDialog.getWindow().setLayout(width, android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+            }
+        });
     }
 
     private void addSectionHeader(LinearLayout container, String title) {
