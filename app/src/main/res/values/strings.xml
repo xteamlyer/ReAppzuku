@@ -301,7 +301,7 @@
     <!-- ── Advanced tools ── -->
     <string name="settings_section_advanced_tools">Advanced tools</string>
     <string name="settings_background_restriction_title">Background restrictions</string>
-    <string name="settings_background_restriction_subtitle">Keep selected apps dormant</string>
+    <string name="settings_background_restriction_subtitle">Restrict background activity for selected apps</string>
     <string name="settings_reapply_restrictions_title">Re-apply background restriction settings</string>
     <string name="settings_reapply_restrictions_subtitle">Restore saved restrictions</string>
     <string name="settings_sleep_mode_title">Sleep mode</string>
