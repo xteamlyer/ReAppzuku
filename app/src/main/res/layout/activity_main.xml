@@ -66,9 +66,8 @@
                 app:iconSize="18dp"
                 app:iconGravity="textStart"
                 app:iconTint="@color/text_primary"
-                app:strokeColor="@color/text_primary"
-                app:rippleColor="@color/text_primary"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.App.ScanButton"
+                app:strokeColor="#40FFFFFF"
+                app:rippleColor="#20FFFFFF"
                 style="@style/Widget.App.ScanButton" />
 
         </RelativeLayout>
