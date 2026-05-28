@@ -66,9 +66,8 @@
                 app:iconSize="18dp"
                 app:iconGravity="textStart"
                 app:iconTint="@color/text_primary"
-                app:strokeColor="@color/text_primary"
                 app:rippleColor="@color/text_primary"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
+                style="@style/Widget.Material3.Button.TextButton" />
 
         </RelativeLayout>
 
