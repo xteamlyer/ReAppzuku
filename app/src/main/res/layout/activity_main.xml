@@ -60,10 +60,15 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:text="@string/scan_button_label"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp"
                 app:icon="@drawable/ic_scan"
                 app:iconSize="18dp"
                 app:iconGravity="textStart"
+                app:iconTint="@color/text_primary"
+                app:strokeColor="@color/text_primary"
+                app:strokeWidth="1dp"
+                app:rippleColor="@color/text_primary"
                 style="@style/Widget.Material3.Button.OutlinedButton" />
 
         </RelativeLayout>
