@@ -27,6 +27,7 @@
     <string name="dialog_close">Close</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_ok_got_it">Got it</string>
+    <string name="filter_sort_button">Sort</string>
 
     <!-- Units -->
     <string name="unit_kb">%d KB</string>
