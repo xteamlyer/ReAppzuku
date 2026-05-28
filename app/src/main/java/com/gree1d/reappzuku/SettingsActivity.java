@@ -25,6 +25,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -1244,26 +1245,39 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void setupFilterListeners(View dialogView, FilterAppsAdapter adapter) {
-        CheckBox chkSystem = dialogView.findViewById(R.id.filter_chk_system);
-        CheckBox chkUser = dialogView.findViewById(R.id.filter_chk_user);
-        CheckBox chkRunning = dialogView.findViewById(R.id.filter_chk_running);
-        android.widget.TextView btnClear = dialogView.findViewById(R.id.filter_btn_clear);
+        TextView btnSort = dialogView.findViewById(R.id.filter_btn_sort);
+        TextView btnClear = dialogView.findViewById(R.id.filter_btn_clear);
 
-        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
-        if (accent == ACCENT_CUSTOM) {
-            android.content.res.ColorStateList tint =
-                    android.content.res.ColorStateList.valueOf(getDialogAccentColor());
-            chkSystem.setButtonTintList(tint);
-            chkUser.setButtonTintList(tint);
-            chkRunning.setButtonTintList(tint);
-            btnClear.setTextColor(getDialogAccentColor());
+        if (sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM) == ACCENT_CUSTOM) {
+            int color = getDialogAccentColor();
+            btnSort.setTextColor(color);
+            btnClear.setTextColor(color);
         }
 
-        android.widget.CompoundButton.OnCheckedChangeListener listener = (buttonView, isChecked) ->
-                adapter.setFilters(chkSystem.isChecked(), chkUser.isChecked(), chkRunning.isChecked());
-        chkSystem.setOnCheckedChangeListener(listener);
-        chkUser.setOnCheckedChangeListener(listener);
-        chkRunning.setOnCheckedChangeListener(listener);
+        final boolean[] showSystem  = {false};
+        final boolean[] showUser    = {true};
+        final boolean[] showRunning = {false};
+
+        btnSort.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(this, btnSort);
+            popup.getMenu().add(0, 0, 0, getString(R.string.filter_system))
+                    .setCheckable(true).setChecked(showSystem[0]);
+            popup.getMenu().add(0, 1, 1, getString(R.string.filter_user))
+                    .setCheckable(true).setChecked(showUser[0]);
+            popup.getMenu().add(0, 2, 2, getString(R.string.filter_running))
+                    .setCheckable(true).setChecked(showRunning[0]);
+            popup.setOnMenuItemClickListener(item -> {
+                switch (item.getItemId()) {
+                    case 0: showSystem[0]  = !showSystem[0];  item.setChecked(showSystem[0]);  break;
+                    case 1: showUser[0]    = !showUser[0];    item.setChecked(showUser[0]);    break;
+                    case 2: showRunning[0] = !showRunning[0]; item.setChecked(showRunning[0]); break;
+                }
+                adapter.setFilters(showSystem[0], showUser[0], showRunning[0]);
+                return true;
+            });
+            popup.show();
+        });
+
         btnClear.setOnClickListener(v -> adapter.clearSelection());
     }
 
