@@ -225,19 +225,15 @@ public class StatisticsActivity extends BaseActivity {
     }
 
     private void updateChartPagerUI() {
-
         switch (currentChartIdx) {
             case CHART_BATTERY:
                 binding.tvChartTitle.setText(getString(R.string.chart_title_battery));
-                binding.ivChartIcon.setImageResource(R.drawable.ic_battery_chart);
                 break;
             case CHART_CPU:
                 binding.tvChartTitle.setText(getString(R.string.chart_title_cpu));
-                binding.ivChartIcon.setImageResource(R.drawable.ic_cpu);
                 break;
             case CHART_RAM:
                 binding.tvChartTitle.setText(getString(R.string.chart_title_ram));
-                binding.ivChartIcon.setImageResource(R.drawable.ic_ram);
                 break;
         }
     }
@@ -332,22 +328,29 @@ public class StatisticsActivity extends BaseActivity {
         binding.chartCpu.setVisibility(currentChartIdx == CHART_CPU     ? View.VISIBLE : View.GONE);
         binding.chartRam.setVisibility(currentChartIdx == CHART_RAM     ? View.VISIBLE : View.GONE);
 
-        double totalBat = 0, totalCpu = 0;
+        double totalBat = 0, totalCpu = 0, totalRam = 0;
         for (BatteryStatsManager.AppResourceStats s : sorted) {
             totalBat += s.batteryMah;
             totalCpu += s.cpuPct;
+            totalRam += s.ramMb;
         }
 
+        String centerText;
         switch (currentChartIdx) {
             case CHART_BATTERY:
-                binding.tvChartTotal.setText(
-                        getString(R.string.stats_chart_total_battery, totalBat));
+                centerText = getString(R.string.stats_chart_total_battery, totalBat);
                 break;
             case CHART_CPU:
-                binding.tvChartTotal.setText(
-                        String.format(Locale.US, "%.1f%%", Math.min(100.0, totalCpu)));
+                centerText = String.format(Locale.US, "%.1f%%", Math.min(100.0, totalCpu));
                 break;
+            case CHART_RAM:
+                centerText = formatRamMb(totalRam);
+                break;
+            default:
+                centerText = "";
         }
+        binding.tvChartCenterValue.setText(centerText);
+        binding.tvChartTotal.setText(centerText);
     }
 
     private void showChartsLoading(boolean loading) {
