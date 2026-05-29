@@ -2,7 +2,6 @@ package com.gree1d.reappzuku;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -22,21 +21,29 @@ import java.util.List;
 
 public class PieChartRender extends PieChartRenderer {
 
-    // Darkness at the start edge (shadow imitation)
-    private static final float EDGE_DARK   = 0.45f;
-    // Darkness at the inner rim (radial depth)
-    private static final float INNER_DARK  = 0.30f;
+    // Shadow darkness at the start edge (the "cut" line shadow)
+    private static final float EDGE_DARK  = 0.38f;
+    // How quickly shadow fades — fraction of sweep angle
+    private static final float SHADOW_PCT = 0.20f;
+    // Inner rim overlay darkness (very subtle depth)
+    private static final float INNER_ALPHA = 55; // out of 255
 
     private final Path  mPath      = new Path();
     private final Paint mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mEdgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mInnerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public PieChartRender(PieChart chart, ChartAnimator animator, ViewPortHandler viewPortHandler) {
         super(chart, animator, viewPortHandler);
         mFillPaint.setStyle(Paint.Style.FILL);
+
         mEdgePaint.setStyle(Paint.Style.STROKE);
         mEdgePaint.setColor(Color.BLACK);
         mEdgePaint.setStrokeCap(Paint.Cap.BUTT);
+
+        mInnerPaint.setStyle(Paint.Style.STROKE);
+        mInnerPaint.setColor(Color.BLACK);
+        mInnerPaint.setAlpha(INNER_ALPHA);
     }
 
     @Override
@@ -52,8 +59,12 @@ public class PieChartRender extends PieChartRenderer {
         final float    cy      = center.y;
 
         final float sliceW     = radius - holeRad;
-        final float lineStroke = Math.max(2f, sliceW * 0.05f);
+        final float lineStroke = Math.max(2f, sliceW * 0.04f);
         mEdgePaint.setStrokeWidth(lineStroke);
+
+        // Inner rim strip: ~18% of slice width
+        final float innerStripW = sliceW * 0.18f;
+        mInnerPaint.setStrokeWidth(innerStripW);
 
         final float[]       drawAngles = mChart.getDrawAngles();
         final float         sliceSpace = dataSet.getSliceSpace();
@@ -84,13 +95,10 @@ public class PieChartRender extends PieChartRenderer {
 
             final int   color    = colors.get(j % colors.size());
             final float endAngle = startAngle + arcSweep;
-            final float midAngle = startAngle + arcSweep / 2f;
-
             final float startRad = (float) Math.toRadians(startAngle);
             final float endRad   = (float) Math.toRadians(endAngle);
-            final float midRad   = (float) Math.toRadians(midAngle);
 
-            // ── Segment path (clean donut) ────────────────────────────────
+            // ── Clean donut segment path ──────────────────────────────────
             mPath.reset();
             mPath.moveTo(cx + holeRad * (float) Math.cos(startRad),
                          cy + holeRad * (float) Math.sin(startRad));
@@ -102,76 +110,38 @@ public class PieChartRender extends PieChartRenderer {
             mPath.arcTo(innerRect, endAngle, -arcSweep, false);
             mPath.close();
 
-            // ── Gradient along the arc (sweep direction) ──────────────────
-            // The gradient goes: dark at start edge → full color at ~25% → full at end
-            // Combined with a radial darkening at inner rim to fake depth.
-            //
-            // Strategy: use a LinearGradient oriented perpendicular to the
-            // start-edge (i.e. along the sweep direction from start to mid).
-            // We align it from the start-edge midpoint to the opposite side.
+            // ── SweepGradient along the arc ───────────────────────────────
+            // dark at start edge → full colour after ~20% of sweep → full colour to end
+            int darkColor = darken(color, EDGE_DARK);
+            int fullColor = color;
 
-            // Start-edge midpoint (between inner and outer rim)
-            float midR    = (holeRad + radius) / 2f;
-            float gradStartX = cx + holeRad * (float) Math.cos(startRad);
-            float gradStartY = cy + holeRad * (float) Math.sin(startRad);
-            // Point well past the mid-angle (far side of segment)
-            float gradEndX   = cx + radius * (float) Math.cos(midRad);
-            float gradEndY   = cy + radius * (float) Math.sin(midRad);
+            // Shadow covers SHADOW_PCT of the sweep, rest is full color
+            float shadowDeg = arcSweep * SHADOW_PCT;
 
-            // SweepGradient centered at cx,cy:
-            // - at startAngle: dark (shadow of the cut edge)
-            // - at startAngle + ~15% sweep: full color
-            // - rest of sweep: full color
-            // We rotate the sweep gradient so angle 0 = startAngle.
-            //
-            // Colors array for SweepGradient covers 0..360 degrees.
-            // We need: dark at startAngle, bright shortly after, bright until endAngle.
-            // Pack the gradient into a small angular band.
+            // SweepGradient positions are in 0..1 (fraction of 360°)
+            // We place everything relative to startAngle then rotate the matrix
+            float p0 = 0f;
+            float p1 = shadowDeg / 360f;
+            float p2 = arcSweep  / 360f;
 
-            float shadowFraction = Math.min(0.18f, 15f / arcSweep); // shadow takes ~15° or 18% of sweep
-            // positions in 0..1 relative to full circle
-            float p0 = startAngle / 360f;
-            float p1 = (startAngle + arcSweep * shadowFraction) / 360f;
-            float p2 = (startAngle + arcSweep * 0.5f) / 360f;
-            float p3 = endAngle / 360f;
-
-            // Clamp positions to [0,1] and ensure monotonic
-            p0 = ((p0 % 1f) + 1f) % 1f;
-            p1 = p0 + (arcSweep * shadowFraction) / 360f;
-            p2 = p0 + (arcSweep * 0.5f) / 360f;
-            p3 = p0 + arcSweep / 360f;
-
-            int darkColor  = darken(color, EDGE_DARK);
-            int fullColor  = color;
-
-            SweepGradient sweepGrad = new SweepGradient(
+            SweepGradient sg = new SweepGradient(
                     cx, cy,
-                    new int[]  { darkColor, fullColor, fullColor, darkColor },
-                    new float[]{ p0,        p1,        p3,        1f        }
+                    new int[]  { darkColor, fullColor, fullColor },
+                    new float[]{ p0,        p1,        p2        }
             );
-
-            // Rotate the sweep gradient so position 0 aligns with our startAngle
             Matrix m = new Matrix();
             m.postRotate(startAngle, cx, cy);
-            sweepGrad.setLocalMatrix(m);
+            sg.setLocalMatrix(m);
 
-            // Also apply inner-rim darkening via a second radial layer drawn on top.
-            // For simplicity we combine: draw segment with sweep gradient first,
-            // then overlay a radial darkening strip near the inner rim.
-            mFillPaint.setShader(sweepGrad);
+            mFillPaint.setShader(sg);
             c.drawPath(mPath, mFillPaint);
 
-            // Inner-rim darkening strip (fake depth / thickness)
-            // Draw a thin arc along the inner edge with a semi-transparent dark paint
-            Paint innerDark = new Paint(Paint.ANTI_ALIAS_FLAG);
-            innerDark.setStyle(Paint.Style.STROKE);
-            innerDark.setColor(Color.BLACK);
-            innerDark.setAlpha((int)(255 * INNER_DARK));
-            innerDark.setStrokeWidth(sliceW * 0.22f);
-            float innerStripR = holeRad + sliceW * 0.11f;
-            RectF innerStripRect = new RectF(cx - innerStripR, cy - innerStripR,
-                                             cx + innerStripR, cy + innerStripR);
-            c.drawArc(innerStripRect, startAngle + 1f, arcSweep - 2f, false, innerDark);
+            // ── Subtle inner-rim darkening (depth illusion) ───────────────
+            float innerStripR = holeRad + innerStripW / 2f;
+            RectF innerStripRect = new RectF(
+                    cx - innerStripR, cy - innerStripR,
+                    cx + innerStripR, cy + innerStripR);
+            c.drawArc(innerStripRect, startAngle + 1f, arcSweep - 2f, false, mInnerPaint);
 
             // ── Black divider line at start edge ─────────────────────────
             float inset = lineStroke * 0.5f;
