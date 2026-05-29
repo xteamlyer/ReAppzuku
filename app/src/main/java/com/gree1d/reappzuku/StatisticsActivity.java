@@ -1413,7 +1413,8 @@ public class StatisticsActivity extends BaseActivity {
     private void applyCustomAccentToDialogButtons(AlertDialog dialog) {
         int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
         if (accent != ACCENT_CUSTOM) return;
-        int color = isNightTheme() ? Color.WHITE : Color.BLACK;
+        int nightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        int color = nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES ? Color.WHITE : Color.BLACK;
         for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL}) {
             android.widget.Button btn = dialog.getButton(which);
             if (btn != null) btn.setTextColor(color);
