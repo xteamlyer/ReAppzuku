@@ -4,117 +4,160 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.interfaces.datasets.IPieDataSet;
 import com.github.mikephil.charting.renderer.PieChartRenderer;
 import com.github.mikephil.charting.utils.MPPointF;
-import com.github.mikephil.charting.utils.Utils;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.util.List;
 
 public class PieChartRender extends PieChartRenderer {
 
-    private static final float CAP_RADIUS_FRACTION = 0.028f;
-    private static final float GRADIENT_CENTER_LIGHTEN = 0.55f;
+    private static final float CORNER_FRACTION = 0.38f;
+    private static final float DARKEN_AMOUNT   = 0.52f;
 
-    private final Path mArcPath = new Path();
-    private final Paint mCapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path  mPath  = new Path();
+    private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public PieChartRender(PieChart chart, ChartAnimator animator, ViewPortHandler viewPortHandler) {
         super(chart, animator, viewPortHandler);
-        mCapPaint.setStyle(Paint.Style.FILL);
+        mPaint.setStyle(Paint.Style.FILL);
     }
 
     @Override
     protected void drawDataSet(Canvas c, IPieDataSet dataSet) {
-        float angle = 0;
         float rotationAngle = mChart.getRotationAngle();
-        float phaseX = mAnimator.getPhaseX();
-        float phaseY = mAnimator.getPhaseY();
+        float phaseX        = mAnimator.getPhaseX();
+        float phaseY        = mAnimator.getPhaseY();
 
-        final RectF circleBox = mChart.getCircleBox();
-        final MPPointF center = mChart.getCenterCircleBox();
-        final float radius = mChart.getRadius();
-        final float holeRadius = radius * (mChart.getHoleRadius() / 100f);
-        final float sliceWidth = radius - holeRadius;
-        final float capRadius = sliceWidth * CAP_RADIUS_FRACTION;
-        final float midRadius = holeRadius + sliceWidth / 2f;
+        final MPPointF center   = mChart.getCenterCircleBox();
+        final float    radius   = mChart.getRadius();
+        final float    holeRad  = radius * (mChart.getHoleRadius() / 100f);
+        final float    sliceW   = radius - holeRad;
+        final float    cornerR  = sliceW * CORNER_FRACTION;
+        final float    cx       = center.x;
+        final float    cy       = center.y;
 
-        final int entryCount = dataSet.getEntryCount();
-        final float[] drawAngles = mChart.getDrawAngles();
-        final float sliceSpace = dataSet.getSliceSpace();
+        final RectF outerBox = mChart.getCircleBox();
+        final RectF innerBox = new RectF(cx - holeRad, cy - holeRad, cx + holeRad, cy + holeRad);
 
-        List<Integer> colors = dataSet.getColors();
+        final float[]       drawAngles = mChart.getDrawAngles();
+        final float         sliceSpace = dataSet.getSliceSpace();
+        final List<Integer> colors     = dataSet.getColors();
 
-        mRenderPaint.setStyle(Paint.Style.FILL);
-        mRenderPaint.setShader(null);
+        float angle = 0f;
 
-        for (int j = 0; j < entryCount; j++) {
-            float sweepAngle = drawAngles[j] * phaseX;
-            PieEntry entry = (PieEntry) dataSet.getEntryForIndex(j);
-            if (entry == null || entry.getValue() == 0f) {
-                angle += sweepAngle;
-                continue;
-            }
+        for (int j = 0; j < dataSet.getEntryCount(); j++) {
+            float sweepAngle   = drawAngles[j] * phaseX;
+            PieEntry entry     = (PieEntry) dataSet.getEntryForIndex(j);
+            if (entry == null || entry.getValue() == 0f) { angle += sweepAngle; continue; }
 
             float effectiveSweep = sweepAngle * phaseY;
-            float startAngle = rotationAngle + angle + sliceSpace / 2f;
-            float arcSweep = Math.max(0f, effectiveSweep - sliceSpace);
+            float startAngle     = rotationAngle + angle + sliceSpace / 2f;
+            float arcSweep       = Math.max(0f, effectiveSweep - sliceSpace);
+            if (arcSweep <= 0f) { angle += sweepAngle; continue; }
 
-            if (arcSweep <= 0f) {
-                angle += sweepAngle;
-                continue;
-            }
+            int   sliceColor = colors.get(j % colors.size());
+            float midAngle   = startAngle + arcSweep / 2f;
+            float endAngle   = startAngle + arcSweep;
 
-            int sliceColor = colors.get(j % colors.size());
+            // --- build segment path with rounded corners ---
+            mPath.reset();
 
-            float cx = center.x;
-            float cy = center.y;
+            // corner radius clamped so it never exceeds half sliceWidth
+            float cr = Math.min(cornerR, sliceW * 0.48f);
 
-            RadialGradient gradient = new RadialGradient(
-                    cx, cy,
-                    radius,
-                    lighten(sliceColor, GRADIENT_CENTER_LIGHTEN),
-                    sliceColor,
-                    Shader.TileMode.CLAMP
-            );
-            mRenderPaint.setShader(gradient);
-
-            mArcPath.reset();
-            mArcPath.moveTo(
-                    cx + holeRadius * (float) Math.cos(Math.toRadians(startAngle)),
-                    cy + holeRadius * (float) Math.sin(Math.toRadians(startAngle))
-            );
-            mArcPath.arcTo(circleBox, startAngle, arcSweep);
-            RectF innerBox = new RectF(
-                    cx - holeRadius, cy - holeRadius,
-                    cx + holeRadius, cy + holeRadius
-            );
-            mArcPath.arcTo(innerBox, startAngle + arcSweep, -arcSweep);
-            mArcPath.close();
-
-            c.drawPath(mArcPath, mRenderPaint);
-
-            mRenderPaint.setShader(null);
-            mCapPaint.setColor(sliceColor);
+            // outer arc radius shrunk by cr at both ends for the outer corners
+            float outerR  = radius - cr;
+            float innerR  = holeRad + cr;
+            float outerDelta = (float) Math.toDegrees(cr / radius);
+            float innerDelta = (float) Math.toDegrees(cr / holeRad);
 
             float startRad = (float) Math.toRadians(startAngle);
-            float endRad   = (float) Math.toRadians(startAngle + arcSweep);
+            float endRad   = (float) Math.toRadians(endAngle);
 
-            drawCap(c, cx + midRadius * (float) Math.cos(startRad),
-                       cy + midRadius * (float) Math.sin(startRad), capRadius);
-            drawCap(c, cx + midRadius * (float) Math.cos(endRad),
-                       cy + midRadius * (float) Math.sin(endRad),   capRadius);
+            // inner-start corner (holeRad side, start edge)
+            float isX = cx + holeRad * (float) Math.cos(startRad);
+            float isY = cy + holeRad * (float) Math.sin(startRad);
+            // inner-end corner
+            float ieX = cx + holeRad * (float) Math.cos(endRad);
+            float ieY = cy + holeRad * (float) Math.sin(endRad);
+            // outer-start corner
+            float osX = cx + radius * (float) Math.cos(startRad);
+            float osY = cy + radius * (float) Math.sin(startRad);
+            // outer-end corner
+            float oeX = cx + radius * (float) Math.cos(endRad);
+            float oeY = cy + radius * (float) Math.sin(endRad);
+
+            // Start at inner-start (offset along arc for corner)
+            mPath.moveTo(
+                    cx + innerR * (float) Math.cos(startRad),
+                    cy + innerR * (float) Math.sin(startRad));
+
+            // outer-start rounded corner
+            mPath.lineTo(
+                    cx + outerR * (float) Math.cos(startRad),
+                    cy + outerR * (float) Math.sin(startRad));
+            RectF cornerBox = new RectF(osX - cr, osY - cr, osX + cr, osY + cr);
+            // approximate corner with small arc tangent to both edges
+            mPath.arcTo(cornerBox, startAngle + 180f, 90f, false);
+
+            // outer arc (shrunk by delta on both ends)
+            RectF outerBox2 = new RectF(cx - radius + cr, cy - radius + cr,
+                                        cx + radius - cr, cy + radius - cr);
+            // We use the original outerBox scaled down by cr
+            float outerBoxR = radius - cr;
+            RectF outerArcBox = new RectF(cx - outerBoxR, cy - outerBoxR,
+                                          cx + outerBoxR, cy + outerBoxR);
+            mPath.arcTo(outerArcBox, startAngle + outerDelta, arcSweep - outerDelta * 2f);
+
+            // outer-end rounded corner
+            cornerBox = new RectF(oeX - cr, oeY - cr, oeX + cr, oeY + cr);
+            mPath.arcTo(cornerBox, endAngle, 90f, false);
+
+            // back along end edge to inner-end
+            mPath.lineTo(
+                    cx + innerR * (float) Math.cos(endRad),
+                    cy + innerR * (float) Math.sin(endRad));
+
+            // inner-end rounded corner
+            float ieCornerX = cx + holeRad * (float) Math.cos(endRad);
+            float ieCornerY = cy + holeRad * (float) Math.sin(endRad);
+            cornerBox = new RectF(ieCornerX - cr, ieCornerY - cr,
+                                  ieCornerX + cr, ieCornerY + cr);
+            mPath.arcTo(cornerBox, endAngle, 90f, false);
+
+            // inner arc (expanded by delta on both ends)
+            float innerArcR = holeRad + cr;
+            RectF innerArcBox = new RectF(cx - innerArcR, cy - innerArcR,
+                                          cx + innerArcR, cy + innerArcR);
+            mPath.arcTo(innerArcBox, endAngle - innerDelta, -(arcSweep - innerDelta * 2f));
+
+            // inner-start rounded corner
+            float isCornerX = cx + holeRad * (float) Math.cos(startRad);
+            float isCornerY = cy + holeRad * (float) Math.sin(startRad);
+            cornerBox = new RectF(isCornerX - cr, isCornerY - cr,
+                                  isCornerX + cr, isCornerY + cr);
+            mPath.arcTo(cornerBox, startAngle + 180f, 90f, false);
+
+            mPath.close();
+
+            // --- radial gradient: dark center → full colour at edge ---
+            RadialGradient gradient = new RadialGradient(
+                    cx, cy, radius,
+                    darken(sliceColor, DARKEN_AMOUNT),
+                    sliceColor,
+                    Shader.TileMode.CLAMP);
+            mPaint.setShader(gradient);
+
+            c.drawPath(mPath, mPaint);
 
             angle += sweepAngle;
         }
@@ -122,17 +165,10 @@ public class PieChartRender extends PieChartRenderer {
         MPPointF.recycleInstance(center);
     }
 
-    private void drawCap(Canvas c, float x, float y, float r) {
-        c.drawCircle(x, y, r, mCapPaint);
-    }
-
-    private static int lighten(int color, float fraction) {
-        int r = Color.red(color);
-        int g = Color.green(color);
-        int b = Color.blue(color);
-        r = Math.min(255, r + (int) ((255 - r) * fraction));
-        g = Math.min(255, g + (int) ((255 - g) * fraction));
-        b = Math.min(255, b + (int) ((255 - b) * fraction));
+    private static int darken(int color, float fraction) {
+        int r = (int) (Color.red(color)   * (1f - fraction));
+        int g = (int) (Color.green(color) * (1f - fraction));
+        int b = (int) (Color.blue(color)  * (1f - fraction));
         return Color.argb(Color.alpha(color), r, g, b);
     }
 }

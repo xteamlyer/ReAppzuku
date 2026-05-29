@@ -390,6 +390,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
 
         new MaterialAlertDialogBuilder(context)
                 .setTitle(context.getString(R.string.filter_restriction_type_dialog_title))
+                .setView(container)
                 .setNegativeButton(context.getString(R.string.dialog_cancel), null)
                 .setPositiveButton(context.getString(R.string.dialog_apply), (dialog, which) -> {
                     BackgroundAppManager.RestrictionType chosen;
