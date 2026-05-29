@@ -10,7 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
+import android.widget.AutoCompleteTextView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
@@ -18,11 +18,11 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.animation.Easing;
@@ -564,7 +564,7 @@ public class StatisticsActivity extends BaseActivity {
             sb.append(String.format(Locale.US, "• %s  %.1f%%\n",
                     s.appName, metricValue(s, metric) / total * 100));
         }
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.chart_others_dialog_title))
                 .setMessage(sb.toString().trim())
                 .setPositiveButton(android.R.string.ok, null)
@@ -690,7 +690,6 @@ public class StatisticsActivity extends BaseActivity {
     private void showTopOffendersDialog() {
         SettingsListContent content = createSettingsListContent(
                 getString(R.string.stats_top_offenders_empty), true);
-        Spinner filterSpinner = content.filterSpinner;
         TextView summaryText = content.summaryText;
         ProgressBar loading = content.loading;
         ListView listView = content.listView;
@@ -707,9 +706,9 @@ public class StatisticsActivity extends BaseActivity {
         });
 
         ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, topOffenderFilterLabels);
-        filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        filterSpinner.setAdapter(filterAdapter);
+                this, android.R.layout.simple_dropdown_item_1line, topOffenderFilterLabels);
+        content.filterSpinner.setAdapter(filterAdapter);
+        content.filterSpinner.setText(topOffenderFilterLabels[0], false);
 
         AlertDialog dialog = createSettingsSurfaceDialog(
                 getString(R.string.settings_top_offenders_title),
@@ -718,13 +717,9 @@ public class StatisticsActivity extends BaseActivity {
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_close), (d, w) -> d.dismiss());
         dialog.show();
 
-        filterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                loadTopOffenders(position, offendersAdapter, summaryText, loading, listView, emptyView);
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+        content.filterSpinner.setOnItemClickListener((parent, view, position, id) -> {
+            content.filterSpinner.setText(topOffenderFilterLabels[position], false);
+            loadTopOffenders(position, offendersAdapter, summaryText, loading, listView, emptyView);
         });
     }
 
@@ -971,7 +966,7 @@ public class StatisticsActivity extends BaseActivity {
         String title = (entry.packageName == null || entry.packageName.equals("-"))
                 ? humanizeLogAction(entry.action) : entry.packageName;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
                 .setTitle(title)
                 .setView(scrollView)
                 .setNegativeButton(getString(R.string.dialog_close), (d, w) -> d.dismiss());
@@ -980,12 +975,7 @@ public class StatisticsActivity extends BaseActivity {
             builder.setPositiveButton(getString(R.string.settings_open_app_info), (d, w) -> openAppInfo(entry.packageName));
         }
 
-        AlertDialog dialog = builder.create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
-        }
-        dialog.show();
+        builder.show();
     }
 
     private String extractDetailValue(String detail, String key) {
@@ -1148,12 +1138,12 @@ public class StatisticsActivity extends BaseActivity {
 
     private static class SettingsListContent {
         final View rootView;
-        final Spinner filterSpinner;
+        final AutoCompleteTextView filterSpinner;
         final TextView summaryText;
         final ProgressBar loading;
         final ListView listView;
         final TextView emptyView;
-        SettingsListContent(View rootView, Spinner filterSpinner, TextView summaryText,
+        SettingsListContent(View rootView, AutoCompleteTextView filterSpinner, TextView summaryText,
                             ProgressBar loading, ListView listView, TextView emptyView) {
             this.rootView = rootView; this.filterSpinner = filterSpinner;
             this.summaryText = summaryText; this.loading = loading;
@@ -1206,7 +1196,7 @@ public class StatisticsActivity extends BaseActivity {
         view.setText(text);
     }
 
-    private AlertDialog createSettingsSurfaceDialog(String title, String subtitle, View contentView) {
+    private androidx.appcompat.app.AlertDialog createSettingsSurfaceDialog(String title, String subtitle, View contentView) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_settings_surface, null);
         TextView subtitleView = dialogView.findViewById(R.id.dialog_surface_subtitle);
         FrameLayout contentContainer = dialogView.findViewById(R.id.dialog_surface_content);
@@ -1214,20 +1204,18 @@ public class StatisticsActivity extends BaseActivity {
         subtitleView.setVisibility(subtitle == null || subtitle.trim().isEmpty() ? View.GONE : View.VISIBLE);
         contentContainer.addView(contentView);
 
-        AlertDialog dialog = new AlertDialog.Builder(this).setTitle(title).setView(dialogView).create();
-        dialog.getWindow().setBackgroundDrawable(
-                new android.graphics.drawable.ColorDrawable(ContextCompat.getColor(this, R.color.background_primary)));
-        return dialog;
+        return new MaterialAlertDialogBuilder(this).setTitle(title).setView(dialogView).create();
     }
 
     private SettingsListContent createSettingsListContent(String emptyText, boolean showFilter) {
         View contentView = getLayoutInflater().inflate(R.layout.dialog_top_offenders, null);
-        Spinner filterSpinner = contentView.findViewById(R.id.top_offenders_filter);
+        AutoCompleteTextView filterSpinner = contentView.findViewById(R.id.top_offenders_filter);
         TextView summaryText = contentView.findViewById(R.id.top_offenders_summary);
         ProgressBar loading = contentView.findViewById(R.id.top_offenders_loading);
         ListView listView = contentView.findViewById(R.id.top_offenders_list);
         TextView emptyView = contentView.findViewById(R.id.top_offenders_empty);
-        filterSpinner.setVisibility(showFilter ? View.VISIBLE : View.GONE);
+        View filterLayout = contentView.findViewById(R.id.top_offenders_filter_layout);
+        filterLayout.setVisibility(showFilter ? View.VISIBLE : View.GONE);
         emptyView.setText(emptyText);
         return new SettingsListContent(contentView, filterSpinner, summaryText, loading, listView, emptyView);
     }
