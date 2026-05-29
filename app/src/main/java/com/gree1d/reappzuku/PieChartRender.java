@@ -26,7 +26,7 @@ public class PieChartRender extends PieChartRenderer {
     // How quickly shadow fades — fraction of sweep angle
     private static final float SHADOW_PCT = 0.20f;
     // Inner rim overlay darkness (very subtle depth)
-    private static final float INNER_ALPHA = 55; // out of 255
+    private static final int INNER_ALPHA = 55; // out of 255
 
     private final Path  mPath      = new Path();
     private final Paint mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
