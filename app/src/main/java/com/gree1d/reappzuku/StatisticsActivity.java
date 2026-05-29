@@ -350,6 +350,7 @@ public class StatisticsActivity extends BaseActivity {
                 centerText = "";
         }
         binding.tvChartCenterValue.setText(centerText);
+        // Keep hidden tv_chart_total in sync for any legacy references
         binding.tvChartTotal.setText(centerText);
     }
 
@@ -400,8 +401,8 @@ public class StatisticsActivity extends BaseActivity {
 
         PieDataSet dataSet = new PieDataSet(entries, "");
         dataSet.setColors(colors);
-        dataSet.setSliceSpace(2f);
-        dataSet.setSelectionShift(8f);
+        dataSet.setSliceSpace(4f);
+        dataSet.setSelectionShift(0f);
         dataSet.setValueTextSize(0f);
 
         PieData data = new PieData(dataSet);
@@ -409,8 +410,8 @@ public class StatisticsActivity extends BaseActivity {
         chart.setRenderer(new PieChartRender(chart, chart.getAnimator(), chart.getViewPortHandler()));
         chart.setDrawHoleEnabled(true);
         chart.setHoleColor(Color.TRANSPARENT);
-        chart.setHoleRadius(48f);
-        chart.setTransparentCircleRadius(52f);
+        chart.setHoleRadius(62f);
+        chart.setTransparentCircleRadius(0f);
         chart.setDrawCenterText(false);
         chart.getDescription().setEnabled(false);
         chart.getLegend().setEnabled(false);
