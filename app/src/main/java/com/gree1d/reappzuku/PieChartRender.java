@@ -2,11 +2,11 @@ package com.gree1d.reappzuku;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RadialGradient;
 import android.graphics.RectF;
-import android.graphics.SweepGradient;
+import android.graphics.Shader;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.PieChart;
@@ -20,22 +20,35 @@ import java.util.List;
 
 public class PieChartRender extends PieChartRenderer {
 
-    // Darkness at the start edge (shadow of the cut)
-    private static final float EDGE_DARK  = 0.40f;
-    // Fraction of sweep angle that the shadow covers before full colour
-    private static final float SHADOW_PCT = 0.18f;
+    // Radial gradient: how dark at inner edge (0=no change, 1=black)
+    private static final float INNER_DARK    = 0.50f;
+    // Inner depth strip: width as fraction of slice width
+    private static final float DEPTH_STRIP_F = 0.14f;
+    // Inner depth strip: opacity 0..255
+    private static final int   DEPTH_ALPHA   = 120;
+    // Divider line: opacity 0..255
+    private static final int   LINE_ALPHA    = 210;
 
-    private final Path  mPath      = new Path();
-    private final Paint mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint mEdgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path  mPath       = new Path();
+    private final Paint mFillPaint  = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mDepthPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mLinePaint  = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public PieChartRender(PieChart chart, ChartAnimator animator, ViewPortHandler viewPortHandler) {
         super(chart, animator, viewPortHandler);
+
         mFillPaint.setStyle(Paint.Style.FILL);
 
-        mEdgePaint.setStyle(Paint.Style.STROKE);
-        mEdgePaint.setColor(Color.BLACK);
-        mEdgePaint.setStrokeCap(Paint.Cap.BUTT);
+        // Semi-transparent black arc at inner edge — depth illusion
+        mDepthPaint.setStyle(Paint.Style.STROKE);
+        mDepthPaint.setColor(Color.BLACK);
+        mDepthPaint.setAlpha(DEPTH_ALPHA);
+
+        // Divider line between segments
+        mLinePaint.setStyle(Paint.Style.STROKE);
+        mLinePaint.setColor(Color.BLACK);
+        mLinePaint.setAlpha(LINE_ALPHA);
+        mLinePaint.setStrokeCap(Paint.Cap.BUTT);
     }
 
     @Override
@@ -50,9 +63,12 @@ public class PieChartRender extends PieChartRenderer {
         final float    cx      = center.x;
         final float    cy      = center.y;
 
-        final float sliceW     = radius - holeRad;
-        final float lineStroke = Math.max(2f, sliceW * 0.04f);
-        mEdgePaint.setStrokeWidth(lineStroke);
+        final float sliceW      = radius - holeRad;
+        final float depthStripW = sliceW * DEPTH_STRIP_F;
+        final float lineStrokeW = Math.max(2f, sliceW * 0.035f);
+
+        mDepthPaint.setStrokeWidth(depthStripW);
+        mLinePaint.setStrokeWidth(lineStrokeW);
 
         final float[]       drawAngles = mChart.getDrawAngles();
         final float         sliceSpace = dataSet.getSliceSpace();
@@ -60,6 +76,10 @@ public class PieChartRender extends PieChartRenderer {
 
         final RectF outerRect = new RectF(cx - radius,  cy - radius,  cx + radius,  cy + radius);
         final RectF innerRect = new RectF(cx - holeRad, cy - holeRad, cx + holeRad, cy + holeRad);
+
+        // Depth strip arc sits just outside the inner edge
+        final float depthR = holeRad + depthStripW / 2f;
+        final RectF depthRect = new RectF(cx - depthR, cy - depthR, cx + depthR, cy + depthR);
 
         float angle = 0f;
 
@@ -86,7 +106,7 @@ public class PieChartRender extends PieChartRenderer {
             final float startRad = (float) Math.toRadians(startAngle);
             final float endRad   = (float) Math.toRadians(endAngle);
 
-            // ── Clean donut segment path ──────────────────────────────────
+            // ── 1. Segment path ───────────────────────────────────────────
             mPath.reset();
             mPath.moveTo(cx + holeRad * (float) Math.cos(startRad),
                          cy + holeRad * (float) Math.sin(startRad));
@@ -98,32 +118,42 @@ public class PieChartRender extends PieChartRenderer {
             mPath.arcTo(innerRect, endAngle, -arcSweep, false);
             mPath.close();
 
-            // ── SweepGradient: dark at start edge → full colour ───────────
-            // shadow fades over SHADOW_PCT of the arc, then stays full colour
-            int darkColor = darken(color, EDGE_DARK);
+            // ── 2. Radial gradient: dark at inner edge → full colour outer ─
+            // Three stops: inner edge dark, just past depth strip = full colour, outer = full colour
+            float innerStop = holeRad / radius;
+            float brightStop = (holeRad + depthStripW * 2f) / radius;
+            brightStop = Math.min(brightStop, 0.65f);
 
-            float shadowDeg = arcSweep * SHADOW_PCT;
-
-            SweepGradient sg = new SweepGradient(
-                    cx, cy,
-                    new int[]  { darkColor, color,            color },
-                    new float[]{ 0f,        shadowDeg / 360f, arcSweep / 360f }
+            RadialGradient rg = new RadialGradient(
+                    cx, cy, radius,
+                    new int[]{
+                        darken(color, INNER_DARK),  // at center (maps to inner edge via stop)
+                        darken(color, INNER_DARK),  // still dark at inner edge
+                        color,                       // full colour shortly past inner edge
+                        color                        // full colour at outer rim
+                    },
+                    new float[]{
+                        0f,
+                        innerStop,
+                        brightStop,
+                        1f
+                    },
+                    Shader.TileMode.CLAMP
             );
-            Matrix m = new Matrix();
-            m.postRotate(startAngle, cx, cy);
-            sg.setLocalMatrix(m);
-
-            mFillPaint.setShader(sg);
+            mFillPaint.setShader(rg);
             c.drawPath(mPath, mFillPaint);
 
-            // ── Black divider line at start edge only ─────────────────────
-            float inset = lineStroke * 0.5f;
+            // ── 3. Inner depth strip (semi-transparent black arc) ─────────
+            c.drawArc(depthRect, startAngle + 0.5f, arcSweep - 1f, false, mDepthPaint);
+
+            // ── 4. Divider line at start edge ─────────────────────────────
+            float inset = lineStrokeW * 0.5f;
             c.drawLine(
                     cx + (holeRad + inset) * (float) Math.cos(startRad),
                     cy + (holeRad + inset) * (float) Math.sin(startRad),
                     cx + (radius  - inset) * (float) Math.cos(startRad),
                     cy + (radius  - inset) * (float) Math.sin(startRad),
-                    mEdgePaint);
+                    mLinePaint);
 
             angle += sweepAngle;
         }
