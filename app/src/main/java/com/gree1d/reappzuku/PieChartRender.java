@@ -20,13 +20,9 @@ import java.util.List;
 
 public class PieChartRender extends PieChartRenderer {
 
-    // How much to lighten at the outer rim (0=no change, 1=white)
-    private static final float OUTER_LIGHT = 0.22f;
-    // Inner depth strip width as fraction of slice width
+    private static final float OUTER_LIGHT = 0.12f;
     private static final float DEPTH_F     = 0.14f;
-    // Inner depth strip opacity 0..255
     private static final int   DEPTH_ALPHA = 40;
-    // Divider line opacity 0..255
     private static final int   LINE_ALPHA  = 210;
 
     private final Path  mPath       = new Path();
@@ -103,7 +99,6 @@ public class PieChartRender extends PieChartRenderer {
             final float startRad = (float) Math.toRadians(startAngle);
             final float endRad   = (float) Math.toRadians(endAngle);
 
-            // ── 1. Segment path ───────────────────────────────────────────
             mPath.reset();
             mPath.moveTo(cx + holeRad * (float) Math.cos(startRad),
                          cy + holeRad * (float) Math.sin(startRad));
@@ -115,28 +110,25 @@ public class PieChartRender extends PieChartRenderer {
             mPath.arcTo(innerRect, endAngle, -arcSweep, false);
             mPath.close();
 
-            // ── 2. Radial gradient: full colour at inner → light at outer ─
             RadialGradient rg = new RadialGradient(
                     cx, cy, radius,
                     new int[]{
-                        color,                    // full colour at centre / inner edge
-                        color,                    // stay full through most of slice
-                        lighten(color, OUTER_LIGHT) // slightly lighter at outer rim
+                        color, 
+                        color,
+                        lighten(color, OUTER_LIGHT) 
                     },
                     new float[]{
                         0f,
-                        holeRad / radius,         // inner edge of ring
-                        1f                        // outer edge of ring
+                        holeRad / radius,
+                        1f 
                     },
                     Shader.TileMode.CLAMP
             );
             mFillPaint.setShader(rg);
             c.drawPath(mPath, mFillPaint);
 
-            // ── 3. Inner depth strip ──────────────────────────────────────
             c.drawArc(depthRect, startAngle + 0.5f, arcSweep - 1f, false, mDepthPaint);
 
-            // ── 4. Divider line at start edge ─────────────────────────────
             float inset = lineStrokeW * 0.5f;
             c.drawLine(
                     cx + (holeRad + inset) * (float) Math.cos(startRad),
@@ -151,7 +143,6 @@ public class PieChartRender extends PieChartRenderer {
         MPPointF.recycleInstance(center);
     }
 
-    // Blend colour toward white by fraction
     private static int lighten(int color, float fraction) {
         final int r = (int)(Color.red(color)   + (255 - Color.red(color))   * fraction);
         final int g = (int)(Color.green(color) + (255 - Color.green(color)) * fraction);
