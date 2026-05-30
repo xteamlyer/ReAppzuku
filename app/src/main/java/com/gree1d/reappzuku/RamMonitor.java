@@ -62,16 +62,15 @@ public class RamMonitor {
 
                             // Цвет индикатора по уровню загруженности
                             float fraction = (float) ramInfo.usedMb / ramInfo.totalMb;
-                            int color;
+                            int indicatorColor;
                             if (fraction < 0.6f) {
-                                color = com.google.android.material.R.attr.colorPrimary;
+                                indicatorColor = resolveAttrColor(androidx.appcompat.R.attr.colorPrimary);
                             } else if (fraction < 0.85f) {
-                                color = com.google.android.material.R.attr.colorTertiary;
+                                indicatorColor = 0xFFFF9800; // orange — нет надёжного MD3 attr для tertiary
                             } else {
-                                color = com.google.android.material.R.attr.colorError;
+                                indicatorColor = resolveAttrColor(androidx.appcompat.R.attr.colorError);
                             }
-                            // resolveAttrColor получает цвет из темы по атрибуту
-                            ramUsageBar.setIndicatorColor(resolveAttrColor(color));
+                            ramUsageBar.setIndicatorColor(indicatorColor);
                         } else {
                             ramUsageText.setText(context.getString(R.string.ram_usage_unavailable));
                         }
