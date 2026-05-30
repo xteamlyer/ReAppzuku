@@ -32,6 +32,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         if (isAmoled) {
             switch (accent) {
+                case ACCENT_SYSTEM:    setTheme(R.style.AppTheme_Amoled);                 break;
                 case ACCENT_INDIGO:    setTheme(R.style.AppTheme_AccentIndigo_Amoled);    break;
                 case ACCENT_CRIMSON:   setTheme(R.style.AppTheme_AccentCrimson_Amoled);   break;
                 case ACCENT_FOREST:    setTheme(R.style.AppTheme_AccentForest_Amoled);    break;
