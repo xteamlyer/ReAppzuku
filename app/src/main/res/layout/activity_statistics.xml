@@ -215,30 +215,42 @@
 
             </LinearLayout>
 
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tab_period_selector"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginBottom="8dp"
-                android:background="@android:color/transparent"
-                app:tabMode="fixed"
-                app:tabGravity="fill"
-                app:tabRippleColor="?attr/colorPrimary"
-                app:tabTextColor="@color/text_secondary"
-                app:tabSelectedTextColor="?attr/colorPrimary"
-                app:tabIndicatorColor="?attr/colorPrimary"
-                app:tabIndicatorHeight="2dp" />
-
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/card_charts_pager"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="?attr/colorSurface">
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.tabs.TabLayout
+                        android:id="@+id/tab_period_selector"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@android:color/transparent"
+                        app:tabMode="fixed"
+                        app:tabGravity="fill"
+                        app:tabRippleColor="?attr/colorPrimary"
+                        app:tabTextColor="@color/text_secondary"
+                        app:tabSelectedTextColor="?attr/colorPrimary"
+                        app:tabIndicatorColor="?attr/colorPrimary"
+                        app:tabIndicatorHeight="2dp" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/card_charts_pager"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="0dp"
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="?attr/colorSurface">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -401,6 +413,9 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:visibility="gone" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
