@@ -103,6 +103,7 @@
                 android:textSize="11sp"
                 android:focusable="false" />
 
+            <!-- Строка 3: ОЗУ + CPU + бейджи — без изменений от оригинала -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -129,6 +130,7 @@
                     android:textSize="11sp"
                     android:focusable="false" />
 
+                <!-- Бейджи — оригинальный стиль TextView с @drawable/badge_* -->
                 <TextView
                     android:id="@+id/badge_system"
                     android:layout_width="wrap_content"
@@ -192,7 +194,7 @@
             android:layout_height="48dp"
             android:orientation="horizontal"
             android:gravity="center"
-            android:padding="8dp">
+            android:padding="9dp">
 
             <ImageView
                 android:id="@+id/btn_app_action"
