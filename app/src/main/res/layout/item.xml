@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Изменения:
-    1. Корневой LinearLayout → MaterialCardView (Filled, MD3)
-    2. badge_system / badge_persistent (TextView) → Chip
-    3. Все android:id сохранены без изменений
-    4. Все иконки (@drawable/ic_protected, ic_whitelist, ic_more_vert, ic_force_stop) — без изменений
--->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -20,23 +13,22 @@
     app:strokeWidth="0dp"
     android:descendantFocusability="blocksDescendants">
 
-    <!-- Внутренний LinearLayout повторяет оригинальный linear1 -->
     <LinearLayout
         android:id="@+id/linear1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="60dp"
+        android:minHeight="54dp"
         android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/app_icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_marginEnd="8dp"
             android:scaleType="fitCenter"
             android:focusable="false"
@@ -47,7 +39,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="4dp"
             android:orientation="vertical">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -61,7 +53,7 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:focusable="false"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -73,8 +65,8 @@
 
                 <ImageView
                     android:id="@+id/protected_icon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:layout_marginStart="4dp"
                     android:src="@drawable/ic_protected"
                     android:visibility="gone"
@@ -87,9 +79,9 @@
 
                 <ImageView
                     android:id="@+id/whitelist_icon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="6dp"
                     android:src="@drawable/ic_whitelist"
                     android:visibility="gone"
                     android:focusable="false"
@@ -101,7 +93,6 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Строка 2: пакет -->
             <TextView
                 android:id="@+id/app_pkg"
                 android:layout_width="match_parent"
@@ -109,7 +100,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:focusable="false" />
 
             <!-- Строка 3: ОЗУ + CPU + бейджи -->
@@ -126,51 +117,59 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:focusable="false" />
 
                 <TextView
                     android:id="@+id/app_cpu"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="6dp"
                     android:maxLines="1"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:focusable="false" />
 
                 <!--
-                    Бейдж System: Chip вместо TextView с @drawable/badge_system.
-                    android:id сохранён — адаптер не требует правок.
+                    System badge: оригинальный цвет текста #1A5276 (тёмно-синий).
+                    Фон — полупрозрачный синий, хорошо виден и в светлой, и в тёмной теме.
                 -->
                 <com.google.android.material.chip.Chip
                     android:id="@+id/badge_system"
                     style="@style/Widget.Material3.Chip.Assist"
                     android:layout_width="wrap_content"
-                    android:layout_height="24dp"
+                    android:layout_height="22dp"
                     android:layout_marginStart="6dp"
                     android:text="System"
+                    android:textColor="#1A5276"
                     android:textSize="10sp"
                     android:visibility="gone"
                     android:focusable="false"
+                    app:chipBackgroundColor="#2A1A5276"
+                    app:chipStrokeColor="#1A5276"
+                    app:chipStrokeWidth="1dp"
                     app:chipMinHeight="20dp"
                     app:chipStartPadding="6dp"
                     app:chipEndPadding="6dp"
                     app:ensureMinTouchTargetSize="false" />
 
                 <!--
-                    Бейдж Persistent: аналогично.
+                    Persistent badge: оригинальный цвет текста #6C3483 (фиолетовый).
                 -->
                 <com.google.android.material.chip.Chip
                     android:id="@+id/badge_persistent"
                     style="@style/Widget.Material3.Chip.Assist"
                     android:layout_width="wrap_content"
-                    android:layout_height="24dp"
+                    android:layout_height="22dp"
                     android:layout_marginStart="4dp"
                     android:text="Persistent"
+                    android:textColor="#6C3483"
                     android:textSize="10sp"
                     android:visibility="gone"
                     android:focusable="false"
+                    app:chipBackgroundColor="#2A6C3483"
+                    app:chipStrokeColor="#6C3483"
+                    app:chipStrokeWidth="1dp"
                     app:chipMinHeight="20dp"
                     app:chipStartPadding="6dp"
                     app:chipEndPadding="6dp"
@@ -180,11 +179,10 @@
 
         </LinearLayout>
 
-        <!-- Overflow — без изменений -->
         <LinearLayout
             android:id="@+id/linear_overflow"
-            android:layout_width="40dp"
-            android:layout_height="48dp"
+            android:layout_width="36dp"
+            android:layout_height="44dp"
             android:orientation="horizontal"
             android:gravity="center"
             android:padding="8dp">
@@ -200,11 +198,10 @@
 
         </LinearLayout>
 
-        <!-- Kill/action button — без изменений -->
         <LinearLayout
             android:id="@+id/linear3"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:orientation="horizontal"
             android:gravity="center"
             android:padding="10dp">
