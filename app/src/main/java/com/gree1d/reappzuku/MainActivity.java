@@ -549,6 +549,9 @@ public class MainActivity extends BaseActivity {
                 .create();
         triggersDialog.show();
         tintDialogButtons(triggersDialog);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            dialogView.setScrollCaptureHint(android.view.View.SCROLL_CAPTURE_HINT_INCLUDE);
+        }
     }
 
     private void addSectionHeader(LinearLayout container, String title) {
