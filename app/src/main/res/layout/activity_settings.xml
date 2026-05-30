@@ -77,12 +77,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -106,12 +100,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_help"
@@ -180,12 +168,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_theme"
@@ -212,12 +194,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_accent"
@@ -244,12 +220,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_accent_on_color"
@@ -284,12 +254,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_notification_mode"
@@ -358,12 +322,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -397,7 +355,9 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_auto_kill"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:scaleX="0.8"
+                            android:scaleY="0.8" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -443,12 +403,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_periodic_kill"
@@ -483,15 +437,11 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_periodic_kill"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:scaleX="0.8"
+                            android:scaleY="0.8" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_kill_interval"
@@ -518,12 +468,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_screen_lock"
@@ -558,15 +502,11 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_kill_screen_off"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:scaleX="0.8"
+                            android:scaleY="0.8" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_ram_threshold_toggle"
@@ -601,15 +541,11 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_ram_threshold"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:scaleX="0.8"
+                            android:scaleY="0.8" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_ram_threshold"
@@ -635,12 +571,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_auto_kill_type"
@@ -666,12 +596,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_kill_mode"
@@ -698,12 +622,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_whitelist"
@@ -729,12 +647,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_blacklist"
@@ -804,12 +716,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_background_restriction"
@@ -835,12 +741,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_reapply_restrictions"
@@ -866,12 +766,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_restrictions_scheduler"
@@ -897,12 +791,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -936,15 +824,11 @@
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/switch_sleep_mode"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:scaleX="0.8"
+                            android:scaleY="0.8" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_sleep_mode_apps"
@@ -970,12 +854,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_sleep_mode_delay"
@@ -1002,12 +880,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_clear_cache"
@@ -1033,12 +905,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_hidden_apps"
@@ -1064,12 +930,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_backup_restore"
@@ -1123,12 +983,6 @@
                         android:paddingTop="8dp"
                         android:paddingBottom="4dp" />
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_github"
@@ -1168,12 +1022,6 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_check_updates"
@@ -1206,12 +1054,6 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        app:dividerInsetStart="0dp"
-                        app:dividerInsetEnd="0dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_telegram"
