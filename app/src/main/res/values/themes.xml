@@ -453,7 +453,7 @@
     </style>
 
     <style name="ThemeOverlay.App.TabLayout" parent="">
-        <item name="colorOutlineVariant">?attr/colorSurface</item>
+        <item name="colorOutlineVariant">#1C1B1F</item>
     </style>
 
     <style name="AppBottomSheetDialogTheme" parent="Theme.Material3.Light.BottomSheetDialog">
