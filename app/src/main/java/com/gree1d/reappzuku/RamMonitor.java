@@ -36,11 +36,9 @@ public class RamMonitor {
         this.ramUsageText = ramUsageText;
         this.executor = Executors.newSingleThreadExecutor();
 
-        // Применяем цвет акцента сразу при создании
         applyAccentColor();
     }
 
-    // Вызывается из MainActivity после смены акцента (например при recreate)
     public void applyAccentColor() {
         SharedPreferences prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE);
         int accent = prefs.getInt(KEY_ACCENT, ACCENT_SYSTEM);
@@ -49,7 +47,6 @@ public class RamMonitor {
         if (accent == ACCENT_CUSTOM) {
             baseColor = prefs.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
         } else {
-            // Для системного и всех остальных — берём colorPrimary из текущей темы Activity
             baseColor = com.google.android.material.color.MaterialColors.getColor(
                     ramUsageBar, androidx.appcompat.R.attr.colorPrimary);
         }
@@ -82,7 +79,6 @@ public class RamMonitor {
                             ramUsageText.setText(context.getString(R.string.ram_usage,
                                     ramInfo.usedMb, ramInfo.totalMb));
 
-                            // Цвет по уровню загруженности поверх акцента
                             float fraction = (float) ramInfo.usedMb / ramInfo.totalMb;
                             if (fraction >= 0.85f) {
                                 ramUsageBar.setIndicatorColor(
@@ -90,7 +86,6 @@ public class RamMonitor {
                             } else if (fraction >= 0.6f) {
                                 ramUsageBar.setIndicatorColor(0xFFFF9800);
                             } else {
-                                // Возвращаем цвет акцента
                                 applyAccentColor();
                             }
                         } else {
