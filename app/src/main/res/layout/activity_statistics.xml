@@ -111,8 +111,8 @@
                     android:layout_height="wrap_content"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="?attr/colorSurfaceVariant"
-                    app:strokeColor="?attr/colorOutline"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:strokeColor="?attr/colorOutlineVariant"
                     app:strokeWidth="1dp"
                     android:layout_marginBottom="4dp">
 
@@ -414,7 +414,7 @@
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/colorSurface"
-                app:strokeColor="?attr/colorOutline"
+                app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -447,11 +447,6 @@
 
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp" />
-
                     <LinearLayout
                         android:id="@+id/layout_top_offenders"
                         android:layout_width="match_parent"
@@ -476,11 +471,6 @@
                             android:textSize="12sp" />
 
                     </LinearLayout>
-
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_restriction_log"
@@ -507,11 +497,6 @@
 
                     </LinearLayout>
 
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp" />
-
                     <LinearLayout
                         android:id="@+id/layout_sleep_mode_log"
                         android:layout_width="match_parent"
@@ -536,11 +521,6 @@
                             android:textSize="12sp" />
 
                     </LinearLayout>
-
-                    <com.google.android.material.divider.MaterialDivider
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp" />
 
                     <LinearLayout
                         android:id="@+id/layout_scheduler_log"
