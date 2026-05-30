@@ -3,8 +3,9 @@ package com.gree1d.reappzuku;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -18,13 +19,14 @@ public class RamMonitor {
 
     private final Context context;
     private final Handler handler;
-    private final ProgressBar ramUsageBar;
+    private final LinearProgressIndicator ramUsageBar;
     private final TextView ramUsageText;
     private final ExecutorService executor;
     private volatile boolean isMonitoring = false;
     private Runnable monitorRunnable;
 
-    public RamMonitor(Context context, Handler handler, ProgressBar ramUsageBar, TextView ramUsageText) {
+    public RamMonitor(Context context, Handler handler,
+                      LinearProgressIndicator ramUsageBar, TextView ramUsageText) {
         this.context = context;
         this.handler = handler;
         this.ramUsageBar = ramUsageBar;
@@ -54,9 +56,22 @@ public class RamMonitor {
 
                         if (ramInfo != null && ramInfo.totalMb > 0) {
                             ramUsageBar.setMax((int) ramInfo.totalMb);
-                            ramUsageBar.setProgress((int) ramInfo.usedMb);
+                            ramUsageBar.setProgress((int) ramInfo.usedMb, true);
                             ramUsageText.setText(context.getString(R.string.ram_usage,
                                     ramInfo.usedMb, ramInfo.totalMb));
+
+                            // Цвет индикатора по уровню загруженности
+                            float fraction = (float) ramInfo.usedMb / ramInfo.totalMb;
+                            int color;
+                            if (fraction < 0.6f) {
+                                color = com.google.android.material.R.attr.colorPrimary;
+                            } else if (fraction < 0.85f) {
+                                color = com.google.android.material.R.attr.colorTertiary;
+                            } else {
+                                color = com.google.android.material.R.attr.colorError;
+                            }
+                            // resolveAttrColor получает цвет из темы по атрибуту
+                            ramUsageBar.setIndicatorColor(resolveAttrColor(color));
                         } else {
                             ramUsageText.setText(context.getString(R.string.ram_usage_unavailable));
                         }
@@ -70,6 +85,12 @@ public class RamMonitor {
         };
 
         handler.post(monitorRunnable);
+    }
+
+    private int resolveAttrColor(int attrRes) {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        context.getTheme().resolveAttribute(attrRes, tv, true);
+        return tv.data;
     }
 
     private RamInfo readRamUsage() {
