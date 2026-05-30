@@ -243,7 +243,6 @@
                         app:tabSelectedTextColor="?attr/colorPrimary"
                         app:tabIndicatorColor="?attr/colorPrimary"
                         app:tabIndicatorHeight="2dp"
-                        app:tabDividerColor="@android:color/transparent"
                         app:tabUnboundedRipple="false" />
 
                     <com.google.android.material.card.MaterialCardView
