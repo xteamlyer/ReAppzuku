@@ -66,6 +66,19 @@
         </service>
 
         <service
+            android:name=".AppLaunchAccessibilityService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <service
             android:name=".ShappkyQuickTile"
             android:icon="@drawable/ic_force_stop"
             android:label="@string/tile_kill_app_label"
