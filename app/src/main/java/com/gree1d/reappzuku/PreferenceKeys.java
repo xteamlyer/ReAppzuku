@@ -29,8 +29,13 @@ public final class PreferenceKeys {
     // Kill Mode
     public static final String KEY_KILL_MODE = "kill_mode"; 
 
-    // Auto-Kill Type: which shell command to use when killing apps
+    // Auto-Kill Advanced
     public static final String KEY_AUTO_KILL_TYPE = "auto_kill_type";
+    public static final String KEY_HW_TRIGGER_HEADSET = "hw_trigger_headset";
+    public static final String KEY_HW_TRIGGER_USB = "hw_trigger_usb";
+    public static final String KEY_HW_TRIGGER_CHARGER = "hw_trigger_charger";
+    public static final String KEY_APP_LAUNCH_TRIGGER_ENABLED = "app_launch_trigger_enabled";
+    public static final String KEY_APP_LAUNCH_TRIGGER_PACKAGES = "app_launch_trigger_packages";
 
     // Service & Automation
     public static final String KEY_AUTO_KILL_ENABLED = "autoKillEnabled";
