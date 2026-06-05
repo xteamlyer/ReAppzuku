@@ -965,20 +965,20 @@
     <string name="scenarios_hw_headset_short">Наушники</string>
     <string name="scenarios_hw_usb_short">USB</string>
     <string name="scenarios_hw_charger_short">Зарядка</string>
-    <string name="scenarios_hw_wifi_short">WiFi/Данные</string>
+    <string name="scenarios_hw_wifi_short">WiFi/Моб Сеть</string>
     <string name="scenarios_hw_bluetooth_short">Bluetooth</string>
-    <string name="scenarios_hw_gps_short">GPS</string>
-    <string name="scenarios_hw_hotspot_short">Хотспот</string>
+    <string name="scenarios_hw_gps_short">Геолокация</string>
+    <string name="scenarios_hw_hotspot_short">Точка доступа</string>
     <string name="scenarios_app_launch_short">Запуск приложения</string>
 
     <!-- Hardware events -->
     <string name="scenarios_hardware_events_title">Аппаратные события</string>
-    <string name="scenarios_hw_headset">Подключение наушников (ACTION_HEADSET_PLUG)</string>
-    <string name="scenarios_hw_usb">Подключение USB (USB_STATE / USB_DEVICE_ATTACHED)</string>
-    <string name="scenarios_hw_charger">Подключение / отключение зарядки</string>
-    <string name="scenarios_hw_wifi">WiFi / Мобильная сеть вкл/выкл</string>
+    <string name="scenarios_hw_headset">Подключение/Отключение наушников</string>
+    <string name="scenarios_hw_usb">Подключение/Отключение USB</string>
+    <string name="scenarios_hw_charger">Подключение/Отключение зарядки</string>
+    <string name="scenarios_hw_wifi">WiFi или Мобильная сеть вкл/выкл</string>
     <string name="scenarios_hw_bluetooth">Bluetooth вкл/выкл</string>
-    <string name="scenarios_hw_gps">GPS / Геолокация вкл/выкл</string>
+    <string name="scenarios_hw_gps">Геолокация вкл/выкл</string>
     <string name="scenarios_hw_hotspot">Точка доступа вкл/выкл</string>
     <string name="scenarios_hw_delay_note">Auto-Kill запускается через 10 секунд после события, чтобы фоновые приложения успели запуститься</string>
 
