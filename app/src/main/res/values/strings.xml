@@ -962,4 +962,34 @@
     <string name="log_detail_bucket_was">Bucket was</string>
     <string name="log_detail_bucket_set">Bucket set</string>
     <string name="log_detail_bucket_restored">Bucket restored</string>
+
+    <!-- Auto-Kill Advanced -->
+    <string name="section_additional_scenarios">Additional Scenarios</string>
+
+    <!-- Hardware events -->
+    <string name="scenarios_hardware_events_title">Hardware Events</string>
+    <string name="scenarios_hw_headset">Headphones connected (ACTION_HEADSET_PLUG)</string>
+    <string name="scenarios_hw_usb">USB connected (USB_STATE / USB_DEVICE_ATTACHED)</string>
+    <string name="scenarios_hw_charger">Charger connected / disconnected</string>
+    <string name="scenarios_hw_delay_note">Auto-Kill runs 10 seconds after the event to allow background apps to start</string>
+
+    <!-- App launch trigger -->
+    <string name="scenarios_app_launch_title">App Launch Trigger</string>
+    <string name="scenarios_app_launch_enable">Run Auto-Kill when target app launches</string>
+    <string name="scenarios_app_launch_target_apps">Target apps</string>
+    <string name="scenarios_app_launch_add">Add app</string>
+    <string name="scenarios_app_launch_add_title">Select target apps</string>
+    <string name="scenarios_app_launch_empty">No apps selected</string>
+    <string name="scenarios_remove_target_app">Remove</string>
+
+    <!-- Kill source selector -->
+    <string name="scenarios_kill_mode_label">Auto-Kill settings to use</string>
+    <string name="scenarios_kill_mode_current">Current settings</string>
+    <string name="scenarios_kill_mode_preset">Preset (coming soon)</string>
+
+    <!-- Accessibility service -->
+    <string name="accessibility_service_description">Detects when target apps are launched to trigger Auto-Kill and free RAM</string>
+    <string name="scenarios_accessibility_required_title">Accessibility Service Required</string>
+    <string name="scenarios_accessibility_required_message">For the App Launch trigger to work, enable ReAppzuku in Accessibility Settings. The setting has been saved and will activate once the service is enabled.</string>
+    <string name="scenarios_accessibility_open_settings">Open Settings</string>
 </resources>
