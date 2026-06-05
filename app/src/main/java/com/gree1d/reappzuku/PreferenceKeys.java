@@ -36,6 +36,10 @@ public final class PreferenceKeys {
     public static final String KEY_HW_TRIGGER_CHARGER = "hw_trigger_charger";
     public static final String KEY_APP_LAUNCH_TRIGGER_ENABLED = "app_launch_trigger_enabled";
     public static final String KEY_APP_LAUNCH_TRIGGER_PACKAGES = "app_launch_trigger_packages";
+    public static final String KEY_HW_TRIGGER_WIFI = "hw_trigger_wifi";
+    public static final String KEY_HW_TRIGGER_BLUETOOTH = "hw_trigger_bluetooth";
+    public static final String KEY_HW_TRIGGER_GPS = "hw_trigger_gps";
+    public static final String KEY_HW_TRIGGER_HOTSPOT = "hw_trigger_hotspot";
 
     // Service & Automation
     public static final String KEY_AUTO_KILL_ENABLED = "autoKillEnabled";
