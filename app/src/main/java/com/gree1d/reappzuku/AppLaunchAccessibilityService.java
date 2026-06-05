@@ -4,12 +4,16 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,6 +88,38 @@ public class AppLaunchAccessibilityService extends AccessibilityService {
 
         Log.d(TAG, "Target app launched: " + packageName + " — triggering Auto-Kill");
         autoKillManager.performAutoKill(null, new HashSet<>(targetPackages));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && prefs.getBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, false)) {
+            executor.execute(() -> clearCacheForAll(targetPackages));
+        }
+    }
+
+    private void clearCacheForAll(Set<String> excludePackages) {
+        PackageManager pm = getPackageManager();
+        List<ApplicationInfo> installedApps;
+        try {
+            installedApps = pm.getInstalledApplications(0);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to get installed apps: " + e.getMessage());
+            return;
+        }
+
+        for (ApplicationInfo app : installedApps) {
+            String pkg = app.packageName;
+
+            if (pkg.equals(getPackageName())) continue;
+            if (excludePackages.contains(pkg)) continue;
+            if (ProtectedApps.isProtected(getApplicationContext(), pkg)) continue;
+            if ((app.flags & ApplicationInfo.FLAG_PERSISTENT) != 0) continue;
+
+            try {
+                shellManager.execute("pm clear --cache-only " + pkg);
+                Log.d(TAG, "Cache cleared: " + pkg);
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to clear cache for " + pkg + ": " + e.getMessage());
+            }
+        }
     }
 
     @Override

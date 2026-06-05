@@ -113,6 +113,9 @@ public class AdditionalScenariosManager {
     public boolean isAppLaunchTriggerEnabled() { return prefs.getBoolean(KEY_APP_LAUNCH_TRIGGER_ENABLED, false); }
     public void setAppLaunchTriggerEnabled(boolean enabled) { prefs.edit().putBoolean(KEY_APP_LAUNCH_TRIGGER_ENABLED, enabled).apply(); }
 
+    public boolean isAppLaunchClearCacheEnabled() { return prefs.getBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, false); }
+    public void setAppLaunchClearCacheEnabled(boolean enabled) { prefs.edit().putBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, enabled).apply(); }
+
     public Set<String> getAppLaunchTriggerPackages() {
         return new HashSet<>(prefs.getStringSet(KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>()));
     }

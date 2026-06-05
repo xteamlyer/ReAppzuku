@@ -2048,9 +2048,22 @@ public class SettingsActivity extends BaseActivity {
         CheckBox cbAppLaunch = new CheckBox(this);
         cbAppLaunch.setText(getString(R.string.scenarios_app_launch_enable));
         cbAppLaunch.setChecked(additionalScenariosManager.isAppLaunchTriggerEnabled());
-        cbAppLaunch.setPadding(dp24, dp8, dp24, dp8);
+        cbAppLaunch.setPadding(dp4, dp8, dp24, dp8);
+        cbAppLaunch.setLayoutParams(cbParams);
         if (checkboxTint != null) cbAppLaunch.setButtonTintList(checkboxTint);
         root.addView(cbAppLaunch);
+
+        CheckBox cbClearCache = new CheckBox(this);
+        cbClearCache.setText(getString(R.string.scenarios_app_launch_clear_cache));
+        cbClearCache.setChecked(additionalScenariosManager.isAppLaunchClearCacheEnabled());
+        cbClearCache.setPadding(dp4, dp8, dp24, dp8);
+        cbClearCache.setLayoutParams(cbParams);
+        if (checkboxTint != null) cbClearCache.setButtonTintList(checkboxTint);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            cbClearCache.setEnabled(false);
+            cbClearCache.setAlpha(0.4f);
+        }
+        root.addView(cbClearCache);
 
         LinearLayout layoutTargetApps = new LinearLayout(this);
         layoutTargetApps.setOrientation(LinearLayout.VERTICAL);
@@ -2138,6 +2151,7 @@ public class SettingsActivity extends BaseActivity {
 
             boolean appLaunchWasOff = !additionalScenariosManager.isAppLaunchTriggerEnabled();
             additionalScenariosManager.setAppLaunchTriggerEnabled(cbAppLaunch.isChecked());
+            additionalScenariosManager.setAppLaunchClearCacheEnabled(cbClearCache.isChecked());
 
             if (cbAppLaunch.isChecked() && appLaunchWasOff && !isAccessibilityServiceEnabled()) {
                 showAccessibilityServiceRequiredDialog();
