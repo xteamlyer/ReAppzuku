@@ -973,10 +973,10 @@
 
     <!-- Hardware events -->
     <string name="scenarios_hardware_events_title">Аппаратные события</string>
-    <string name="scenarios_hw_headset">Подключение/Отключение наушников</string>
-    <string name="scenarios_hw_usb">Подключение/Отключение USB</string>
-    <string name="scenarios_hw_charger">Подключение/Отключение зарядки</string>
-    <string name="scenarios_hw_wifi">WiFi или Мобильная сеть вкл/выкл</string>
+    <string name="scenarios_hw_headset">Подключение наушников (ACTION_HEADSET_PLUG)</string>
+    <string name="scenarios_hw_usb">Подключение USB (USB_STATE / USB_DEVICE_ATTACHED)</string>
+    <string name="scenarios_hw_charger">Подключение / отключение зарядки</string>
+    <string name="scenarios_hw_wifi">WiFi / Мобильная сеть вкл/выкл</string>
     <string name="scenarios_hw_bluetooth">Bluetooth вкл/выкл</string>
     <string name="scenarios_hw_gps">GPS / Геолокация вкл/выкл</string>
     <string name="scenarios_hw_hotspot">Точка доступа вкл/выкл</string>
@@ -985,6 +985,7 @@
     <!-- App launch trigger -->
     <string name="scenarios_app_launch_title">Запуск приложения</string>
     <string name="scenarios_app_launch_enable">Запускать Auto-Kill при открытии целевого приложения</string>
+    <string name="scenarios_app_launch_clear_cache">Очищать кэш всех приложений при запуске</string>
     <string name="scenarios_app_launch_target_apps">Целевые приложения</string>
     <string name="scenarios_app_launch_add">Добавить</string>
     <string name="scenarios_app_launch_add_title">Выбор целевых приложений</string>
@@ -994,7 +995,7 @@
     <!-- Kill source selector -->
     <string name="scenarios_kill_mode_label">Настройки Auto-Kill для использования</string>
     <string name="scenarios_kill_mode_current">Текущие настройки</string>
-    <string name="scenarios_kill_mode_preset">Пресет</string>
+    <string name="scenarios_kill_mode_preset">Пресет (скоро)</string>
 
     <!-- Accessibility service -->
     <string name="accessibility_service_description">Определяет запуск целевых приложений для запуска Auto-Kill и освобождения RAM</string>
