@@ -977,8 +977,8 @@
 
     <!-- Hardware events -->
     <string name="scenarios_hardware_events_title">Hardware Events</string>
-    <string name="scenarios_hw_headset">Headphones connected</string>
-    <string name="scenarios_hw_usb">USB connected</string>
+    <string name="scenarios_hw_headset">Headphones connected / disconnected</string>
+    <string name="scenarios_hw_usb">USB connected / disconnected</string>
     <string name="scenarios_hw_charger">Charger connected / disconnected</string>
     <string name="scenarios_hw_wifi">WiFi or Mobile network on/off</string>
     <string name="scenarios_hw_bluetooth">Bluetooth on/off</string>
