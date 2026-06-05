@@ -973,9 +973,9 @@
 
     <!-- Hardware events -->
     <string name="scenarios_hardware_events_title">Аппаратные события</string>
-    <string name="scenarios_hw_headset">Подключение наушников</string>
-    <string name="scenarios_hw_usb">Подключение USB</string>
-    <string name="scenarios_hw_charger">Подключение / отключение зарядки</string>
+    <string name="scenarios_hw_headset">Подключение/Отключение наушников</string>
+    <string name="scenarios_hw_usb">Подключение/Отключение USB</string>
+    <string name="scenarios_hw_charger">Подключение/Отключение зарядки</string>
     <string name="scenarios_hw_wifi">WiFi или Мобильная сеть вкл/выкл</string>
     <string name="scenarios_hw_bluetooth">Bluetooth вкл/выкл</string>
     <string name="scenarios_hw_gps">GPS / Геолокация вкл/выкл</string>
