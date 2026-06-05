@@ -65,7 +65,7 @@ public class AdditionalScenariosManager {
         }
         if (bluetooth) filter.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
         if (gps) filter.addAction("android.location.PROVIDERS_CHANGED");
-        if (hotspot) filter.addAction(WifiManager.WIFI_AP_STATE_CHANGED_ACTION);
+        if (hotspot) filter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(hardwareEventReceiver, filter, Context.RECEIVER_NOT_EXPORTED);

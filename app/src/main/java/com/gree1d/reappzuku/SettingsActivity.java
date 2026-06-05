@@ -1917,6 +1917,14 @@ public class SettingsActivity extends BaseActivity {
             active.add(getString(R.string.scenarios_hw_usb_short));
         if (additionalScenariosManager.isChargerTriggerEnabled())
             active.add(getString(R.string.scenarios_hw_charger_short));
+        if (additionalScenariosManager.isWifiTriggerEnabled())
+            active.add(getString(R.string.scenarios_hw_wifi_short));
+        if (additionalScenariosManager.isBluetoothTriggerEnabled())
+            active.add(getString(R.string.scenarios_hw_bluetooth_short));
+        if (additionalScenariosManager.isGpsTriggerEnabled())
+            active.add(getString(R.string.scenarios_hw_gps_short));
+        if (additionalScenariosManager.isHotspotTriggerEnabled())
+            active.add(getString(R.string.scenarios_hw_hotspot_short));
         if (additionalScenariosManager.isAppLaunchTriggerEnabled())
             active.add(getString(R.string.scenarios_app_launch_short));
 
@@ -1985,6 +1993,34 @@ public class SettingsActivity extends BaseActivity {
         cbCharger.setPadding(dp24, dp8, dp24, dp8);
         if (checkboxTint != null) cbCharger.setButtonTintList(checkboxTint);
         root.addView(cbCharger);
+
+        CheckBox cbWifi = new CheckBox(this);
+        cbWifi.setText(getString(R.string.scenarios_hw_wifi));
+        cbWifi.setChecked(additionalScenariosManager.isWifiTriggerEnabled());
+        cbWifi.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbWifi.setButtonTintList(checkboxTint);
+        root.addView(cbWifi);
+
+        CheckBox cbBluetooth = new CheckBox(this);
+        cbBluetooth.setText(getString(R.string.scenarios_hw_bluetooth));
+        cbBluetooth.setChecked(additionalScenariosManager.isBluetoothTriggerEnabled());
+        cbBluetooth.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbBluetooth.setButtonTintList(checkboxTint);
+        root.addView(cbBluetooth);
+
+        CheckBox cbGps = new CheckBox(this);
+        cbGps.setText(getString(R.string.scenarios_hw_gps));
+        cbGps.setChecked(additionalScenariosManager.isGpsTriggerEnabled());
+        cbGps.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbGps.setButtonTintList(checkboxTint);
+        root.addView(cbGps);
+
+        CheckBox cbHotspot = new CheckBox(this);
+        cbHotspot.setText(getString(R.string.scenarios_hw_hotspot));
+        cbHotspot.setChecked(additionalScenariosManager.isHotspotTriggerEnabled());
+        cbHotspot.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbHotspot.setButtonTintList(checkboxTint);
+        root.addView(cbHotspot);
 
         TextView noteHw = new TextView(this);
         noteHw.setText(getString(R.string.scenarios_hw_delay_note));
@@ -2094,6 +2130,10 @@ public class SettingsActivity extends BaseActivity {
             additionalScenariosManager.setHeadsetTriggerEnabled(cbHeadset.isChecked());
             additionalScenariosManager.setUsbTriggerEnabled(cbUsb.isChecked());
             additionalScenariosManager.setChargerTriggerEnabled(cbCharger.isChecked());
+            additionalScenariosManager.setWifiTriggerEnabled(cbWifi.isChecked());
+            additionalScenariosManager.setBluetoothTriggerEnabled(cbBluetooth.isChecked());
+            additionalScenariosManager.setGpsTriggerEnabled(cbGps.isChecked());
+            additionalScenariosManager.setHotspotTriggerEnabled(cbHotspot.isChecked());
             additionalScenariosManager.updateHardwareReceiverState();
 
             boolean appLaunchWasOff = !additionalScenariosManager.isAppLaunchTriggerEnabled();

@@ -36,7 +36,7 @@ public class HardwareEventReceiver extends BroadcastReceiver {
             case "android.net.conn.CONNECTIVITY_ACTION":
             case "android.bluetooth.adapter.action.STATE_CHANGED":
             case "android.location.PROVIDERS_CHANGED":
-            case WifiManager.WIFI_AP_STATE_CHANGED_ACTION:
+            case "android.net.wifi.WIFI_AP_STATE_CHANGED":
                 relevant = true;
                 break;
         }
