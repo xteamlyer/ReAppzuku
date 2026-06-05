@@ -114,7 +114,7 @@ public class AppLaunchAccessibilityService extends AccessibilityService {
             if ((app.flags & ApplicationInfo.FLAG_PERSISTENT) != 0) continue;
 
             try {
-                shellManager.execute("pm clear --cache-only " + pkg);
+                shellManager.runShellCommandAndGetFullOutput("pm clear --cache-only " + pkg);
                 Log.d(TAG, "Cache cleared: " + pkg);
             } catch (Exception e) {
                 Log.w(TAG, "Failed to clear cache for " + pkg + ": " + e.getMessage());
