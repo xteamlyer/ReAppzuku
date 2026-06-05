@@ -1933,13 +1933,23 @@ public class SettingsActivity extends BaseActivity {
         int dp16 = (int) (getResources().getDisplayMetrics().density * 16);
         int dp24 = (int) (getResources().getDisplayMetrics().density * 24);
 
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        boolean isCustomAccent = accent == ACCENT_CUSTOM;
+        int customColor = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+        android.content.res.ColorStateList checkboxTint = isCustomAccent
+                ? android.content.res.ColorStateList.valueOf(customColor) : null;
+        int onColor = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE);
+        int buttonTextColor = isCustomAccent
+                ? ((onColor == ACCENT_ON_BLACK) ? Color.BLACK : Color.WHITE)
+                : ContextCompat.getColor(this, R.color.dialog_button_text);
+
         TypedValue tv = new TypedValue();
         getTheme().resolveAttribute(android.R.attr.textColorPrimary, tv, true);
         int colorPrimary = ContextCompat.getColor(this, tv.resourceId);
         getTheme().resolveAttribute(android.R.attr.textColorSecondary, tv, true);
         int colorSecondary = ContextCompat.getColor(this, tv.resourceId);
         getTheme().resolveAttribute(com.google.android.material.R.attr.colorSecondary, tv, true);
-        int colorAccent = tv.data;
+        int colorAccent = isCustomAccent ? customColor : tv.data;
         getTheme().resolveAttribute(android.R.attr.colorControlHighlight, tv, true);
         int colorDivider = tv.data;
 
@@ -1959,18 +1969,21 @@ public class SettingsActivity extends BaseActivity {
         cbHeadset.setText(getString(R.string.scenarios_hw_headset));
         cbHeadset.setChecked(additionalScenariosManager.isHeadsetTriggerEnabled());
         cbHeadset.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbHeadset.setButtonTintList(checkboxTint);
         root.addView(cbHeadset);
 
         CheckBox cbUsb = new CheckBox(this);
         cbUsb.setText(getString(R.string.scenarios_hw_usb));
         cbUsb.setChecked(additionalScenariosManager.isUsbTriggerEnabled());
         cbUsb.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbUsb.setButtonTintList(checkboxTint);
         root.addView(cbUsb);
 
         CheckBox cbCharger = new CheckBox(this);
         cbCharger.setText(getString(R.string.scenarios_hw_charger));
         cbCharger.setChecked(additionalScenariosManager.isChargerTriggerEnabled());
         cbCharger.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbCharger.setButtonTintList(checkboxTint);
         root.addView(cbCharger);
 
         TextView noteHw = new TextView(this);
@@ -2000,6 +2013,7 @@ public class SettingsActivity extends BaseActivity {
         cbAppLaunch.setText(getString(R.string.scenarios_app_launch_enable));
         cbAppLaunch.setChecked(additionalScenariosManager.isAppLaunchTriggerEnabled());
         cbAppLaunch.setPadding(dp24, dp8, dp24, dp8);
+        if (checkboxTint != null) cbAppLaunch.setButtonTintList(checkboxTint);
         root.addView(cbAppLaunch);
 
         LinearLayout layoutTargetApps = new LinearLayout(this);
@@ -2073,7 +2087,8 @@ public class SettingsActivity extends BaseActivity {
         dialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_save), (d, w) -> {});
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (d, w) -> d.dismiss());
         dialog.show();
-        resetDialogButtonColors(dialog);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(buttonTextColor);
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(buttonTextColor);
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             additionalScenariosManager.setHeadsetTriggerEnabled(cbHeadset.isChecked());
@@ -2131,7 +2146,12 @@ public class SettingsActivity extends BaseActivity {
         listView.setVisibility(View.GONE);
         searchBox.setVisibility(View.GONE);
         dialog.show();
-        resetDialogButtonColors(dialog);
+        int pickerAccent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        int pickerButtonColor = (pickerAccent == ACCENT_CUSTOM)
+                ? ((sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE) == ACCENT_ON_BLACK) ? Color.BLACK : Color.WHITE)
+                : ContextCompat.getColor(this, R.color.dialog_button_text);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(pickerButtonColor);
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(pickerButtonColor);
 
         appManager.loadAllApps(allApps -> {
             Set<String> currentTargets = additionalScenariosManager.getAppLaunchTriggerPackages();
