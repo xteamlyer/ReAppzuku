@@ -2101,22 +2101,6 @@ public class SettingsActivity extends BaseActivity {
         tvKillModeLabel.setPadding(dp24, dp4, dp24, dp4);
         layoutTargetApps.addView(tvKillModeLabel);
 
-        RadioGroup radioGroup = new RadioGroup(this);
-        radioGroup.setPadding(dp16, 0, dp16, dp8);
-
-        RadioButton radioCurrentSettings = new RadioButton(this);
-        radioCurrentSettings.setText(getString(R.string.scenarios_kill_mode_current));
-        radioCurrentSettings.setChecked(true);
-        radioCurrentSettings.setPadding(dp8, dp8, dp8, dp8);
-        radioGroup.addView(radioCurrentSettings);
-
-        RadioButton radioPreset = new RadioButton(this);
-        radioPreset.setText(getString(R.string.scenarios_kill_mode_preset));
-        radioPreset.setEnabled(false);
-        radioPreset.setAlpha(0.4f);
-        radioPreset.setPadding(dp8, dp8, dp8, dp8);
-        radioGroup.addView(radioPreset);
-
         layoutTargetApps.addView(radioGroup);
 
         CheckBox cbClearCache = new CheckBox(this);
