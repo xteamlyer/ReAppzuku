@@ -989,7 +989,7 @@
     <!-- App launch trigger -->
     <string name="scenarios_app_launch_title">App Launch Trigger</string>
     <string name="scenarios_app_launch_enable">Run Auto-Kill when target app launches</string>
-    <string name="scenarios_app_launch_clear_cache">Clear cache of all apps on launch</string>
+    <string name="scenarios_app_launch_clear_cache">Clear RAM of all apps on launch</string>
     <string name="scenarios_app_launch_target_apps">Target apps</string>
     <string name="scenarios_app_launch_add">Add app</string>
     <string name="scenarios_app_launch_add_title">Select target apps</string>
