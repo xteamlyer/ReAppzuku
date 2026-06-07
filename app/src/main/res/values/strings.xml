@@ -319,6 +319,11 @@
     <string name="settings_hidden_apps_title">Hidden apps</string>
     <string name="settings_hidden_apps_subtitle">Hide apps from main list</string>
     <string name="settings_hidden_apps_dialog_title">Select apps to hide from main list</string>
+    <string name="freeze_badge_timer">Temporary</string>
+    <string name="freeze_badge_permanent">Permanent</string>
+    <string name="filter_freeze_type_dialog_title">Freeze type</string>
+    <string name="filter_freeze_timer_option">Temporary (when screen off)</string>
+    <string name="filter_freeze_permanent_option">Permanent (manual unfreeze only)</string>
 
     <string-array name="settings_sleep_mode_delay_labels">
         <item>5 minutes</item>
