@@ -964,8 +964,9 @@ public class SettingsActivity extends BaseActivity {
 
         sleepModeManager.loadSleepModeApps(allApps -> {
             allApps = filterOutProtected(allApps);
-            Set<String> sleepModeApps = sleepModeManager.getSleepModeApps();
-            FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, sleepModeApps);
+            Set<String> timerApps = sleepModeManager.getSleepModeApps();
+            Set<String> permanentApps = sleepModeManager.getPermanentFreezeApps();
+            FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, timerApps, permanentApps, true);
             if (sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM) == ACCENT_CUSTOM)
                 filterAdapter.setAccentColor(sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR));
             listView.setAdapter(filterAdapter);
@@ -981,8 +982,13 @@ public class SettingsActivity extends BaseActivity {
                 @Override public void afterTextChanged(android.text.Editable s) {}
             });
 
-            dialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dialog_save), (d, w) ->
-                    sleepModeManager.saveSleepModeApps(filterAdapter.getSelectedPackages()));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                sleepModeManager.saveSleepModeApps(
+                        filterAdapter.getTimerPackages(),
+                        filterAdapter.getPermanentPackages(),
+                        null);
+                dialog.dismiss();
+            });
         });
     }
 
