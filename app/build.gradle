@@ -98,7 +98,6 @@ dependencies {
     implementation("io.noties.markwon:core:4.6.2")
 
     // Translate Release
-    implementation "com.github.godsarmy:mlkit-markdown-translator-android:1.2.0"
     implementation "com.google.mlkit:translate:17.0.3"
     
     // Room
