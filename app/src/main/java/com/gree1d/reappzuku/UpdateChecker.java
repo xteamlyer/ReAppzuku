@@ -26,18 +26,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.mlkit.common.model.DownloadConditions;
-import com.google.mlkit.common.model.RemoteModelManager;
 import com.google.mlkit.nl.translate.TranslateLanguage;
-import com.google.mlkit.nl.translate.TranslateRemoteModel;
+import com.google.mlkit.nl.translate.Translator;
 
-import io.github.godsarmy.mlmarkdown.MlKitMarkdownTranslator;
-import io.github.godsarmy.mlmarkdown.api.TranslationCallback;
-import io.github.godsarmy.mlmarkdown.api.TranslationErrorCode;
-import io.github.godsarmy.mlmarkdown.api.TranslationException;
 import io.noties.markwon.Markwon;
 
 import org.json.JSONArray;
@@ -63,33 +55,21 @@ public class UpdateChecker {
     private static final String RELEASES_URL =
             "https://github.com/gree1d/ReAppzuku/releases";
 
-    private static final String CHANNEL_ID  = "reappzuku_updates";
-    private static final int    NOTIF_ID    = 9001;
-
-    private static final String PREFS_NAME        = "update_checker_prefs";
-    private static final String KEY_LAST_CHECK_MS = "last_check_ms";
-    private static final long   CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L;
-
-    private static final int CONNECT_TIMEOUT_MS = 8_000;
-    private static final int READ_TIMEOUT_MS    = 8_000;
+    private static final String CHANNEL_ID        = "reappzuku_updates";
+    private static final int    NOTIF_ID           = 9001;
+    private static final String PREFS_NAME         = "update_checker_prefs";
+    private static final String KEY_LAST_CHECK_MS  = "last_check_ms";
+    private static final long   CHECK_INTERVAL_MS  = 24 * 60 * 60 * 1000L;
+    private static final int    CONNECT_TIMEOUT_MS = 8_000;
+    private static final int    READ_TIMEOUT_MS    = 8_000;
 
     public static void checkForUpdatesAuto(Context context) {
-        if (!isAppInForeground(context)) {
-            Log.d(TAG, "Auto-check skipped: app is in background");
-            return;
-        }
+        if (!isAppInForeground(context)) return;
 
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         long lastCheck = prefs.getLong(KEY_LAST_CHECK_MS, 0);
-        if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL_MS) {
-            Log.d(TAG, "Auto-check skipped: within throttle window");
-            return;
-        }
-
-        if (!isConnected(context)) {
-            Log.d(TAG, "Auto-check skipped: no internet");
-            return;
-        }
+        if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL_MS) return;
+        if (!isConnected(context)) return;
 
         prefs.edit().putLong(KEY_LAST_CHECK_MS, System.currentTimeMillis()).apply();
 
@@ -97,13 +77,8 @@ public class UpdateChecker {
         exec.execute(() -> {
             ReleaseInfo info = fetchLatestRelease();
             if (info == null) return;
-
-            String currentVersion = getAppVersion(context);
-            if (isNewer(info.tagName, currentVersion)) {
-                Log.i(TAG, "Auto-check: new version found: " + info.tagName);
+            if (isNewer(info.tagName, getAppVersion(context))) {
                 postUpdateNotification(context, info);
-            } else {
-                Log.d(TAG, "Auto-check: already up to date (" + currentVersion + ")");
             }
         });
     }
@@ -135,22 +110,18 @@ public class UpdateChecker {
         });
     }
 
-
     private static void showUpdateDialog(Context context, ReleaseInfo info) {
         String originalMd = info.changelog.isEmpty()
                 ? "Version " + info.tagName + " is available."
                 : "Version " + info.tagName + " is available.\n\n" + stripGitHubAlerts(info.changelog);
 
-        String targetLangTag = resolveTargetLanguageTag();
-
+        String targetLangTag         = resolveTargetLanguageTag();
         boolean[] showingTranslation = {false};
-        String[] cachedTranslation = {null};
+        String[] cachedTranslation   = {null};
 
         Markwon markwon = Markwon.create(context);
         TextView messageView = new TextView(context);
-        int px16 = dp(context, 16);
-        int px8  = dp(context, 8);
-        messageView.setPadding(px16, px8, px16, px8);
+        messageView.setPadding(dp(context, 16), dp(context, 8), dp(context, 16), dp(context, 8));
         messageView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         renderMarkdown(markwon, messageView, originalMd);
 
@@ -194,63 +165,30 @@ public class UpdateChecker {
         applyDialogAccentColors(context, dialog);
         dialog.show();
 
-        if (targetLangTag != null) {
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
-                if (!showingTranslation[0]) {
-                    if (cachedTranslation[0] != null) {
-                        renderMarkdown(markwon, messageView, cachedTranslation[0]);
-                        showingTranslation[0] = true;
-                        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-                                .setText(context.getString(R.string.update_dialog_show_original));
-                    } else {
-                        checkModelAndTranslate(
-                                context, dialog, markwon, messageView, progressBar,
-                                originalMd, targetLangTag,
-                                showingTranslation, cachedTranslation);
-                    }
-                } else {
-                    renderMarkdown(markwon, messageView, originalMd);
-                    showingTranslation[0] = false;
+        if (targetLangTag == null) return;
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            if (!showingTranslation[0]) {
+                if (cachedTranslation[0] != null) {
+                    renderMarkdown(markwon, messageView, cachedTranslation[0]);
+                    showingTranslation[0] = true;
                     dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-                            .setText(context.getString(R.string.update_dialog_translate));
+                            .setText(context.getString(R.string.update_dialog_show_original));
+                } else {
+                    showDownloadConfirmAndTranslate(context, dialog, markwon, messageView,
+                            progressBar, originalMd, targetLangTag,
+                            showingTranslation, cachedTranslation);
                 }
-            });
-
-            isModelDownloaded(targetLangTag, isDownloaded -> {
-                if (isDownloaded && dialog.isShowing()) {
-                    startTranslation(context, dialog, markwon, messageView, progressBar,
-                            originalMd, targetLangTag, showingTranslation, cachedTranslation,
-                            /* autoApply= */ true);
-                }
-            });
-        }
-    }
-
-    private static void checkModelAndTranslate(
-            Context context,
-            AlertDialog parentDialog,
-            Markwon markwon,
-            TextView messageView,
-            ProgressBar progressBar,
-            String originalMd,
-            String targetLangTag,
-            boolean[] showingTranslation,
-            String[] cachedTranslation) {
-
-        isModelDownloaded(targetLangTag, isDownloaded -> {
-            if (!parentDialog.isShowing()) return;
-            if (isDownloaded) {
-                startTranslation(context, parentDialog, markwon, messageView, progressBar,
-                        originalMd, targetLangTag, showingTranslation, cachedTranslation,
-                        /* autoApply= */ false);
             } else {
-                showDownloadConfirmDialog(context, parentDialog, markwon, messageView, progressBar,
-                        originalMd, targetLangTag, showingTranslation, cachedTranslation);
+                renderMarkdown(markwon, messageView, originalMd);
+                showingTranslation[0] = false;
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+                        .setText(context.getString(R.string.update_dialog_translate));
             }
         });
     }
 
-    private static void showDownloadConfirmDialog(
+    private static void showDownloadConfirmAndTranslate(
             Context context,
             AlertDialog parentDialog,
             Markwon markwon,
@@ -261,18 +199,16 @@ public class UpdateChecker {
             boolean[] showingTranslation,
             String[] cachedTranslation) {
 
-        String langName = getLanguageDisplayName(targetLangTag, context);
-        String message  = context.getString(
-                R.string.update_translate_download_message, langName);
+        String langName = getLanguageDisplayName(targetLangTag);
+        String message  = context.getString(R.string.update_translate_download_message, langName);
 
         AlertDialog confirmDialog = new MaterialAlertDialogBuilder(context)
                 .setTitle(context.getString(R.string.update_translate_download_title))
                 .setMessage(message)
                 .setPositiveButton(context.getString(R.string.update_translate_download_ok), (d, w) -> {
                     d.dismiss();
-                    downloadModelAndTranslate(context, parentDialog, markwon, messageView,
-                            progressBar, originalMd, targetLangTag,
-                            showingTranslation, cachedTranslation);
+                    runTranslation(context, parentDialog, markwon, messageView, progressBar,
+                            originalMd, targetLangTag, showingTranslation, cachedTranslation);
                 })
                 .setNegativeButton(context.getString(R.string.dialog_cancel), null)
                 .create();
@@ -281,7 +217,7 @@ public class UpdateChecker {
         confirmDialog.show();
     }
 
-    private static void downloadModelAndTranslate(
+    private static void runTranslation(
             Context context,
             AlertDialog parentDialog,
             Markwon markwon,
@@ -292,121 +228,74 @@ public class UpdateChecker {
             boolean[] showingTranslation,
             String[] cachedTranslation) {
 
-        TranslateRemoteModel model = new TranslateRemoteModel.Builder(targetLangTag).build();
-        DownloadConditions conditions = new DownloadConditions.Builder().build();
-
         new Handler(Looper.getMainLooper()).post(() -> progressBar.setVisibility(View.VISIBLE));
 
-        RemoteModelManager.getInstance().download(model, conditions)
-                .addOnSuccessListener(unused -> {
-                    Log.i(TAG, "ML Kit model downloaded: " + targetLangTag);
-                    startTranslation(context, parentDialog, markwon, messageView, progressBar,
-                            originalMd, targetLangTag, showingTranslation, cachedTranslation,
-                            /* autoApply= */ false);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Model download failed: " + e.getMessage());
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        showToast(context, context.getString(R.string.update_translate_download_failed));
-                    });
-                });
-    }
+        Translator translator = MarkdownAwareTranslator.buildTranslator(targetLangTag);
 
-    private static void startTranslation(
-            Context context,
-            AlertDialog parentDialog,
-            Markwon markwon,
-            TextView messageView,
-            ProgressBar progressBar,
-            String originalMd,
-            String targetLangTag,
-            boolean[] showingTranslation,
-            String[] cachedTranslation,
-            boolean autoApply) {
+        MarkdownAwareTranslator.downloadModelIfNeeded(translator,
+                new MarkdownAwareTranslator.ModelReadyCallback() {
+                    @Override
+                    public void onReady(Translator t) {
+                        Log.i(TAG, "ML Kit model ready");
+                        MarkdownAwareTranslator.translate(t, originalMd,
+                                new MarkdownAwareTranslator.Callback() {
+                                    @Override
+                                    public void onSuccess(String translated) {
+                                        t.close();
+                                        cachedTranslation[0] = translated;
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            progressBar.setVisibility(View.GONE);
+                                            if (!parentDialog.isShowing()) return;
+                                            renderMarkdown(markwon, messageView, translated);
+                                            showingTranslation[0] = true;
+                                            parentDialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+                                                    .setText(context.getString(
+                                                            R.string.update_dialog_show_original));
+                                        });
+                                    }
 
-        new Handler(Looper.getMainLooper()).post(() -> progressBar.setVisibility(View.VISIBLE));
-
-        MlKitMarkdownTranslator translator = new MlKitMarkdownTranslator();
-
-        translator.translateMarkdown(originalMd, "en", targetLangTag, new TranslationCallback() {
-            @Override
-            public void onSuccess(String translatedMarkdown) {
-                cachedTranslation[0] = translatedMarkdown;
-                translator.close();
-
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    if (!parentDialog.isShowing()) return;
-
-                    if (autoApply || !showingTranslation[0]) {
-                        renderMarkdown(markwon, messageView, translatedMarkdown);
-                        showingTranslation[0] = true;
-                        parentDialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-                                .setText(context.getString(R.string.update_dialog_show_original));
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        t.close();
+                                        Log.e(TAG, "Translation failed", e);
+                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                            progressBar.setVisibility(View.GONE);
+                                            showToast(context, context.getString(
+                                                    R.string.update_translate_failed));
+                                        });
+                                    }
+                                });
                     }
-                });
-            }
 
-            @Override
-            public void onFailure(Exception error) {
-                translator.close();
-                Log.e(TAG, "Translation failed", error);
-
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    if (!parentDialog.isShowing()) return;
-
-                    if (error instanceof TranslationException
-                            && ((TranslationException) error).getCode()
-                            == TranslationErrorCode.MODEL_NOT_DOWNLOADED) {
-                        showToast(context,
-                                context.getString(R.string.update_translate_model_missing));
-                    } else {
-                        showToast(context,
-                                context.getString(R.string.update_translate_failed));
+                    @Override
+                    public void onFailure(Exception e) {
+                        translator.close();
+                        Log.e(TAG, "Model download failed", e);
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            progressBar.setVisibility(View.GONE);
+                            showToast(context, context.getString(
+                                    R.string.update_translate_download_failed));
+                        });
                     }
-                });
-            }
-        });
-    }
-
-
-    private interface ModelCheckCallback {
-        void onResult(boolean isDownloaded);
-    }
-
-    private static void isModelDownloaded(String langTag, ModelCheckCallback callback) {
-        TranslateRemoteModel model = new TranslateRemoteModel.Builder(langTag).build();
-        RemoteModelManager.getInstance().isModelDownloaded(model)
-                .addOnSuccessListener(isDownloaded ->
-                        new Handler(Looper.getMainLooper()).post(() ->
-                                callback.onResult(isDownloaded)))
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "isModelDownloaded check failed: " + e.getMessage());
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onResult(false));
                 });
     }
 
     private static String resolveTargetLanguageTag() {
         String lang = Locale.getDefault().getLanguage();
         if ("en".equals(lang)) return null;
-
         String tag = TranslateLanguage.fromLanguageTag(lang);
-        if (tag == null) {
-            Log.d(TAG, "ML Kit does not support locale language: " + lang);
-        }
-        return tag; 
+        if (tag == null) Log.d(TAG, "ML Kit does not support locale: " + lang);
+        return tag;
     }
 
-    private static String getLanguageDisplayName(String langTag, Context context) {
+    private static String getLanguageDisplayName(String langTag) {
         try {
             Locale locale = Locale.forLanguageTag(langTag);
             String name = locale.getDisplayLanguage(Locale.getDefault());
             if (name == null || name.isEmpty() || name.equals(langTag)) {
                 name = locale.getDisplayLanguage(Locale.ENGLISH);
             }
-            return name != null && !name.isEmpty() ? name : langTag;
+            return (name != null && !name.isEmpty()) ? name : langTag;
         } catch (Exception e) {
             return langTag;
         }
@@ -422,20 +311,16 @@ public class UpdateChecker {
     }
 
     private static void applyDialogAccentColors(Context context, AlertDialog dialog) {
-        if (!(context instanceof android.app.Activity)) return;
-
         SharedPreferences prefs = context.getSharedPreferences(
                 "app_preferences", Context.MODE_PRIVATE);
-
-        int accent = prefs.getInt("accent", 0 );
+        int accent   = prefs.getInt("accent", 0);
         int btnColor;
-        if (accent == 20 ) {
-            int onColor = prefs.getInt("accent_on_color", 1 );
-            btnColor = (onColor == 2 ) ? Color.BLACK : Color.WHITE;
+        if (accent == 20) {
+            int onColor = prefs.getInt("accent_on_color", 1);
+            btnColor = (onColor == 2) ? Color.BLACK : Color.WHITE;
         } else {
             btnColor = ContextCompat.getColor(context, R.color.dialog_button_text);
         }
-
         for (int which : new int[]{
                 AlertDialog.BUTTON_POSITIVE,
                 AlertDialog.BUTTON_NEGATIVE,
@@ -448,7 +333,6 @@ public class UpdateChecker {
     private static int dp(Context context, int dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
-
 
     private static boolean isAppInForeground(Context context) {
         android.app.ActivityManager am =
@@ -507,16 +391,16 @@ public class UpdateChecker {
             return new ReleaseInfo(tagName, body.trim(), downloadUrl, htmlUrl);
 
         } catch (UnknownHostException e) {
-            Log.w(TAG, "No route to GitHub (DNS failed): " + e.getMessage());
+            Log.w(TAG, "DNS failed: " + e.getMessage());
             return null;
         } catch (SocketTimeoutException e) {
-            Log.w(TAG, "GitHub API timed out: " + e.getMessage());
+            Log.w(TAG, "Timeout: " + e.getMessage());
             return null;
         } catch (IOException e) {
-            Log.w(TAG, "Network I/O error fetching release: " + e.getMessage());
+            Log.w(TAG, "I/O error: " + e.getMessage());
             return null;
         } catch (Exception e) {
-            Log.e(TAG, "Unexpected error fetching release info", e);
+            Log.e(TAG, "Unexpected error fetching release", e);
             return null;
         } finally {
             if (conn != null) {
@@ -592,8 +476,7 @@ public class UpdateChecker {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel ch = new NotificationChannel(
-                    CHANNEL_ID, "App Updates",
-                    NotificationManager.IMPORTANCE_DEFAULT);
+                    CHANNEL_ID, "App Updates", NotificationManager.IMPORTANCE_DEFAULT);
             ch.setDescription("Notifications about new ReAppzuku releases");
             nm.createNotificationChannel(ch);
         }
@@ -618,7 +501,7 @@ public class UpdateChecker {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "POST_NOTIFICATIONS not granted, skipping update notification");
+                Log.w(TAG, "POST_NOTIFICATIONS not granted");
                 return;
             }
         }
