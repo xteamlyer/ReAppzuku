@@ -2,7 +2,6 @@ package com.gree1d.reappzuku
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -10,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -18,8 +18,8 @@ import androidx.glance.appwidget.action.actionStartService
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.isSystemInDarkTheme
 import androidx.glance.layout.Alignment
-import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
@@ -35,13 +35,6 @@ import kotlinx.coroutines.withContext
 import java.io.RandomAccessFile
 import java.util.Locale
 
-private val BgGreen  = Color(0xFF2E7D32)
-private val BgBlue   = Color(0xFF1565C0)
-private val BgAmber  = Color(0xFFF57F17)
-private val BgRed    = Color(0xFFC62828)
-private val TextMain = Color(0xFFFFFFFF)
-private val TextSub  = Color(0xCCFFFFFF)
-
 @Keep
 class RamKillWidget : GlanceAppWidget() {
 
@@ -52,51 +45,43 @@ class RamKillWidget : GlanceAppWidget() {
 
     @Composable
     private fun WidgetContent(context: Context, data: RamData) {
-        val bgColor = when {
-            data.percent < 40 -> BgGreen
-            data.percent < 80 -> BgBlue
-            data.percent < 90 -> BgAmber
-            else              -> BgRed
-        }
+        val isDark = isSystemInDarkTheme()
+        val bgColor = if (isDark) Color.Black else Color.White
+        val textColor = if (isDark) Color.White else Color.Black
+        val subColor = if (isDark) Color(0xCCFFFFFF) else Color(0xCC000000)
 
         val killIntent = Intent(context, ShappkyService::class.java).apply {
             action = "WIDGET_KILL"
         }
 
-        Box(
+        Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(bgColor)
                 .cornerRadius(24.dp)
+                .padding(4.dp)
                 .clickable(actionStartService(killIntent, isForegroundService = true)),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .padding(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${data.percent}%",
-                    style = TextStyle(
-                        color = ColorProvider(TextMain),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
+            Text(
+                text = "${data.percent}%",
+                style = TextStyle(
+                    color = ColorProvider(textColor),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
-                Text(
-                    text = data.label,
-                    style = TextStyle(
-                        color = ColorProvider(TextSub),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
-                    )
+            )
+            Text(
+                text = data.label,
+                style = TextStyle(
+                    color = ColorProvider(subColor),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
                 )
-            }
+            )
         }
     }
 
@@ -117,10 +102,9 @@ class RamKillWidget : GlanceAppWidget() {
             var availKb = 0L
             try {
                 RandomAccessFile("/proc/meminfo", "r").use { reader ->
-                    var line: String?
                     var linesRead = 0
                     while (linesRead < 3) {
-                        line = reader.readLine() ?: break
+                        val line = reader.readLine() ?: break
                         when {
                             line.startsWith("MemTotal") -> totalKb = parseMemValue(line)
                             line.startsWith("MemAvailable") -> availKb = parseMemValue(line)
@@ -134,23 +118,15 @@ class RamKillWidget : GlanceAppWidget() {
 
             val usedKb = totalKb - availKb
             val percent = (usedKb * 100 / totalKb).toInt()
-            val label = formatGb(usedKb, context) + "/" + formatGb(totalKb, context) + " " + gbUnit(context)
-            return RamData(percent, label)
+            val unit = if (context.resources.configuration.locales[0].language == "ru") "ГБ" else "GB"
+            val used = String.format(Locale.getDefault(), "%.1f", usedKb / (1024f * 1024f))
+            val total = String.format(Locale.getDefault(), "%.1f", totalKb / (1024f * 1024f))
+            return RamData(percent, "$used/$total $unit")
         }
 
         private fun parseMemValue(line: String): Long {
             val parts = line.trim().split(Regex("\\s+"))
             return if (parts.size >= 2) parts[1].toLongOrNull() ?: 0L else 0L
-        }
-
-        private fun formatGb(kb: Long, context: Context): String {
-            val gb = kb / (1024f * 1024f)
-            return String.format(Locale.getDefault(), "%.1f", gb)
-        }
-
-        private fun gbUnit(context: Context): String {
-            val locale = context.resources.configuration.locales[0]
-            return if (locale.language == "ru") "ГБ" else "GB"
         }
     }
 
