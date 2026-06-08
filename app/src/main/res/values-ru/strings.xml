@@ -12,6 +12,21 @@
     <string name="shortcut_kill_long_label">Завершить работу приложения в фоновом режиме</string>
     <string name="ram_kill_widget_description">Виджет загруженности ОЗУ. Нажмите для очистки от фоновых приложений.</string>
 
+    <string name="settings_add_ram_shortcut_title">RAM Kill ярлык</string>
+    <string name="settings_add_ram_shortcut_subtitle">Добавить ярлык на рабочий стол</string>
+    <plurals name="toast_killed_apps">
+        <item quantity="one">Закрыто %1$d приложение · %2$s освобождено</item>
+        <item quantity="few">Закрыто %1$d приложения · %2$s освобождено</item>
+        <item quantity="many">Закрыто %1$d приложений · %2$s освобождено</item>
+        <item quantity="other">Закрыто %1$d приложений · %2$s освобождено</item>
+    </plurals>
+    <plurals name="toast_killed_apps_no_ram">
+        <item quantity="one">Закрыто %d приложение</item>
+        <item quantity="few">Закрыто %d приложения</item>
+        <item quantity="many">Закрыто %d приложений</item>
+        <item quantity="other">Закрыто %d приложений</item>
+    </plurals>
+    
     <!-- ══════════════════════════════════════════════
          ОБЩЕЕ
          ══════════════════════════════════════════════ -->
