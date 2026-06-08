@@ -104,10 +104,10 @@ public class RamKillShortcutManager {
 
         String percentText = info != null ? info.percent + "%" : "—";
 
-        textPaint.setTextSize(32f);
+        textPaint.setTextSize(40f);
         textPaint.setFakeBoldText(true);
         float cx = ICON_SIZE / 2f;
-        float cy = ICON_SIZE / 2f - 6f;
+        float cy = ICON_SIZE / 2f;
         canvas.drawText(percentText, cx, cy - (textPaint.descent() + textPaint.ascent()) / 2f, textPaint);
 
         return bmp;

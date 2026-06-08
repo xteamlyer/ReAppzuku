@@ -57,6 +57,11 @@ public class AutoKillManager {
     }
 
     public void performAutoKill(Runnable onComplete, Set<String> extraWhitelist) {
+        performAutoKillWithResult(onComplete, extraWhitelist, null);
+    }
+
+    public void performAutoKillWithResult(Runnable onComplete, Set<String> extraWhitelist,
+            java.util.function.BiConsumer<Integer, Long> onResult) {
         executor.execute(() -> {
             if (!shellManager.resolveAnyShellPermission()) {
                 if (onComplete != null)
@@ -205,6 +210,16 @@ public class AutoKillManager {
                 shellManager.runShellCommandAndGetFullOutput(killCommand);
 
                 sendKillNotification(toKill.size());
+
+                long totalRssKb = 0;
+                for (String pkg : toKill) {
+                    totalRssKb += psRssMap.getOrDefault(pkg, 0L);
+                }
+                final long finalTotalRssKb = totalRssKb;
+                final int finalKillCount = toKill.size();
+                if (onResult != null) {
+                    handler.post(() -> onResult.accept(finalKillCount, finalTotalRssKb));
+                }
 
                 try {
                     Thread.sleep(RELAUNCH_CHECK_DELAY_MS);

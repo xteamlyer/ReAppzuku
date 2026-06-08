@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.widget.Toast;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -208,8 +209,17 @@ public class ShappkyService extends Service {
 
             case "WIDGET_KILL":
                 executor.execute(() -> {
+                    long ramBefore = readAvailableRamKb();
                     clearCacheForActivePackages();
-                    autoKillManager.performAutoKill(null);
+                    autoKillManager.performAutoKillWithResult(null, null, (killCount, ignored) -> {
+                        handler.postDelayed(() -> {
+                            long ramAfter = readAvailableRamKb();
+                            long freedKb = Math.max(0, ramAfter - ramBefore);
+                            String msg = buildKillToastMessage(killCount, freedKb);
+                            Toast.makeText(ShappkyService.this, msg, Toast.LENGTH_LONG).show();
+                            ramKillShortcutManager.updateShortcut();
+                        }, 2000);
+                    });
                 });
                 break;
         }
@@ -401,6 +411,34 @@ public class ShappkyService extends Service {
         } catch (IOException | NumberFormatException e) {
             return 0;
         }
+    }
+
+    private String buildKillToastMessage(int killCount, long freedKb) {
+        String ram;
+        if (freedKb <= 0) {
+            ram = null;
+        } else if (freedKb < 1024) {
+            ram = freedKb + " KB";
+        } else {
+            ram = String.format(java.util.Locale.getDefault(), "%.1f MB", freedKb / 1024f);
+        }
+        if (ram == null) {
+            return getResources().getQuantityString(R.plurals.toast_killed_apps_no_ram, killCount, killCount);
+        }
+        return getResources().getQuantityString(R.plurals.toast_killed_apps, killCount, killCount, ram);
+    }
+
+    private long readAvailableRamKb() {
+        try (java.io.RandomAccessFile reader = new java.io.RandomAccessFile("/proc/meminfo", "r")) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("MemAvailable")) {
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length >= 2) return Long.parseLong(parts[1]);
+                }
+            }
+        } catch (Exception ignored) {}
+        return 0;
     }
 
     private void clearCacheForActivePackages() {
