@@ -18,6 +18,15 @@
     <string name="settings_add_ram_shortcut_subtitle">Add shortcut to home screen</string>
     <string name="ram_kill_widget_description">RAM usage widget. Tap to kill background apps.</string>
     
+    <plurals name="toast_killed_apps">
+        <item quantity="one">%1$d app closed · %2$s freed</item>
+        <item quantity="other">%1$d apps closed · %2$s freed</item>
+    </plurals>
+    <plurals name="toast_killed_apps_no_ram">
+        <item quantity="one">%d app closed</item>
+        <item quantity="other">%d apps closed</item>
+    </plurals>
+    
     <!-- ══════════════════════════════════════════════
          COMMON / SHARED
          ══════════════════════════════════════════════ -->
