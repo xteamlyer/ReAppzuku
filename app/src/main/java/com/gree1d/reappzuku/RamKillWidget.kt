@@ -72,7 +72,7 @@ class RamKillWidget : GlanceAppWidget() {
                 text = "${data.percent}%",
                 style = TextStyle(
                     color = ColorProvider(textColor),
-                    fontSize = 26.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -81,7 +81,7 @@ class RamKillWidget : GlanceAppWidget() {
                 text = data.label,
                 style = TextStyle(
                     color = ColorProvider(subColor),
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
