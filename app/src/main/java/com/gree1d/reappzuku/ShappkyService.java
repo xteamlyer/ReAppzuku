@@ -137,6 +137,7 @@ public class ShappkyService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand: action=" + (intent != null ? intent.getAction() : "null")); // <-- сюда
         if (intent == null) return START_STICKY;
 
         String action = intent.getAction();
