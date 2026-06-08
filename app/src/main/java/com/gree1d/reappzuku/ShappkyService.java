@@ -405,7 +405,7 @@ public class ShappkyService extends Service {
 
     private void clearCacheForActivePackages() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
-        String psOutput = shellManager.runShellCommandAndGetFullOutput("ps -A -o name | grep '\.'");
+        String psOutput = shellManager.runShellCommandAndGetFullOutput("ps -A -o name");
         if (psOutput == null || psOutput.trim().isEmpty()) return;
         android.content.pm.PackageManager pm = getPackageManager();
         Set<String> whitelist = autoKillManager.getWhitelistedApps();
