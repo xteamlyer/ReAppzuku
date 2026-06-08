@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.widget.Toast;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -24,7 +23,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.content.BroadcastReceiver;
-import java.util.Set;
 import android.content.IntentFilter;
 
 import static com.gree1d.reappzuku.PreferenceKeys.*;
@@ -208,19 +206,7 @@ public class ShappkyService extends Service {
                 break;
 
             case "WIDGET_KILL":
-                executor.execute(() -> {
-                    long ramBefore = readAvailableRamKb();
-                    clearCacheForActivePackages();
-                    autoKillManager.performAutoKillWithResult(null, null, (killCount, ignored) -> {
-                        handler.postDelayed(() -> {
-                            long ramAfter = readAvailableRamKb();
-                            long freedKb = Math.max(0, ramAfter - ramBefore);
-                            String msg = buildKillToastMessage(killCount, freedKb);
-                            Toast.makeText(ShappkyService.this, msg, Toast.LENGTH_LONG).show();
-                            ramKillShortcutManager.updateShortcut();
-                        }, 2000);
-                    });
-                });
+                ramKillShortcutManager.performKillAndUpdate(autoKillManager);
                 break;
         }
 
@@ -413,54 +399,8 @@ public class ShappkyService extends Service {
         }
     }
 
-    private String buildKillToastMessage(int killCount, long freedKb) {
-        String ram;
-        if (freedKb <= 0) {
-            ram = null;
-        } else if (freedKb < 1024) {
-            ram = freedKb + " KB";
-        } else {
-            ram = String.format(java.util.Locale.getDefault(), "%.1f MB", freedKb / 1024f);
-        }
-        if (ram == null) {
-            return getResources().getQuantityString(R.plurals.toast_killed_apps_no_ram, killCount, killCount);
-        }
-        return getResources().getQuantityString(R.plurals.toast_killed_apps, killCount, killCount, ram);
-    }
 
-    private long readAvailableRamKb() {
-        try (java.io.RandomAccessFile reader = new java.io.RandomAccessFile("/proc/meminfo", "r")) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("MemAvailable")) {
-                    String[] parts = line.trim().split("\\s+");
-                    if (parts.length >= 2) return Long.parseLong(parts[1]);
-                }
-            }
-        } catch (Exception ignored) {}
-        return 0;
-    }
 
-    private void clearCacheForActivePackages() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
-        String psOutput = shellManager.runShellCommandAndGetFullOutput("ps -A -o name");
-        if (psOutput == null || psOutput.trim().isEmpty()) return;
-        android.content.pm.PackageManager pm = getPackageManager();
-        Set<String> whitelist = autoKillManager.getWhitelistedApps();
-        for (String line : psOutput.split("\n")) {
-            String pkg = line.trim();
-            if (pkg.isEmpty() || !pkg.contains(".")) continue;
-            String basePkg = pkg.contains(":") ? pkg.substring(0, pkg.indexOf(":")) : pkg;
-            if (whitelist.contains(basePkg)) continue;
-            if (ProtectedApps.isProtected(this, basePkg)) continue;
-            try {
-                android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(basePkg, 0);
-                if ((ai.flags & android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0) continue;
-                shellManager.runShellCommandBlocking("pm clear --cache-only " + basePkg);
-            } catch (android.content.pm.PackageManager.NameNotFoundException ignored) {
-            }
-        }
-    }
 
     @Override
     public void onDestroy() {
