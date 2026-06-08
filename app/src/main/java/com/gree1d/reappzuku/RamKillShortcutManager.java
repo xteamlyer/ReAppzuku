@@ -146,7 +146,7 @@ public class RamKillShortcutManager {
 
     private ShortcutInfoCompat buildShortcut(RamInfo info) {
         Bitmap icon = buildIcon(info);
-        Intent killIntent = new Intent(context, ShappkyService.class);
+        Intent killIntent = new Intent(context, KillShortcutActivity.class);
         killIntent.setAction("WIDGET_KILL");
         return new ShortcutInfoCompat.Builder(context, SHORTCUT_ID)
                 .setShortLabel(formatLabel(info))
