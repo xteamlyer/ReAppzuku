@@ -14,6 +14,8 @@
     <string name="widget_freed">RAM Freed</string>
     <string name="widget_last_kill">Last Kill</string>
     <string name="widget_ram">RAM</string>
+    <string name="settings_add_ram_shortcut_title">RAM Kill shortcut</string>
+    <string name="settings_add_ram_shortcut_subtitle">Add shortcut to home screen</string>
     <string name="ram_kill_widget_description">RAM usage widget. Tap to kill background apps.</string>
     
     <!-- ══════════════════════════════════════════════
