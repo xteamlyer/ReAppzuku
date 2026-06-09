@@ -487,7 +487,6 @@
     <string name="settings_restriction_log_dialog_subtitle">Результаты фоновых ограничений.</string>
     <string name="settings_restriction_log_clear">Очистить</string>
     <string name="settings_restriction_log_summary">Последние события: %1$d записей.</string>
-    <string name="settings_restriction_log_cleared">Журнал фоновых ограничений очищен</string>
     <string name="log_bg_restriction_empty">Записи о фоновых ограничениях отсутствуют.\n\nЗаписи хранятся в базе данных приложения и автоматически обрезаются.</string>
 
     <!-- ── Журнал режима сна ── -->
