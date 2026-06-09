@@ -33,6 +33,7 @@
     <string name="url_open_failed">Unable to open link</string>
 
     <!-- Common dialog buttons -->
+    <string name="stats_top_offenders_reset">Reset</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_apply">Apply</string>
     <string name="dialog_save">Save</string>
