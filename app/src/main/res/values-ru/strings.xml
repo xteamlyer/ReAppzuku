@@ -33,6 +33,7 @@
     <string name="url_open_failed">Не удалось открыть ссылку</string>
 
     <!-- Кнопки диалогов -->
+    <string name="stats_top_offenders_reset">Сброс</string>
     <string name="dialog_cancel">Отмена</string>
     <string name="dialog_apply">Применить</string>
     <string name="dialog_save">Сохранить</string>
