@@ -129,6 +129,8 @@ public class AutoKillManager {
 
             killOrphanShellProcesses(null);
 
+            boolean presetActive = new PresetManager(context).getActivePresetNumber() != 0;
+
             List<String> toKill = runningPackages.stream()
                     .filter(pkg -> {
                         try {
@@ -144,7 +146,7 @@ public class AutoKillManager {
                                 Log.d(TAG, "SKIP (extra whitelist): " + pkg);
                                 return false;
                             }
-                            if (scheduler != null && scheduler.isProtected(pkg, RestrictionsScheduler.PROTECT_AUTO_KILL)) {
+                            if (!presetActive && scheduler != null && scheduler.isProtected(pkg, RestrictionsScheduler.PROTECT_AUTO_KILL)) {
                                 Log.d(TAG, "SKIP (temp protected): " + pkg);
                                 return false;
                             }
