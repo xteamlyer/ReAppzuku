@@ -96,3 +96,5 @@ ReAppzuku распространяется под лицензией [GNU Genera
 ## Благодарности
 
 Форк проекта [northmendo/Appzuku](https://github.com/northmendo/Appzuku).
+
+> ReAppzuku был создан с использованием vibecoding — подхода, при котором значительная часть кода была сгенерирована с помощью ИИ (LLM).
