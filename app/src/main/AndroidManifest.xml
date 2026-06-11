@@ -57,7 +57,11 @@
             android:exported="false"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoAnimation" />
-
+        <activity
+            android:name=".PresetSettingsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+  
         <service
             android:name=".ShappkyService"
             android:foregroundServiceType="specialUse"
