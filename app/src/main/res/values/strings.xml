@@ -1019,11 +1019,13 @@
     <string name="scenarios_accessibility_required_message">For the App Launch trigger to work, enable ReAppzuku in Accessibility Settings. The setting has been saved and will activate once the service is enabled.</string>
     <string name="scenarios_accessibility_open_settings">Open Settings</string>
 
-    <!-- Auto-Kill Presets -->
-    <string name="preset_section_title">Auto-Kill Presets</string>
+    <!-- Auto-Kill Presets-->
     <string name="settings_presets_title">Auto-Kill Presets</string>
     <string name="settings_presets_subtitle">Schedule up to 2 rule sets by time</string>
     <string name="preset_title">Preset %d</string>
+    <string name="preset_section_title">Auto-Kill Presets</string>
+    <string name="preset_enabled_title">Enable preset</string>
+    <string name="preset_enabled_subtitle">Preset activates automatically by schedule</string>
     <string name="preset_name_title">Preset name</string>
     <string name="preset_name_dialog_title">Preset name</string>
     <string name="preset_time_range_title">Active time</string>
@@ -1038,8 +1040,20 @@
     <string name="preset_app_list_mode_switch_hint">Switch to "Own list" to edit</string>
     <string name="preset_list_count_current">%d apps (from current settings)</string>
     <string name="preset_list_count_own">%d apps selected</string>
+    <string name="scenarios_summary_none">None</string>
+    <string name="scenarios_hw_headset_short">Headset</string>
+    <string name="scenarios_hw_usb_short">USB</string>
+    <string name="scenarios_hw_charger_short">Charger</string>
+    <string name="scenarios_hw_wifi_short">Wi-Fi</string>
+    <string name="scenarios_hw_bluetooth_short">Bluetooth</string>
+    <string name="scenarios_hw_gps_short">GPS</string>
+    <string name="scenarios_hw_hotspot_short">Hotspot</string>
+    <string name="scenarios_app_launch_short">App launch</string>
     <string name="preset_save_button">Save preset</string>
     <string name="preset_saved">Preset %d saved</string>
+    <string name="preset_export_json_button">Export to JSON file</string>
+    <string name="preset_export_success">Preset exported successfully</string>
+    <string name="preset_badge_active">Active</string>
     <string name="preset_overlap_title">Time overlap</string>
-    <string name="preset_overlap_message">This time range overlaps with the other preset (%1$d:%2$02d – %3$d:%4$02d). Adjust the time so presets don\'t overlap.</string>
+    <string name="preset_overlap_message">This range overlaps with another preset (%1$d:%2$02d – %3$d:%4$02d). Adjust times so presets don\'t overlap.</string>
 </resources>
