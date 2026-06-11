@@ -20,7 +20,7 @@
             android:elevation="4dp"
             android:theme="@style/AppTheme.AppBarOverlay"
             app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIcon="@drawable/ic_back"
             app:titleTextColor="@android:color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -466,10 +466,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="24dp"
-        android:text="@string/preset_save_button"
+        android:text="@string/dialog_save"
         android:textColor="@android:color/white"
-        android:backgroundTint="#1B5E20"
-        app:icon="@drawable/ic_save"
-        app:iconTint="@android:color/white" />
+        android:backgroundTint="#1B5E20" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
