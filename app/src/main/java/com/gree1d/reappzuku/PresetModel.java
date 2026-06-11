@@ -14,6 +14,7 @@ public class PresetModel {
 
     public int presetNumber;
     public String name;
+    public boolean enabled = true;
 
     public boolean autoKillEnabled;
     public boolean periodicKillEnabled;
@@ -23,6 +24,17 @@ public class PresetModel {
     public int ramThreshold;
     public int autoKillType;
     public int killMode;
+
+    public boolean hwTriggerHeadset;
+    public boolean hwTriggerUsb;
+    public boolean hwTriggerCharger;
+    public boolean hwTriggerWifi;
+    public boolean hwTriggerBluetooth;
+    public boolean hwTriggerGps;
+    public boolean hwTriggerHotspot;
+    public boolean appLaunchTriggerEnabled;
+    public boolean appLaunchClearCache;
+    public Set<String> appLaunchTriggerPackages;
 
     public Set<String> whitelistedApps;
     public Set<String> blacklistedApps;
@@ -37,12 +49,14 @@ public class PresetModel {
         this.name = "Preset " + presetNumber;
         this.whitelistedApps = new HashSet<>();
         this.blacklistedApps = new HashSet<>();
+        this.appLaunchTriggerPackages = new HashSet<>();
     }
 
     public JSONObject toJson() throws JSONException {
         JSONObject obj = new JSONObject();
         obj.put("presetNumber", presetNumber);
         obj.put("name", name);
+        obj.put("enabled", enabled);
         obj.put("autoKillEnabled", autoKillEnabled);
         obj.put("periodicKillEnabled", periodicKillEnabled);
         obj.put("killInterval", killInterval);
@@ -51,6 +65,18 @@ public class PresetModel {
         obj.put("ramThreshold", ramThreshold);
         obj.put("autoKillType", autoKillType);
         obj.put("killMode", killMode);
+        obj.put("hwTriggerHeadset", hwTriggerHeadset);
+        obj.put("hwTriggerUsb", hwTriggerUsb);
+        obj.put("hwTriggerCharger", hwTriggerCharger);
+        obj.put("hwTriggerWifi", hwTriggerWifi);
+        obj.put("hwTriggerBluetooth", hwTriggerBluetooth);
+        obj.put("hwTriggerGps", hwTriggerGps);
+        obj.put("hwTriggerHotspot", hwTriggerHotspot);
+        obj.put("appLaunchTriggerEnabled", appLaunchTriggerEnabled);
+        obj.put("appLaunchClearCache", appLaunchClearCache);
+        JSONArray launchPackages = new JSONArray();
+        for (String pkg : appLaunchTriggerPackages) launchPackages.put(pkg);
+        obj.put("appLaunchTriggerPackages", launchPackages);
         obj.put("startHour", startHour);
         obj.put("startMinute", startMinute);
         obj.put("endHour", endHour);
@@ -71,6 +97,7 @@ public class PresetModel {
         int number = obj.getInt("presetNumber");
         PresetModel model = new PresetModel(number);
         model.name = obj.optString("name", "Preset " + number);
+        model.enabled = obj.optBoolean("enabled", true);
         model.autoKillEnabled = obj.optBoolean("autoKillEnabled", false);
         model.periodicKillEnabled = obj.optBoolean("periodicKillEnabled", false);
         model.killInterval = obj.optInt("killInterval", 15);
@@ -79,10 +106,26 @@ public class PresetModel {
         model.ramThreshold = obj.optInt("ramThreshold", 80);
         model.autoKillType = obj.optInt("autoKillType", 0);
         model.killMode = obj.optInt("killMode", 1);
+        model.hwTriggerHeadset = obj.optBoolean("hwTriggerHeadset", false);
+        model.hwTriggerUsb = obj.optBoolean("hwTriggerUsb", false);
+        model.hwTriggerCharger = obj.optBoolean("hwTriggerCharger", false);
+        model.hwTriggerWifi = obj.optBoolean("hwTriggerWifi", false);
+        model.hwTriggerBluetooth = obj.optBoolean("hwTriggerBluetooth", false);
+        model.hwTriggerGps = obj.optBoolean("hwTriggerGps", false);
+        model.hwTriggerHotspot = obj.optBoolean("hwTriggerHotspot", false);
+        model.appLaunchTriggerEnabled = obj.optBoolean("appLaunchTriggerEnabled", false);
+        model.appLaunchClearCache = obj.optBoolean("appLaunchClearCache", false);
         model.startHour = obj.optInt("startHour", 8);
         model.startMinute = obj.optInt("startMinute", 0);
         model.endHour = obj.optInt("endHour", 20);
         model.endMinute = obj.optInt("endMinute", 0);
+
+        JSONArray launchPkgs = obj.optJSONArray("appLaunchTriggerPackages");
+        if (launchPkgs != null) {
+            for (int i = 0; i < launchPkgs.length(); i++) {
+                model.appLaunchTriggerPackages.add(launchPkgs.getString(i));
+            }
+        }
 
         JSONArray whitelist = obj.optJSONArray("whitelistedApps");
         if (whitelist != null) {

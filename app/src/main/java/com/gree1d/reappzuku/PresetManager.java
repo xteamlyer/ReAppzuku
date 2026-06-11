@@ -6,15 +6,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,15 +24,42 @@ public class PresetManager {
 
     private static final String TAG = "PresetManager";
 
-    private static final String FILE_PRESET_1 = "preset1.json";
-    private static final String FILE_PRESET_2 = "preset2.json";
+    private static final String PREFS_PRESET_1 = "preset_1_prefs";
+    private static final String PREFS_PRESET_2 = "preset_2_prefs";
 
-    private static final String ACTION_PRESET_ACTIVATE = "com.gree1d.reappzuku.PRESET_ACTIVATE";
-    private static final String ACTION_PRESET_DEACTIVATE = "com.gree1d.reappzuku.PRESET_DEACTIVATE";
-    private static final String EXTRA_PRESET_NUMBER = "preset_number";
+    static final String ACTION_PRESET_ACTIVATE = "com.gree1d.reappzuku.PRESET_ACTIVATE";
+    static final String ACTION_PRESET_DEACTIVATE = "com.gree1d.reappzuku.PRESET_DEACTIVATE";
+    static final String EXTRA_PRESET_NUMBER = "preset_number";
 
     private static final String KEY_ACTIVE_PRESET = "active_preset_number";
     private static final String KEY_BACKUP_PREFIX = "preset_backup_";
+
+    private static final String P_NAME = "name";
+    private static final String P_ENABLED = "enabled";
+    private static final String P_AUTO_KILL_ENABLED = "autoKillEnabled";
+    private static final String P_PERIODIC_KILL_ENABLED = "periodicKillEnabled";
+    private static final String P_KILL_INTERVAL = "killInterval";
+    private static final String P_KILL_ON_SCREEN_OFF = "killOnScreenOff";
+    private static final String P_RAM_THRESHOLD_ENABLED = "ramThresholdEnabled";
+    private static final String P_RAM_THRESHOLD = "ramThreshold";
+    private static final String P_AUTO_KILL_TYPE = "autoKillType";
+    private static final String P_KILL_MODE = "killMode";
+    private static final String P_HW_HEADSET = "hwTriggerHeadset";
+    private static final String P_HW_USB = "hwTriggerUsb";
+    private static final String P_HW_CHARGER = "hwTriggerCharger";
+    private static final String P_HW_WIFI = "hwTriggerWifi";
+    private static final String P_HW_BLUETOOTH = "hwTriggerBluetooth";
+    private static final String P_HW_GPS = "hwTriggerGps";
+    private static final String P_HW_HOTSPOT = "hwTriggerHotspot";
+    private static final String P_APP_LAUNCH_ENABLED = "appLaunchTriggerEnabled";
+    private static final String P_APP_LAUNCH_CLEAR_CACHE = "appLaunchClearCache";
+    private static final String P_APP_LAUNCH_PACKAGES = "appLaunchTriggerPackages";
+    private static final String P_WHITELIST = "whitelistedApps";
+    private static final String P_BLACKLIST = "blacklistedApps";
+    private static final String P_START_HOUR = "startHour";
+    private static final String P_START_MINUTE = "startMinute";
+    private static final String P_END_HOUR = "endHour";
+    private static final String P_END_MINUTE = "endMinute";
 
     private static final int REQUEST_CODE_ACTIVATE_1 = 1001;
     private static final int REQUEST_CODE_DEACTIVATE_1 = 1002;
@@ -41,64 +67,98 @@ public class PresetManager {
     private static final int REQUEST_CODE_DEACTIVATE_2 = 1004;
 
     private final Context context;
-    private final SharedPreferences prefs;
+    private final SharedPreferences mainPrefs;
 
     public PresetManager(Context context) {
         this.context = context.getApplicationContext();
-        this.prefs = this.context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+        this.mainPrefs = this.context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+    }
+
+    private SharedPreferences presetPrefs(int presetNumber) {
+        String name = presetNumber == PresetModel.PRESET_1 ? PREFS_PRESET_1 : PREFS_PRESET_2;
+        return context.getSharedPreferences(name, Context.MODE_PRIVATE);
     }
 
     public void savePreset(PresetModel model) {
-        String fileName = model.presetNumber == PresetModel.PRESET_1 ? FILE_PRESET_1 : FILE_PRESET_2;
-        File file = new File(context.getFilesDir(), fileName);
+        SharedPreferences.Editor e = presetPrefs(model.presetNumber).edit();
+        e.putString(P_NAME, model.name);
+        e.putBoolean(P_ENABLED, model.enabled);
+        e.putBoolean(P_AUTO_KILL_ENABLED, model.autoKillEnabled);
+        e.putBoolean(P_PERIODIC_KILL_ENABLED, model.periodicKillEnabled);
+        e.putInt(P_KILL_INTERVAL, model.killInterval);
+        e.putBoolean(P_KILL_ON_SCREEN_OFF, model.killOnScreenOff);
+        e.putBoolean(P_RAM_THRESHOLD_ENABLED, model.ramThresholdEnabled);
+        e.putInt(P_RAM_THRESHOLD, model.ramThreshold);
+        e.putInt(P_AUTO_KILL_TYPE, model.autoKillType);
+        e.putInt(P_KILL_MODE, model.killMode);
+        e.putBoolean(P_HW_HEADSET, model.hwTriggerHeadset);
+        e.putBoolean(P_HW_USB, model.hwTriggerUsb);
+        e.putBoolean(P_HW_CHARGER, model.hwTriggerCharger);
+        e.putBoolean(P_HW_WIFI, model.hwTriggerWifi);
+        e.putBoolean(P_HW_BLUETOOTH, model.hwTriggerBluetooth);
+        e.putBoolean(P_HW_GPS, model.hwTriggerGps);
+        e.putBoolean(P_HW_HOTSPOT, model.hwTriggerHotspot);
+        e.putBoolean(P_APP_LAUNCH_ENABLED, model.appLaunchTriggerEnabled);
+        e.putBoolean(P_APP_LAUNCH_CLEAR_CACHE, model.appLaunchClearCache);
+        e.putStringSet(P_APP_LAUNCH_PACKAGES, new HashSet<>(model.appLaunchTriggerPackages));
+        e.putStringSet(P_WHITELIST, new HashSet<>(model.whitelistedApps));
+        e.putStringSet(P_BLACKLIST, new HashSet<>(model.blacklistedApps));
+        e.putInt(P_START_HOUR, model.startHour);
+        e.putInt(P_START_MINUTE, model.startMinute);
+        e.putInt(P_END_HOUR, model.endHour);
+        e.putInt(P_END_MINUTE, model.endMinute);
+        e.apply();
         Log.d(TAG, "savePreset #" + model.presetNumber + " name=" + model.name
-                + " file=" + file.getAbsolutePath());
-        try (FileWriter writer = new FileWriter(file)) {
-            String json = model.toJson().toString();
-            writer.write(json);
-            Log.d(TAG, "savePreset #" + model.presetNumber + " OK | " + json);
-        } catch (IOException | JSONException e) {
-            Log.e(TAG, "savePreset #" + model.presetNumber + " FAILED", e);
-        }
+                + " enabled=" + model.enabled
+                + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
+                + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute));
     }
 
     public PresetModel loadPreset(int presetNumber) {
-        String fileName = presetNumber == PresetModel.PRESET_1 ? FILE_PRESET_1 : FILE_PRESET_2;
-        File file = new File(context.getFilesDir(), fileName);
-        Log.d(TAG, "loadPreset #" + presetNumber + " path=" + file.getAbsolutePath()
-                + " exists=" + file.exists());
-        if (!file.exists()) return null;
-        try (FileReader reader = new FileReader(file)) {
-            StringBuilder sb = new StringBuilder();
-            char[] buffer = new char[4096];
-            int read;
-            while ((read = reader.read(buffer)) != -1) {
-                sb.append(buffer, 0, read);
-            }
-            PresetModel model = PresetModel.fromJson(new JSONObject(sb.toString()));
-            Log.d(TAG, "loadPreset #" + presetNumber + " OK | name=" + model.name
-                    + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
-                    + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute)
-                    + " killMode=" + model.killMode + " killType=" + model.autoKillType
-                    + " interval=" + model.killInterval
-                    + " screenOff=" + model.killOnScreenOff
-                    + " ramEnabled=" + model.ramThresholdEnabled + " ramThreshold=" + model.ramThreshold
-                    + " whitelist=" + model.whitelistedApps.size()
-                    + " blacklist=" + model.blacklistedApps.size());
-            return model;
-        } catch (IOException | JSONException e) {
-            Log.e(TAG, "loadPreset #" + presetNumber + " FAILED", e);
+        SharedPreferences p = presetPrefs(presetNumber);
+        if (!p.contains(P_NAME)) {
+            Log.d(TAG, "loadPreset #" + presetNumber + " — not found");
             return null;
         }
+        PresetModel model = new PresetModel(presetNumber);
+        model.name = p.getString(P_NAME, "Preset " + presetNumber);
+        model.enabled = p.getBoolean(P_ENABLED, true);
+        model.autoKillEnabled = p.getBoolean(P_AUTO_KILL_ENABLED, false);
+        model.periodicKillEnabled = p.getBoolean(P_PERIODIC_KILL_ENABLED, false);
+        model.killInterval = p.getInt(P_KILL_INTERVAL, 15);
+        model.killOnScreenOff = p.getBoolean(P_KILL_ON_SCREEN_OFF, false);
+        model.ramThresholdEnabled = p.getBoolean(P_RAM_THRESHOLD_ENABLED, false);
+        model.ramThreshold = p.getInt(P_RAM_THRESHOLD, 80);
+        model.autoKillType = p.getInt(P_AUTO_KILL_TYPE, 0);
+        model.killMode = p.getInt(P_KILL_MODE, 1);
+        model.hwTriggerHeadset = p.getBoolean(P_HW_HEADSET, false);
+        model.hwTriggerUsb = p.getBoolean(P_HW_USB, false);
+        model.hwTriggerCharger = p.getBoolean(P_HW_CHARGER, false);
+        model.hwTriggerWifi = p.getBoolean(P_HW_WIFI, false);
+        model.hwTriggerBluetooth = p.getBoolean(P_HW_BLUETOOTH, false);
+        model.hwTriggerGps = p.getBoolean(P_HW_GPS, false);
+        model.hwTriggerHotspot = p.getBoolean(P_HW_HOTSPOT, false);
+        model.appLaunchTriggerEnabled = p.getBoolean(P_APP_LAUNCH_ENABLED, false);
+        model.appLaunchClearCache = p.getBoolean(P_APP_LAUNCH_CLEAR_CACHE, false);
+        model.appLaunchTriggerPackages = new HashSet<>(p.getStringSet(P_APP_LAUNCH_PACKAGES, new HashSet<>()));
+        model.whitelistedApps = new HashSet<>(p.getStringSet(P_WHITELIST, new HashSet<>()));
+        model.blacklistedApps = new HashSet<>(p.getStringSet(P_BLACKLIST, new HashSet<>()));
+        model.startHour = p.getInt(P_START_HOUR, 8);
+        model.startMinute = p.getInt(P_START_MINUTE, 0);
+        model.endHour = p.getInt(P_END_HOUR, 20);
+        model.endMinute = p.getInt(P_END_MINUTE, 0);
+        Log.d(TAG, "loadPreset #" + presetNumber + " OK | name=" + model.name
+                + " enabled=" + model.enabled
+                + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
+                + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute)
+                + " whitelist=" + model.whitelistedApps.size()
+                + " blacklist=" + model.blacklistedApps.size());
+        return model;
     }
 
     public void deletePreset(int presetNumber) {
-        String fileName = presetNumber == PresetModel.PRESET_1 ? FILE_PRESET_1 : FILE_PRESET_2;
-        File file = new File(context.getFilesDir(), fileName);
-        boolean deleted = false;
-        if (file.exists()) deleted = file.delete();
-        Log.d(TAG, "deletePreset #" + presetNumber + " fileDeleted=" + deleted
-                + " wasActive=" + (getActivePresetNumber() == presetNumber));
+        Log.d(TAG, "deletePreset #" + presetNumber + " wasActive=" + (getActivePresetNumber() == presetNumber));
+        presetPrefs(presetNumber).edit().clear().apply();
         cancelAlarms(presetNumber);
         if (getActivePresetNumber() == presetNumber) {
             restoreBackup();
@@ -107,38 +167,43 @@ public class PresetManager {
     }
 
     public boolean presetExists(int presetNumber) {
-        String fileName = presetNumber == PresetModel.PRESET_1 ? FILE_PRESET_1 : FILE_PRESET_2;
-        return new File(context.getFilesDir(), fileName).exists();
+        return presetPrefs(presetNumber).contains(P_NAME);
+    }
+
+    public String getPresetName(int presetNumber) {
+        return presetPrefs(presetNumber).getString(P_NAME, "Preset " + presetNumber);
     }
 
     public int getActivePresetNumber() {
-        return prefs.getInt(KEY_ACTIVE_PRESET, 0);
+        return mainPrefs.getInt(KEY_ACTIVE_PRESET, 0);
     }
 
     private void setActivePresetNumber(int number) {
-        prefs.edit().putInt(KEY_ACTIVE_PRESET, number).apply();
+        mainPrefs.edit().putInt(KEY_ACTIVE_PRESET, number).apply();
     }
 
     private void clearActivePreset() {
-        prefs.edit().remove(KEY_ACTIVE_PRESET).apply();
+        mainPrefs.edit().remove(KEY_ACTIVE_PRESET).apply();
     }
 
     public void activatePreset(int presetNumber) {
         Log.d(TAG, "activatePreset #" + presetNumber + " | currentActive=" + getActivePresetNumber());
         PresetModel model = loadPreset(presetNumber);
         if (model == null) {
-            Log.w(TAG, "activatePreset #" + presetNumber + " ABORTED — preset file not found");
+            Log.w(TAG, "activatePreset #" + presetNumber + " ABORTED — not found");
+            return;
+        }
+        if (!model.enabled) {
+            Log.d(TAG, "activatePreset #" + presetNumber + " SKIPPED — preset is disabled");
             return;
         }
 
         int currentActive = getActivePresetNumber();
-        if (currentActive != 0 && currentActive != presetNumber) {
-            Log.d(TAG, "activatePreset: replacing active preset #" + currentActive + " → restoring backup first");
-            restoreBackup();
-        }
         if (currentActive == 0) {
-            Log.d(TAG, "activatePreset: no preset was active — saving backup of current settings");
+            Log.d(TAG, "activatePreset: no preset active — saving backup of current settings");
             saveBackup();
+        } else if (currentActive != presetNumber) {
+            Log.d(TAG, "activatePreset: switching from preset #" + currentActive + " — original backup preserved");
         }
 
         applyPreset(model);
@@ -153,24 +218,40 @@ public class PresetManager {
             Log.w(TAG, "deactivatePreset #" + presetNumber + " SKIPPED — not the active preset");
             return;
         }
+        PresetModel model = loadPreset(presetNumber);
+        if (model != null && isCurrentlyActive(model)) {
+            Log.w(TAG, "deactivatePreset #" + presetNumber + " SKIPPED — still inside time window (alarm drift)");
+            return;
+        }
         restoreBackup();
         clearActivePreset();
         Log.d(TAG, "deactivatePreset #" + presetNumber + " DONE");
     }
 
+    public void forceDeactivateIfActive(int presetNumber) {
+        if (getActivePresetNumber() == presetNumber) {
+            restoreBackup();
+            clearActivePreset();
+            Log.d(TAG, "forceDeactivateIfActive #" + presetNumber + " DONE");
+        }
+    }
+
     private void applyPreset(PresetModel model) {
         Log.d(TAG, "applyPreset #" + model.presetNumber
-                + " | autoKillEnabled=" + model.autoKillEnabled
-                + " periodicEnabled=" + model.periodicKillEnabled
+                + " | autoKill=" + model.autoKillEnabled
+                + " periodic=" + model.periodicKillEnabled
                 + " interval=" + model.killInterval
                 + " screenOff=" + model.killOnScreenOff
-                + " killMode=" + model.killMode
-                + " killType=" + model.autoKillType
-                + " ramEnabled=" + model.ramThresholdEnabled
-                + " ramThreshold=" + model.ramThreshold
-                + " whitelist=" + model.whitelistedApps
-                + " blacklist=" + model.blacklistedApps);
-        SharedPreferences.Editor editor = prefs.edit();
+                + " killMode=" + model.killMode + " killType=" + model.autoKillType
+                + " ramEnabled=" + model.ramThresholdEnabled + " ramThreshold=" + model.ramThreshold
+                + " headset=" + model.hwTriggerHeadset + " usb=" + model.hwTriggerUsb
+                + " charger=" + model.hwTriggerCharger + " wifi=" + model.hwTriggerWifi
+                + " bt=" + model.hwTriggerBluetooth + " gps=" + model.hwTriggerGps
+                + " hotspot=" + model.hwTriggerHotspot
+                + " appLaunch=" + model.appLaunchTriggerEnabled
+                + " whitelist=" + model.whitelistedApps + " blacklist=" + model.blacklistedApps);
+
+        SharedPreferences.Editor editor = mainPrefs.edit();
         editor.putBoolean(KEY_AUTO_KILL_ENABLED, model.autoKillEnabled);
         editor.putBoolean(KEY_PERIODIC_KILL_ENABLED, model.periodicKillEnabled);
         editor.putInt(KEY_KILL_INTERVAL, model.killInterval);
@@ -179,134 +260,178 @@ public class PresetManager {
         editor.putInt(KEY_RAM_THRESHOLD, model.ramThreshold);
         editor.putInt(KEY_AUTO_KILL_TYPE, model.autoKillType);
         editor.putInt(KEY_KILL_MODE, model.killMode);
+        editor.putBoolean(KEY_HW_TRIGGER_HEADSET, model.hwTriggerHeadset);
+        editor.putBoolean(KEY_HW_TRIGGER_USB, model.hwTriggerUsb);
+        editor.putBoolean(KEY_HW_TRIGGER_CHARGER, model.hwTriggerCharger);
+        editor.putBoolean(KEY_HW_TRIGGER_WIFI, model.hwTriggerWifi);
+        editor.putBoolean(KEY_HW_TRIGGER_BLUETOOTH, model.hwTriggerBluetooth);
+        editor.putBoolean(KEY_HW_TRIGGER_GPS, model.hwTriggerGps);
+        editor.putBoolean(KEY_HW_TRIGGER_HOTSPOT, model.hwTriggerHotspot);
+        editor.putBoolean(KEY_APP_LAUNCH_TRIGGER_ENABLED, model.appLaunchTriggerEnabled);
+        editor.putBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, model.appLaunchClearCache);
+        editor.putStringSet(KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>(model.appLaunchTriggerPackages));
         editor.putStringSet(KEY_WHITELISTED_APPS, new HashSet<>(model.whitelistedApps));
         editor.putStringSet(KEY_BLACKLISTED_APPS, new HashSet<>(model.blacklistedApps));
         editor.apply();
+
         Log.d(TAG, "applyPreset #" + model.presetNumber + " prefs written — rescheduling worker");
         rescheduleWorker();
     }
 
     private void saveBackup() {
-        boolean autoKill = prefs.getBoolean(KEY_AUTO_KILL_ENABLED, false);
-        boolean periodic = prefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
-        int interval = prefs.getInt(KEY_KILL_INTERVAL, 15);
-        boolean screenOff = prefs.getBoolean(KEY_KILL_ON_SCREEN_OFF, false);
-        boolean ramEnabled = prefs.getBoolean(KEY_RAM_THRESHOLD_ENABLED, false);
-        int ramThreshold = prefs.getInt(KEY_RAM_THRESHOLD, 80);
-        int killType = prefs.getInt(KEY_AUTO_KILL_TYPE, 0);
-        int killMode = prefs.getInt(KEY_KILL_MODE, 1);
-        Set<String> whitelist = prefs.getStringSet(KEY_WHITELISTED_APPS, new HashSet<>());
-        Set<String> blacklist = prefs.getStringSet(KEY_BLACKLISTED_APPS, new HashSet<>());
-
-        Log.d(TAG, "saveBackup | autoKill=" + autoKill + " periodic=" + periodic
-                + " interval=" + interval + " screenOff=" + screenOff
-                + " killMode=" + killMode + " killType=" + killType
-                + " ramEnabled=" + ramEnabled + " ramThreshold=" + ramThreshold
-                + " whitelist=" + whitelist + " blacklist=" + blacklist);
-
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED, autoKill);
-        editor.putBoolean(KEY_BACKUP_PREFIX + KEY_PERIODIC_KILL_ENABLED, periodic);
-        editor.putInt(KEY_BACKUP_PREFIX + KEY_KILL_INTERVAL, interval);
-        editor.putBoolean(KEY_BACKUP_PREFIX + KEY_KILL_ON_SCREEN_OFF, screenOff);
-        editor.putBoolean(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD_ENABLED, ramEnabled);
-        editor.putInt(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD, ramThreshold);
-        editor.putInt(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_TYPE, killType);
-        editor.putInt(KEY_BACKUP_PREFIX + KEY_KILL_MODE, killMode);
-        editor.putStringSet(KEY_BACKUP_PREFIX + KEY_WHITELISTED_APPS, new HashSet<>(whitelist));
-        editor.putStringSet(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS, new HashSet<>(blacklist));
-        editor.apply();
+        SharedPreferences.Editor e = mainPrefs.edit();
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED, mainPrefs.getBoolean(KEY_AUTO_KILL_ENABLED, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_PERIODIC_KILL_ENABLED, mainPrefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false));
+        e.putInt(KEY_BACKUP_PREFIX + KEY_KILL_INTERVAL, mainPrefs.getInt(KEY_KILL_INTERVAL, 15));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_KILL_ON_SCREEN_OFF, mainPrefs.getBoolean(KEY_KILL_ON_SCREEN_OFF, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD_ENABLED, mainPrefs.getBoolean(KEY_RAM_THRESHOLD_ENABLED, false));
+        e.putInt(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD, mainPrefs.getInt(KEY_RAM_THRESHOLD, 80));
+        e.putInt(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_TYPE, mainPrefs.getInt(KEY_AUTO_KILL_TYPE, 0));
+        e.putInt(KEY_BACKUP_PREFIX + KEY_KILL_MODE, mainPrefs.getInt(KEY_KILL_MODE, 1));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_HEADSET, mainPrefs.getBoolean(KEY_HW_TRIGGER_HEADSET, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_USB, mainPrefs.getBoolean(KEY_HW_TRIGGER_USB, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_CHARGER, mainPrefs.getBoolean(KEY_HW_TRIGGER_CHARGER, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_WIFI, mainPrefs.getBoolean(KEY_HW_TRIGGER_WIFI, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_BLUETOOTH, mainPrefs.getBoolean(KEY_HW_TRIGGER_BLUETOOTH, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_GPS, mainPrefs.getBoolean(KEY_HW_TRIGGER_GPS, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_HOTSPOT, mainPrefs.getBoolean(KEY_HW_TRIGGER_HOTSPOT, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_TRIGGER_ENABLED, mainPrefs.getBoolean(KEY_APP_LAUNCH_TRIGGER_ENABLED, false));
+        e.putBoolean(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_CLEAR_CACHE, mainPrefs.getBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, false));
+        Set<String> launchPkgs = mainPrefs.getStringSet(KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>());
+        e.putStringSet(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>(launchPkgs));
+        Set<String> whitelist = mainPrefs.getStringSet(KEY_WHITELISTED_APPS, new HashSet<>());
+        e.putStringSet(KEY_BACKUP_PREFIX + KEY_WHITELISTED_APPS, new HashSet<>(whitelist));
+        Set<String> blacklist = mainPrefs.getStringSet(KEY_BLACKLISTED_APPS, new HashSet<>());
+        e.putStringSet(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS, new HashSet<>(blacklist));
+        e.apply();
         Log.d(TAG, "saveBackup DONE");
     }
 
     private void restoreBackup() {
-        boolean hasBackup = prefs.contains(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED);
+        boolean hasBackup = mainPrefs.contains(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED);
         Log.d(TAG, "restoreBackup | hasBackup=" + hasBackup);
         if (!hasBackup) return;
 
-        boolean autoKill = prefs.getBoolean(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED, false);
-        boolean periodic = prefs.getBoolean(KEY_BACKUP_PREFIX + KEY_PERIODIC_KILL_ENABLED, false);
-        int interval = prefs.getInt(KEY_BACKUP_PREFIX + KEY_KILL_INTERVAL, 15);
-        boolean screenOff = prefs.getBoolean(KEY_BACKUP_PREFIX + KEY_KILL_ON_SCREEN_OFF, false);
-        boolean ramEnabled = prefs.getBoolean(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD_ENABLED, false);
-        int ramThreshold = prefs.getInt(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD, 80);
-        int killType = prefs.getInt(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_TYPE, 0);
-        int killMode = prefs.getInt(KEY_BACKUP_PREFIX + KEY_KILL_MODE, 1);
-        Set<String> whitelist = prefs.getStringSet(KEY_BACKUP_PREFIX + KEY_WHITELISTED_APPS, new HashSet<>());
-        Set<String> blacklist = prefs.getStringSet(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS, new HashSet<>());
+        SharedPreferences.Editor e = mainPrefs.edit();
+        e.putBoolean(KEY_AUTO_KILL_ENABLED, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED, false));
+        e.putBoolean(KEY_PERIODIC_KILL_ENABLED, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_PERIODIC_KILL_ENABLED, false));
+        e.putInt(KEY_KILL_INTERVAL, mainPrefs.getInt(KEY_BACKUP_PREFIX + KEY_KILL_INTERVAL, 15));
+        e.putBoolean(KEY_KILL_ON_SCREEN_OFF, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_KILL_ON_SCREEN_OFF, false));
+        e.putBoolean(KEY_RAM_THRESHOLD_ENABLED, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD_ENABLED, false));
+        e.putInt(KEY_RAM_THRESHOLD, mainPrefs.getInt(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD, 80));
+        e.putInt(KEY_AUTO_KILL_TYPE, mainPrefs.getInt(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_TYPE, 0));
+        e.putInt(KEY_KILL_MODE, mainPrefs.getInt(KEY_BACKUP_PREFIX + KEY_KILL_MODE, 1));
+        e.putBoolean(KEY_HW_TRIGGER_HEADSET, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_HEADSET, false));
+        e.putBoolean(KEY_HW_TRIGGER_USB, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_USB, false));
+        e.putBoolean(KEY_HW_TRIGGER_CHARGER, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_CHARGER, false));
+        e.putBoolean(KEY_HW_TRIGGER_WIFI, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_WIFI, false));
+        e.putBoolean(KEY_HW_TRIGGER_BLUETOOTH, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_BLUETOOTH, false));
+        e.putBoolean(KEY_HW_TRIGGER_GPS, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_GPS, false));
+        e.putBoolean(KEY_HW_TRIGGER_HOTSPOT, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_HOTSPOT, false));
+        e.putBoolean(KEY_APP_LAUNCH_TRIGGER_ENABLED, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_TRIGGER_ENABLED, false));
+        e.putBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, mainPrefs.getBoolean(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_CLEAR_CACHE, false));
+        Set<String> launchPkgs = mainPrefs.getStringSet(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>());
+        e.putStringSet(KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>(launchPkgs));
+        Set<String> whitelist = mainPrefs.getStringSet(KEY_BACKUP_PREFIX + KEY_WHITELISTED_APPS, new HashSet<>());
+        e.putStringSet(KEY_WHITELISTED_APPS, new HashSet<>(whitelist));
+        Set<String> blacklist = mainPrefs.getStringSet(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS, new HashSet<>());
+        e.putStringSet(KEY_BLACKLISTED_APPS, new HashSet<>(blacklist));
 
-        Log.d(TAG, "restoreBackup values | autoKill=" + autoKill + " periodic=" + periodic
-                + " interval=" + interval + " screenOff=" + screenOff
-                + " killMode=" + killMode + " killType=" + killType
-                + " ramEnabled=" + ramEnabled + " ramThreshold=" + ramThreshold
-                + " whitelist=" + whitelist + " blacklist=" + blacklist);
-
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(KEY_AUTO_KILL_ENABLED, autoKill);
-        editor.putBoolean(KEY_PERIODIC_KILL_ENABLED, periodic);
-        editor.putInt(KEY_KILL_INTERVAL, interval);
-        editor.putBoolean(KEY_KILL_ON_SCREEN_OFF, screenOff);
-        editor.putBoolean(KEY_RAM_THRESHOLD_ENABLED, ramEnabled);
-        editor.putInt(KEY_RAM_THRESHOLD, ramThreshold);
-        editor.putInt(KEY_AUTO_KILL_TYPE, killType);
-        editor.putInt(KEY_KILL_MODE, killMode);
-        editor.putStringSet(KEY_WHITELISTED_APPS, new HashSet<>(whitelist));
-        editor.putStringSet(KEY_BLACKLISTED_APPS, new HashSet<>(blacklist));
-
-        editor.remove(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_PERIODIC_KILL_ENABLED);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_KILL_INTERVAL);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_KILL_ON_SCREEN_OFF);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD_ENABLED);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_TYPE);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_KILL_MODE);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_WHITELISTED_APPS);
-        editor.remove(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS);
-        editor.apply();
+        e.remove(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED);
+        e.remove(KEY_BACKUP_PREFIX + KEY_PERIODIC_KILL_ENABLED);
+        e.remove(KEY_BACKUP_PREFIX + KEY_KILL_INTERVAL);
+        e.remove(KEY_BACKUP_PREFIX + KEY_KILL_ON_SCREEN_OFF);
+        e.remove(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD_ENABLED);
+        e.remove(KEY_BACKUP_PREFIX + KEY_RAM_THRESHOLD);
+        e.remove(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_TYPE);
+        e.remove(KEY_BACKUP_PREFIX + KEY_KILL_MODE);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_HEADSET);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_USB);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_CHARGER);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_WIFI);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_BLUETOOTH);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_GPS);
+        e.remove(KEY_BACKUP_PREFIX + KEY_HW_TRIGGER_HOTSPOT);
+        e.remove(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_TRIGGER_ENABLED);
+        e.remove(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_CLEAR_CACHE);
+        e.remove(KEY_BACKUP_PREFIX + KEY_APP_LAUNCH_TRIGGER_PACKAGES);
+        e.remove(KEY_BACKUP_PREFIX + KEY_WHITELISTED_APPS);
+        e.remove(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS);
+        e.apply();
 
         Log.d(TAG, "restoreBackup DONE — rescheduling worker");
         rescheduleWorker();
     }
 
     private void rescheduleWorker() {
-        boolean autoKillEnabled = prefs.getBoolean(KEY_AUTO_KILL_ENABLED, false);
-        boolean periodicEnabled = prefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
-        int interval = prefs.getInt(KEY_KILL_INTERVAL, 15);
+        boolean autoKillEnabled = mainPrefs.getBoolean(KEY_AUTO_KILL_ENABLED, false);
+        boolean periodicEnabled = mainPrefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
+        int interval = mainPrefs.getInt(KEY_KILL_INTERVAL, 15);
         Log.d(TAG, "rescheduleWorker | autoKill=" + autoKillEnabled
                 + " periodic=" + periodicEnabled + " interval=" + interval);
         AutoKillWorker.cancel(context);
         if (autoKillEnabled && periodicEnabled) {
             AutoKillWorker.schedule(context);
-            Log.d(TAG, "rescheduleWorker — worker scheduled with interval=" + interval);
+            Log.d(TAG, "rescheduleWorker — scheduled with interval=" + interval);
         } else {
-            Log.d(TAG, "rescheduleWorker — worker cancelled (autoKill or periodic disabled)");
+            Log.d(TAG, "rescheduleWorker — worker cancelled");
         }
     }
 
+    public void exportPresetToJson(PresetModel model, Uri uri) {
+        Log.d(TAG, "exportPresetToJson #" + model.presetNumber + " uri=" + uri);
+        try {
+            JSONObject json = model.toJson();
+            try (OutputStream os = context.getContentResolver().openOutputStream(uri)) {
+                if (os == null) throw new IOException("OutputStream is null for uri: " + uri);
+                os.write(json.toString(2).getBytes("UTF-8"));
+                Log.d(TAG, "exportPresetToJson #" + model.presetNumber + " OK");
+            }
+        } catch (IOException | JSONException e) {
+            Log.e(TAG, "exportPresetToJson #" + model.presetNumber + " FAILED", e);
+        }
+    }
+
+
     public void scheduleAlarms(PresetModel model) {
         cancelAlarms(model.presetNumber);
-
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
             Log.e(TAG, "scheduleAlarms #" + model.presetNumber + " — AlarmManager is null");
             return;
         }
-
-        PendingIntent activateIntent = buildPendingIntent(model.presetNumber, ACTION_PRESET_ACTIVATE);
-        PendingIntent deactivateIntent = buildPendingIntent(model.presetNumber, ACTION_PRESET_DEACTIVATE);
-
         long activateTime = nextAlarmTime(model.startHour, model.startMinute);
         long deactivateTime = nextAlarmTime(model.endHour, model.endMinute);
-
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, activateTime, activateIntent);
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, deactivateTime, deactivateIntent);
-
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, activateTime,
+                buildPendingIntent(model.presetNumber, ACTION_PRESET_ACTIVATE));
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, deactivateTime,
+                buildPendingIntent(model.presetNumber, ACTION_PRESET_DEACTIVATE));
         Log.d(TAG, "scheduleAlarms #" + model.presetNumber
                 + " | activateAt=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                 + " (ms=" + activateTime + ")"
-                + " | deactivateAt=" + model.endHour + ":" + String.format("%02d", model.endMinute)
+                + " deactivateAt=" + model.endHour + ":" + String.format("%02d", model.endMinute)
                 + " (ms=" + deactivateTime + ")");
+    }
+
+    public void rescheduleNextAlarm(int presetNumber, String action) {
+        PresetModel model = loadPreset(presetNumber);
+        if (model == null) return;
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+        boolean isActivate = ACTION_PRESET_ACTIVATE.equals(action);
+        int hour = isActivate ? model.startHour : model.endHour;
+        int minute = isActivate ? model.startMinute : model.endMinute;
+        Calendar next = Calendar.getInstance();
+        next.set(Calendar.HOUR_OF_DAY, hour);
+        next.set(Calendar.MINUTE, minute);
+        next.set(Calendar.SECOND, 0);
+        next.set(Calendar.MILLISECOND, 0);
+        next.add(Calendar.DAY_OF_YEAR, 1);
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.getTimeInMillis(),
+                buildPendingIntent(presetNumber, action));
+        Log.d(TAG, "rescheduleNextAlarm #" + presetNumber + " action=" + action
+                + " nextAt=" + hour + ":" + String.format("%02d", minute)
+                + " tomorrow ms=" + next.getTimeInMillis());
     }
 
     public void cancelAlarms(int presetNumber) {
@@ -315,13 +440,8 @@ public class PresetManager {
             Log.e(TAG, "cancelAlarms #" + presetNumber + " — AlarmManager is null");
             return;
         }
-
-        PendingIntent activateIntent = buildPendingIntent(presetNumber, ACTION_PRESET_ACTIVATE);
-        PendingIntent deactivateIntent = buildPendingIntent(presetNumber, ACTION_PRESET_DEACTIVATE);
-
-        alarmManager.cancel(activateIntent);
-        alarmManager.cancel(deactivateIntent);
-
+        alarmManager.cancel(buildPendingIntent(presetNumber, ACTION_PRESET_ACTIVATE));
+        alarmManager.cancel(buildPendingIntent(presetNumber, ACTION_PRESET_DEACTIVATE));
         Log.d(TAG, "cancelAlarms #" + presetNumber + " DONE");
     }
 
@@ -329,16 +449,12 @@ public class PresetManager {
         Intent intent = new Intent(context, PresetReceiver.class);
         intent.setAction(action);
         intent.putExtra(EXTRA_PRESET_NUMBER, presetNumber);
-
         int requestCode;
         if (presetNumber == PresetModel.PRESET_1) {
-            requestCode = action.equals(ACTION_PRESET_ACTIVATE)
-                    ? REQUEST_CODE_ACTIVATE_1 : REQUEST_CODE_DEACTIVATE_1;
+            requestCode = action.equals(ACTION_PRESET_ACTIVATE) ? REQUEST_CODE_ACTIVATE_1 : REQUEST_CODE_DEACTIVATE_1;
         } else {
-            requestCode = action.equals(ACTION_PRESET_ACTIVATE)
-                    ? REQUEST_CODE_ACTIVATE_2 : REQUEST_CODE_DEACTIVATE_2;
+            requestCode = action.equals(ACTION_PRESET_ACTIVATE) ? REQUEST_CODE_ACTIVATE_2 : REQUEST_CODE_DEACTIVATE_2;
         }
-
         return PendingIntent.getBroadcast(context, requestCode, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
@@ -360,38 +476,19 @@ public class PresetManager {
         int nowMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
         int startMinutes = model.getStartTotalMinutes();
         int endMinutes = model.getEndTotalMinutes();
-
         boolean active;
         if (endMinutes <= startMinutes) {
             active = nowMinutes >= startMinutes || nowMinutes < endMinutes;
         } else {
             active = nowMinutes >= startMinutes && nowMinutes < endMinutes;
         }
-
         Log.d(TAG, "isCurrentlyActive #" + model.presetNumber
                 + " | now=" + now.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", now.get(Calendar.MINUTE))
-                + " (" + nowMinutes + "min)"
                 + " range=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                 + "–" + model.endHour + ":" + String.format("%02d", model.endMinute)
                 + " crossesMidnight=" + (endMinutes <= startMinutes)
                 + " → active=" + active);
         return active;
-    }
-
-    public void rescheduleNextDayAlarm(int presetNumber, String action, int hour, int minute) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        PendingIntent pi = buildPendingIntent(presetNumber, action);
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pi);
-        Log.d(TAG, "rescheduleNextDayAlarm #" + presetNumber + " action=" + action
-                + " at=" + hour + ":" + String.format("%02d", minute)
-                + " (tomorrow, ms=" + calendar.getTimeInMillis() + ")");
     }
 
     public void checkAndApplyCurrentPreset() {
@@ -402,27 +499,25 @@ public class PresetManager {
                 Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " not found, skipping");
                 continue;
             }
+            if (!model.enabled) {
+                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " disabled, skipping");
+                continue;
+            }
             if (isCurrentlyActive(model)) {
-                if (getActivePresetNumber() != number) {
-                    Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " is in its time window — activating");
-                    activatePreset(number);
-                } else {
-                    Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " already active — skipping");
-                }
+                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " in window — activating");
+                activatePreset(number);
                 return;
             }
         }
-
         int currentActive = getActivePresetNumber();
         if (currentActive != 0) {
             PresetModel active = loadPreset(currentActive);
-            if (active == null || !isCurrentlyActive(active)) {
-                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + currentActive
-                        + " is outside its time window — deactivating");
+            if (active == null || !active.enabled || !isCurrentlyActive(active)) {
+                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + currentActive + " outside window — deactivating");
                 deactivatePreset(currentActive);
             }
         } else {
-            Log.d(TAG, "checkAndApplyCurrentPreset | no preset active and none in window — nothing to do");
+            Log.d(TAG, "checkAndApplyCurrentPreset | no preset active and none in window");
         }
     }
 
@@ -430,34 +525,23 @@ public class PresetManager {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent == null || intent.getAction() == null) {
-                Log.w(TAG, "PresetReceiver: received null intent or action");
+                Log.w(TAG, "PresetReceiver: null intent or action");
                 return;
             }
             int presetNumber = intent.getIntExtra(EXTRA_PRESET_NUMBER, 0);
-            Log.d(TAG, "PresetReceiver.onReceive | action=" + intent.getAction()
-                    + " presetNumber=" + presetNumber);
+            Log.d(TAG, "PresetReceiver | action=" + intent.getAction() + " preset=" + presetNumber);
             if (presetNumber == 0) {
                 Log.w(TAG, "PresetReceiver: missing preset_number extra");
                 return;
             }
-
             PresetManager manager = new PresetManager(context);
-
-            if (ACTION_PRESET_ACTIVATE.equals(intent.getAction())) {
+            String action = intent.getAction();
+            if (ACTION_PRESET_ACTIVATE.equals(action)) {
                 manager.activatePreset(presetNumber);
-                PresetModel model = manager.loadPreset(presetNumber);
-                if (model != null) {
-                    manager.rescheduleNextDayAlarm(presetNumber, ACTION_PRESET_ACTIVATE,
-                            model.startHour, model.startMinute);
-                }
-            } else if (ACTION_PRESET_DEACTIVATE.equals(intent.getAction())) {
+            } else if (ACTION_PRESET_DEACTIVATE.equals(action)) {
                 manager.deactivatePreset(presetNumber);
-                PresetModel model = manager.loadPreset(presetNumber);
-                if (model != null) {
-                    manager.rescheduleNextDayAlarm(presetNumber, ACTION_PRESET_DEACTIVATE,
-                            model.endHour, model.endMinute);
-                }
             }
+            manager.rescheduleNextAlarm(presetNumber, action);
         }
     }
 }

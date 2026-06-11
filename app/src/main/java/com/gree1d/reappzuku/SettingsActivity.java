@@ -1946,37 +1946,59 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void showPresetPickerDialog() {
+        PresetManager presetManager = new PresetManager(this);
+        int activePreset = presetManager.getActivePresetNumber();
+
         View view = getLayoutInflater().inflate(R.layout.dialog_single_choice, null);
         TextView titleView = view.findViewById(R.id.single_choice_title);
         RadioGroup group = view.findViewById(R.id.single_choice_group);
         titleView.setText(getString(R.string.settings_presets_title));
 
-        PresetManager presetManager = new PresetManager(this);
-        String[] labels = new String[2];
-        for (int i = 0; i < 2; i++) {
-            int num = i + 1;
-            PresetModel m = presetManager.loadPreset(num);
-            labels[i] = (m != null && m.name != null && !m.name.isEmpty())
-                    ? m.name
-                    : getString(R.string.preset_title, num);
-        }
-
         int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
         android.content.res.ColorStateList tint = (accent == ACCENT_CUSTOM)
                 ? android.content.res.ColorStateList.valueOf(getDialogAccentColor()) : null;
 
+        int dp8 = (int) (getResources().getDisplayMetrics().density * 8);
         int dp12 = (int) (getResources().getDisplayMetrics().density * 12);
-        for (int i = 0; i < labels.length; i++) {
-            android.widget.RadioButton rb = new android.widget.RadioButton(this);
-            rb.setText(labels[i]);
-            rb.setId(1000 + i);
-            rb.setPadding(dp12, dp12, dp12, dp12);
-            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+
+        for (int presetNumber : new int[]{ PresetModel.PRESET_1, PresetModel.PRESET_2 }) {
+            String name = presetManager.presetExists(presetNumber)
+                    ? presetManager.getPresetName(presetNumber)
+                    : getString(R.string.preset_title, presetNumber);
+
+            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-            rb.setLayoutParams(lp);
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+
+            android.widget.RadioButton rb = new android.widget.RadioButton(this);
+            rb.setText(name);
+            rb.setId(1000 + presetNumber);
+            rb.setPadding(dp12, dp12, dp12, dp12);
+            rb.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             if (tint != null) rb.setButtonTintList(tint);
-            group.addView(rb);
+            row.addView(rb);
+
+            if (activePreset == presetNumber) {
+                TextView badge = new TextView(this);
+                badge.setText(getString(R.string.preset_badge_active));
+                badge.setTextSize(11);
+                badge.setTextColor(Color.WHITE);
+                badge.setBackground(buildBadgeBackground());
+                badge.setPadding(dp8, dp8 / 2, dp8, dp8 / 2);
+                android.widget.LinearLayout.LayoutParams badgeLp =
+                        new android.widget.LinearLayout.LayoutParams(
+                                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+                badgeLp.setMarginEnd(dp12);
+                badge.setLayoutParams(badgeLp);
+                row.addView(badge);
+            }
+
+            group.addView(row);
         }
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
@@ -1986,7 +2008,7 @@ public class SettingsActivity extends BaseActivity {
 
         group.setOnCheckedChangeListener((g, id) -> {
             if (id == -1) return;
-            int presetNumber = (id - 1000) + 1;
+            int presetNumber = id - 1000;
             dialog.dismiss();
             Intent intent = new Intent(this, PresetSettingsActivity.class);
             intent.putExtra(PresetSettingsActivity.EXTRA_PRESET_NUMBER, presetNumber);
@@ -1995,6 +2017,19 @@ public class SettingsActivity extends BaseActivity {
 
         dialog.show();
         resetDialogButtonColors(dialog);
+    }
+
+    private android.graphics.drawable.GradientDrawable buildBadgeBackground() {
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(32f);
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        if (accent == ACCENT_CUSTOM) {
+            bg.setColor(sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR));
+        } else {
+            bg.setColor(0xFF388E3C);
+        }
+        return bg;
     }
 
     private void showAdditionalScenariosDialog() {
