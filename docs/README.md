@@ -98,4 +98,6 @@ ReAppzuku is licensed under [GNU General Public License v3.0](LICENSE).
 
 Forked from [northmendo/Appzuku](https://github.com/northmendo/Appzuku).
 
+---
+
 > ReAppzuku was built using vibecoding — an approach where a significant part of the code was generated with help of AI (LLM).
