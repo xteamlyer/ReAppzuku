@@ -28,6 +28,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import com.gree1d.reappzuku.databinding.ActivityPresetSettingsBinding;
+
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
