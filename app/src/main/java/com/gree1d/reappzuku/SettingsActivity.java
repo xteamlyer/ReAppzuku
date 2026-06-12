@@ -2006,17 +2006,36 @@ public class SettingsActivity extends BaseActivity {
                 .setNegativeButton(getString(R.string.dialog_cancel), null)
                 .create();
 
-        group.setOnCheckedChangeListener((g, id) -> {
-            if (id == -1) return;
-            int presetNumber = id - 1000;
-            dialog.dismiss();
-            Intent intent = new Intent(this, PresetSettingsActivity.class);
-            intent.putExtra(PresetSettingsActivity.EXTRA_PRESET_NUMBER, presetNumber);
-            startActivity(intent);
-        });
+        for (int i = 0; i < group.getChildCount(); i++) {
+            android.view.View row = group.getChildAt(i);
+            android.widget.RadioButton rb = findRadioButton(row);
+            if (rb == null) continue;
+            int presetNumber = rb.getId() - 1000;
+
+            android.view.View.OnClickListener openPreset = v -> {
+                dialog.dismiss();
+                Intent intent = new Intent(this, PresetSettingsActivity.class);
+                intent.putExtra(PresetSettingsActivity.EXTRA_PRESET_NUMBER, presetNumber);
+                startActivity(intent);
+            };
+            row.setOnClickListener(openPreset);
+            rb.setOnClickListener(openPreset);
+        }
 
         dialog.show();
         resetDialogButtonColors(dialog);
+    }
+
+    private android.widget.RadioButton findRadioButton(android.view.View view) {
+        if (view instanceof android.widget.RadioButton) return (android.widget.RadioButton) view;
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                android.widget.RadioButton found = findRadioButton(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private android.graphics.drawable.GradientDrawable buildBadgeBackground() {
