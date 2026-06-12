@@ -1018,4 +1018,40 @@
     <string name="scenarios_accessibility_required_title">Требуется служба специальных возможностей</string>
     <string name="scenarios_accessibility_required_message">Для работы триггера «Запуск приложения» включите ReAppzuku в настройках специальных возможностей. Настройка сохранена и активируется после включения службы.</string>
     <string name="scenarios_accessibility_open_settings">Открыть настройки</string>
+
+    <!-- Auto-Kill Presets -->
+    <string name="settings_presets_title">Пресеты Auto-Kill</string>
+    <string name="settings_presets_subtitle">До 2 наборов правил по расписанию</string>
+    <string name="preset_title">Пресет %d</string>
+    <string name="preset_section_title">Пресеты Auto-Kill</string>
+    <string name="preset_enabled_title">Включить пресет</string>
+    <string name="preset_enabled_subtitle">Пресет активируется автоматически по расписанию</string>
+    <string name="preset_name_title">Название пресета</string>
+    <string name="preset_name_dialog_title">Название пресета</string>
+    <string name="preset_time_range_title">Время работы</string>
+    <string name="preset_time_range_dialog_title">Время работы</string>
+    <string name="preset_time_from_label">С</string>
+    <string name="preset_time_to_label">До</string>
+    <string name="preset_time_range_error_same">Время начала и конца должны различаться</string>
+    <string name="preset_app_list_mode_title">Источник списка приложений</string>
+    <string name="preset_app_list_mode_dialog_title">Источник списка приложений</string>
+    <string name="preset_app_list_mode_current">Использовать текущий whitelist / blacklist</string>
+    <string name="preset_app_list_mode_own">Использовать собственный список пресета</string>
+    <string name="preset_app_list_mode_switch_hint">Переключитесь на «Собственный список» для редактирования</string>
+    <string name="preset_list_count_current">%d прил. (из текущих настроек)</string>
+    <string name="preset_list_count_own">%d прил. выбрано</string>
+    <string name="preset_save_button">Сохранить пресет</string>
+    <string name="preset_saved">Пресет %d сохранён</string>
+    <string name="preset_export_json_button">Экспорт в JSON</string>
+    <string name="preset_export_success">Пресет успешно экспортирован</string>
+    <string name="preset_badge_active">Активный</string>
+    <string name="preset_overlap_title">Пересечение времени</string>
+    <string name="preset_overlap_message">Диапазон пересекается с другим пресетом (%1$d:%2$02d – %3$d:%4$02d). Измените время, чтобы пресеты не пересекались.</string>
+    <string name="preset_import_json_button">Импорт из JSON</string>
+    <string name="preset_import_success">Пресет успешно импортирован</string>
+    <string name="preset_import_failed">Не удалось импортировать пресет</string>
+    <string name="preset_reset_button">Сбросить пресет</string>
+    <string name="preset_reset_dialog_title">Сбросить настройки пресета?</string>
+    <string name="preset_reset_dialog_message">Все настройки пресета %d будут сброшены до значений по умолчанию. Изменения применятся только после нажатия «Сохранить».</string>
+    <string name="preset_reset_success">Настройки пресета %d сброшены — нажмите «Сохранить»</string>
 </resources>
