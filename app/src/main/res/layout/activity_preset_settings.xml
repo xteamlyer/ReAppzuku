@@ -20,7 +20,7 @@
             android:elevation="4dp"
             android:theme="@style/AppTheme.AppBarOverlay"
             app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:navigationIcon="@drawable/ic_back"
+            app:navigationIcon="@drawable/ic_arrow_back"
             app:titleTextColor="@android:color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -529,14 +529,42 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Export to JSON button -->
+            <!-- Import / Export JSON buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_import_json"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/preset_import_json_button" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_export_json"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="@string/preset_export_json_button" />
+
+            </LinearLayout>
+
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_export_json"
+                android:id="@+id/btn_reset_preset"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/preset_export_json_button" />
+                android:text="@string/preset_reset_button"
+                android:textColor="@color/sheet_delete_color"
+                app:strokeColor="@color/sheet_delete_color" />
 
         </LinearLayout>
     </ScrollView>
