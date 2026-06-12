@@ -43,7 +43,7 @@ public final class PreferenceKeys {
     public static final String KEY_APP_LAUNCH_CLEAR_CACHE = "app_launch_clear_cache";
 
     // Auto-Kill Presets
-    public static final String KEY_PRESET_ACTIVE = "active_preset_number";
+    public static final String KEY_ACTIVE_PRESET = "active_preset_number";
 
     // Service & Automation
     public static final String KEY_AUTO_KILL_ENABLED = "autoKillEnabled";
