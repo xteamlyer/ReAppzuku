@@ -251,7 +251,7 @@ Three buttons in toolbar:
 - 🔽 **Sort** — configure display order
 - ☑️ **Select All** — select all apps for Kill in one tap
 
-### Sort
+**Sort**
 
 List can be sorted by:
 - **Default** — user apps first, then system apps
@@ -260,6 +260,19 @@ List can be sorted by:
 - **Name A → Z** / **Name Z → A** — alphabetical
 
 You can also toggle display of system and persistent apps.
+
+**Scan**
+Performs scan of current load on system from all active apps in list. Load categories:
+- CPU hold
+- Network hold
+- Foreground Service hold
+- Waking device (prevents sleep mode)
+- Sensor hold
+- GPS hold
+
+> ℹ️ Scan does not work on Persistent and Protected apps, even if they appear in active apps list.
+
+> 💡 Keep in mind that more active apps displayed (e.g. system apps display is enabled), longer scan will take.
 
 ### App Actions
 
@@ -284,10 +297,13 @@ Analyzes **62 independent factors (42 main and 20 additional ones depending Andr
 
 **App Status (active / background / cached)**
 
-Determined by process priority in Linux kernel (oom_score_adj) — same value Android uses to decide which processes to kill when memory is low.
-- **Active** — app is in foreground or holds a system resource (service, alarm, etc.).
+Determined by process priority in Linux kernel combined with active service detection. This is the same value Android uses to decide which processes to terminate when memory is low.
+- **Active** — app is in foreground or holds system resources (service, alarm, etc.)
+- **Background • active service** — running in background with an active Foreground Service.
 - **Background** — running silently, but system considers it necessary.
-- **Cached** — process is alive, but Android may kill it at any moment.
+- **Cached • holds service** — process is in cache but keeps an active service running.
+- **Cached • recently used** — process is in cache, was used recently.
+- **Cached • inactive** — process is alive, but Android is ready to terminate it at any moment.
 
 ---
 
@@ -610,6 +626,52 @@ Determines **which** apps get targeted by Auto-Kill.
 **Whitelist / Blacklist**\
 App list for selected mode. One of two lists is shown depending on mode.
 
+**Advanced Conditions**  
+Expand Auto-Kill with extra triggers — for cases where regular schedule is not enough.
+
+- **Hardware Events**  
+Auto-Kill launches automatically on selected events: headphone or USB connect/disconnect, charging state change, WiFi, mobile network, Bluetooth, GPS or hotspot. After event, 10-second pause is held — so parasitic apps have time to start and get cleaned up.
+
+- **App Launch**  
+Auto-Kill triggers right when selected target apps are opened — useful on budget devices to free RAM and CPU before launching heavy games or programs. Target apps themselves do not get killed.  
+  - **Clear Cache** — additionally clears cache of all apps, except Protected, Persistent and other target apps.
+> ℹ️ **App Launch** function requires special permission in "Accessibility" settings. This feature can also slightly increase battery usage by ReAppzuku itself.
+
+**Auto-Kill Presets**
+Save your own set of Auto-Kill settings that activates automatically at a specific time of day and replaces the current settings for the duration of its active window. When the window ends, the original settings are restored automatically.
+**2 presets** are available. Each can be configured independently: its own name, its own active time range, its own Auto-Kill rules, its own app lists, and its own additional scenarios.
+> ℹ️ While active, presets ignore the immunity granted to apps by the Restrictions Scheduler. This is done to avoid confusion in the settings.
+
+- **Enable preset**
+The master switch. If disabled, the preset **will not activate** on schedule, even if its time window starts. If the preset is currently active and this switch is turned off, it deactivates immediately and the original settings are restored.
+
+- **Preset name**
+A custom name, up to 30 characters. Shown in the preset picker dialog in the main settings. If the preset is currently active, an **"Active"** badge appears next to its name.
+
+- **Active time**
+A "From — To" range, displayed using the device's time format (12/24-hour). Ranges that cross midnight are supported (e.g. 22:00 – 06:00).
+> ℹ️ The two presets cannot overlap in their active time. If you try to save a preset with an overlapping range, a warning will show the conflicting preset's time range — adjust one of the presets' times to resolve it.
+
+- **App list source**
+Choose between:
+  - **Use current whitelist / blacklist** — the preset always uses the live whitelist/blacklist from the main settings at the moment it activates
+  - **Use preset's own list** — the preset has its own independent whitelist/blacklist, edited separately and unaffected by changes to the main settings
+
+- **Auto-Kill management and Advanced Conditions**
+A standard Auto-Kill settings block, same as in the regular app settings. All these settings are described in [Auto-Kill Settings](#-auto-kill-settings)
+
+- **Save preset**
+Applies all changes: saves the settings, reschedules the activation/deactivation alarms, and immediately activates or deactivates the preset if needed (if the changes affect the current time window).
+
+- **Import/Export JSON file**
+Save preset to JSON file or restore it from a backup file. To apply changes, click "Save" button.
+
+- **Reset preset**
+Resets all current settings on screen back to their default values (taken from the app's main settings). **Changes are not applied** until "Save" is pressed — you can simply leave the screen without saving, and the reset will not affect the already-saved preset.
+
+**RAM Kill Shortcut**  
+Adds small 1x1 shortcut to home screen. Tapping shortcut launches Auto-Kill according to current list (black or white). Additionally performs RAM cleanup from active apps, but excludes whitelist, protected and persistent system apps.
+
 ---
 
 ### 🔧 Advanced Tools
@@ -649,7 +711,11 @@ Blocks any background activity.\
 Once app is minimized or switched away from — system kills it immediately. App cannot keep itself in memory without direct user interaction (even if visible in recents). Use Hard restriction with caution, as it may completely deprive app of background operations (file downloads, media playback, long-running internal tasks).\
 **Commands used:**\
 `RUN_ANY_IN_BACKGROUND ignore`\
+`RUN_IN_BACKGROUND ignore`\
 `START_FOREGROUND ignore`\
+`START_FOREGROUND_SERVICES_FROM_BACKGROUND ignore`\
+`WAKE_LOCK ignore`\
+`ALARM_WAKEUP ignore`\
 `RECEIVE_BOOT_COMPLETED ignore`\
 `INTERACT_ACROSS_PROFILES ignore`\
 `Battery optimization whitelist removal`\
@@ -874,6 +940,8 @@ Detailed log of background restriction operations. Stored in cache, 200 entries 
 | `Verification unavailable` | Could not query actual state from system |
 | `Removed from whitelist` | App removed from battery optimization exceptions |
 | `Restored to whitelist` | App restored to battery optimization exceptions |
+
+> 💡 Tapping entry in Background Restrictions Log opens log details. There you can see which AppOps didn't apply or got reset. Also can check if app Standby Bucket changed.
 
 **Sleep Mode Log**\
 Logs date and time of freeze/unfreeze for target apps.
