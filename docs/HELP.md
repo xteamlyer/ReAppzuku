@@ -626,7 +626,7 @@ Determines **which** apps get targeted by Auto-Kill.
 **Whitelist / Blacklist**\
 App list for selected mode. One of two lists is shown depending on mode.
 
-**Advanced Conditions**\ 
+**Advanced Conditions**\
 Expand Auto-Kill with extra triggers — for cases where regular schedule is not enough.
 
 - **Hardware Events**. 
@@ -636,6 +636,7 @@ Auto-Kill launches automatically on selected events: headphone or USB connect/di
 Auto-Kill triggers right when selected target apps are opened — useful on budget devices to free RAM and CPU before launching heavy games or programs. Target apps themselves do not get killed.  
   - **Clear Cache**. Additionally clears cache of all apps, except Protected, Persistent and other target apps.
 > ℹ️ **App Launch** function requires special permission in "Accessibility" settings. This feature can also slightly increase battery usage by ReAppzuku itself.
+
 
 **Auto-Kill Presets**\
 Save your own set of Auto-Kill settings that activates automatically at a specific time of day and replaces the current settings for the duration of its active window. When the window ends, the original settings are restored automatically.
