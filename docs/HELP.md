@@ -295,9 +295,9 @@ Analyzes **62 independent factors (42 main and 20 additional ones depending Andr
 
 ---
 
-**App Status (active / background / cached)**
-
+**App Status (active / background / cached)**\
 Determined by process priority in Linux kernel combined with active service detection. This is the same value Android uses to decide which processes to terminate when memory is low.
+
 - **Active** — app is in foreground or holds system resources (service, alarm, etc.)
 - **Background • active service** — running in background with an active Foreground Service.
 - **Background** — running silently, but system considers it necessary.
@@ -307,13 +307,11 @@ Determined by process priority in Linux kernel combined with active service dete
 
 ---
 
-**Aggression Score**
-
+**Aggression Score**\
 Evaluated on a 100-point scale based on triggers.
 - Active triggers: + **6 points** each.
 - Can wake app at any time: + **5 points** each.
 - Other triggers: **0–4 points** depending on importance. Some are informational only and don't affect score.
-
 
 > 💡 What you can do based on aggression score:
 > - 0–40 — system can handle this on its own. No urgent need for restrictions.
@@ -334,43 +332,43 @@ Evaluated on a 100-point scale based on triggers.
 
 App is consuming resources **right now**.
 
-- **Foreground Service**
+- **Foreground Service**. 
 App launched a background service with a persistent notification. Most reliable way to avoid being killed — Android won't touch such processes while notification is visible. Shows service type: media playback, location, phone call, connected device, etc.
 
-- **FG Notification Channel**
+- **FG Notification Channel**.
 Supplements foreground service info: shows notification channel importance. URGENT or HIGH importance shows as a pop-up banner — extremely hard for system to suppress, making force-stop nearly impossible.
 
-- **Sticky Service**
+- **Sticky Service**.
 Service declared `START_STICKY` — Android automatically restarts it after kill. App can't be permanently stopped without disabling it.
 
-- **Held by Bindings**
+- **Held by Bindings**.
 One or more processes hold an active binding to this app's service. While binding is held, Android can't kill process. Google Play Services (GMS) is a common culprit — holds push connections and account sync bindings.
 
-- **WakeLock**
+- **WakeLock**.
 App explicitly asked system to "stay awake". `PARTIAL_WAKE_LOCK` — CPU running with screen off; `FULL_WAKE_LOCK` — screen stays on too. Shows lock tag, type, and hold duration. Directly drains battery while held.
 
-- **Network Activity**
+- **Network Activity**.
 App has active background network activity. Open TCP connections indicate ongoing data exchange — typical for messengers, push clients, and real-time sync apps. Only traffic exceeding 10 KB is counted, along with `ESTABLISHED` connections.
 
-- **Sensors**
+- **Sensors**.
 App is actively polling hardware sensors: accelerometer, gyroscope, barometer, GPS, heart rate monitor, and others. Continuous sensor use drains battery even with screen off. Shows sensor names and polling rate where available.
 
-- **Location**
+- **Location**.
 App is requesting location data. Shows accuracy level (HIGH_ACCURACY, BALANCED, LOW_POWER), whether background or foreground, and minimum update interval. Background high-accuracy is most resource-intensive.
 
-- **Audio Focus**
+- **Audio Focus**.
 App holds audio focus — exclusively (GAIN) or temporarily (duck/transient). Process stays alive until focus is released. Shows stream type: MUSIC, VOICE_CALL, ALARM, etc.
 
-- **Media Session**
+- **Media Session**.
 App has active `MediaSession`. Shows playback state (PLAYING, PAUSED, BUFFERING, etc.) and session tag. Unclosed paused session is a common reason media apps stay in memory.
 
-- **BLE Scan**
+- **BLE Scan**.
 App is doing a Bluetooth Low Energy scan. BLE scanning acquires a wake lock internally and keeps process running in background. `LOW_LATENCY` mode is most power-hungry.
 
-- **GATT Connection**
+- **GATT Connection**.
 App has active Bluetooth GATT connection to a peripheral. Connection is maintained by system and keeps process alive for its duration.
 
-- **AppOps**
+- **AppOps**.
 AppOps operations indicating recent app activity:
   - **WAKE_LOCK** — app acquired a WakeLock via AppOps — CPU was kept awake on its behalf.
   - **ACTIVITY_RECOGNITION** — app is using Activity Recognition API and periodically receives motion updates in background (walking, running, in vehicle, etc.).
@@ -378,10 +376,10 @@ AppOps operations indicating recent app activity:
 <details>
 <summary>Android 15+ triggers</summary>
 
-- **FGS Timeout Exceeded**
+- **FGS Timeout Exceeded**.
 Android 15: service of type `dataSync` or `mediaProcessing` exceeded 6-hour limit. System should have triggered `onTimeout()` and stopped it.
 
-- **FGS Near Timeout**
+- **FGS Near Timeout**.
 Android 15: service has less than 30 minutes left of 6-hour limit (`dataSync` / `mediaProcessing`).
 
 </details>
@@ -389,45 +387,44 @@ Android 15: service has less than 30 minutes left of 6-hour limit (`dataSync` / 
 <details>
 <summary>Android 13 and below triggers</summary>
 
-- **WakeLock (WorkSource attribution)**
+- **WakeLock (WorkSource attribution)**.
 Android 10–13: wakelock is held by a system process but attributed to this app via WorkSource. App is real initiator of wakeup, even though lock is formally held by system.
 
-- **Kernel Wakelock**
+- **Kernel Wakelock**.
 App is holding a kernel-level wakelock (`/sys/power/wake_lock`). Extremely rare — indicates a non-standard driver or system component.
 
-- **ACCESS_BACKGROUND_LOCATION**
+- **ACCESS_BACKGROUND_LOCATION**.
 Android 11–13: app has permission to receive location data from background at any time, even when not actively used. Requires separate user approval.
 
 </details>
 
 ---
 
-**Can Wake Up at Any Time**
-
+**Can Wake Up at Any Time**\
 System **may start or resume** app without any user action.
 
-- **Alarms**
+- **Alarms**.
 Analyzes active `AlarmManager` alarms. Wake-up alarms (`RTC_WAKEUP`) pull device out of sleep even with screen off. Interval under 2 minutes is high severity. `AllowWhileIdle` alarms fire even in Doze mode. Shows alarm tags, intervals, and time until next trigger.
 
-- **Jobs / WorkManager**
+- **Jobs / WorkManager**.
 App has registered jobs in `JobScheduler`. WorkManager tasks, sync jobs, and periodic operations are registered here and wake app on schedule. Shows job constraints (network type, charging required, idle mode) and stop reasons from recent history.
 
-- **PendingIntent**
+- **PendingIntent**.
 App holds registered `PendingIntent`s. System or other apps can activate them at any moment — via notification, AlarmManager, or system event — starting process. Shows breakdown by type: Activity, Service, Broadcast.
 
-- **Excessive Wakeups**
+- **Excessive Wakeups**.
 Total device wakeups caused by this app since last charge. High numbers indicate aggressive background activity that prevents deep CPU sleep. Broken down by alarms, jobs, GCM/FCM, and broadcasts.
 
-- **Content Observers**
+- **Content Observers**.
 App registered `ContentObserver`s for content URIs (contacts, media, settings, calendar, etc.). Any change to those URIs wakes app to deliver callback.
 
-- **Push Notifications (FCM)**
+- **Push Notifications (FCM)**.
 App is registered for Firebase Cloud Messaging (FCM). Google Play Services can wake it at any time when a push arrives, regardless of battery optimization settings.
 
-- **Dynamic Receivers**
+- **Dynamic Receivers**.
 App registered `BroadcastReceiver`s dynamically at runtime. Unlike static manifest receivers, they're active while process is alive and react to system events in real time.
 
-- **AppOps**
+- **AppOps**.
 AppOps operations granting background execution rights:
   - **RUN_IN_BACKGROUND** — system battery policy explicitly allows this app to run in background. Won't be suspended when screen is off.
   - **RUN_ANY_IN_BACKGROUND** — app is fully excluded from battery optimization — unrestricted background execution with no system limitations.
@@ -438,7 +435,7 @@ AppOps operations granting background execution rights:
 <details>
 <summary>Android 14+ triggers</summary>
 
-- **Jobs (sysfs fallback)**
+- **Jobs (sysfs fallback)**.
 Android 14+: job state retrieved via `cmd jobscheduler get-job-state` when primary method (`dumpsys jobscheduler`) is unavailable. Shows status: running, pending, or stopped.
 
 </details>
@@ -446,76 +443,75 @@ Android 14+: job state retrieved via `cmd jobscheduler get-job-state` when prima
 <details>
 <summary>Android 13 and below triggers</summary>
 
-- **SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM**
+- **SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM**.
 Android 12–13: app has permission for exact alarms that fire at a specified time regardless of Doze mode and battery saving. `USE_EXACT_ALARM` is a broader right granted only to alarm clock and calendar apps.
 
 </details>
 
 ---
 
-**Other Triggers**
-
+**Other Triggers**\
 Passive factors that affect background behavior but don't indicate current activity directly.
 
-- **Chain Launch**
+- **Chain Launch**.
 Identifies who launched this process and how. Direct call — another app explicitly started it via service or activity. Broadcast — started by a broadcast from third-party app. Shows sender name and triggering action.
 
-- **Broadcast Receivers**
+- **Broadcast Receivers**.
 Lists all system events app subscribed to in manifest: network changes, charger connection, timezone changes, screen on/off, and others. `BOOT` and `CONNECTIVITY` subscriptions are flagged as potentially aggressive.
 
-- **Boot Autostart**
+- **Boot Autostart**.
 App is registered for system boot events. `BOOT_COMPLETED` — launches after storage is unlocked. `LOCKED_BOOT_COMPLETED` — launches before lock screen appears (before PIN/password entry) — especially aggressive autostart.
 
-- **App Standby Bucket**
+- **App Standby Bucket**.
 App's priority rank in system: `ACTIVE` → `WORKING_SET` → `FREQUENT` → `RARE` → `RESTRICTED` → `NEVER`. Higher status = fewer background restrictions. `RESTRICTED` and `NEVER` mean system already throttled app. Shows bucket history where available.
 
-- **Doze Exempt**
+- **Doze Exempt**.
 App is on Doze whitelist. Such apps don't sleep with device and retain unrestricted network and alarm access at any time. Manufacturer entries can't be revoked by user.
 
-- **Battery Usage History**
+- **Battery Usage History**.
 Stats since last battery reset: wakelock holds, alarm wakeups, job and sync launches. Supplements current snapshot with longer-term data.
 
-- **Broadcast Efficiency**
+- **Broadcast Efficiency**.
 Shows how many broadcasts were delivered to app and how many required a cold start. High percentage = system regularly kills and restarts it.
 
-- **Multiple Processes**
+- **Multiple Processes**.
 App runs in more than one OS process. Sub-processes (`:sync`, `:remote`, `:push`, etc.) can stay alive independently and may not die when main process stops.
 
-- **Accessibility Service**
+- **Accessibility Service**.
 App is registered as active Accessibility Service. System keeps it running at all times while enabled, regardless of battery optimization.
 
-- **Input Method (IME)**
+- **Input Method (IME)**.
 App is currently selected input method (keyboard). System keeps active IME alive as long as it's selected.
 
-- **Device Administrator**
+- **Device Administrator**.
 App is active Device Administrator, Device Owner, or Profile Owner. Has elevated privileges — system protects it from force-stop via standard battery restriction mechanisms.
 
-- **Sync Adapter**
+- **Sync Adapter**.
 App has Sync Adapter registered with system. Android periodically launches it to sync account data, even when app isn't running.
 
-- **Background Start**
+- **Background Start**.
 App was recently active but not in foreground — sign of a hidden background wakeup triggered by alarm, job, push, or chain launch. Detected by comparing `lastTimeUsed` and `lastTimeForeground` from `dumpsys usagestats`.
 
 - **AppOps**
   - **START_FOREGROUND (blocked)** — system has blocked right to launch Foreground Service. App is trying to operate in background but is restricted.
   - **MANAGE_MEDIA** — manages media sessions of other applications. Associated with `mediaProcessing` FGS type on Android 15.
   
-- **Wakelocks History**
+- **Wakelocks History**.
 Shows history of last 5 **WAKELOCK** held by app. If app holds wakelock too long, that's bad sign.
 
 <details>
 <summary>Android 14+ triggers</summary>
 
-- **Chain Launch (BAL privilege)**
+- **Chain Launch (BAL privilege)**.
 Android 14+: app received a `BackgroundStartPrivilege` token to launch from background. Usually granted by system for high-priority FCM, exact alarms, or PendingIntent from a visible app.
 
-- **Boot Autostart (FGS restriction)**
+- **Boot Autostart (FGS restriction)**.
 Android 14+: `BOOT_COMPLETED` receiver can't start FGS of type MICROPHONE or PHONE_CALL. App is attempting to bypass this restriction at boot.
 
-- **Doze Exempt (fallback)**
+- **Doze Exempt (fallback)**.
 Android 14+: battery optimization exemption detected via `cmd appops get RUN_ANY_IN_BACKGROUND=allow`. App can run in background without Doze/App Standby restrictions.
 
-- **StandbyBucket Restricted Effects**
+- **StandbyBucket Restricted Effects**.
 Android 14+: system confirmed RESTRICTED bucket via appops. Jobs and Alarms are blocked — app can't launch itself independently.
 
 </details>
@@ -523,28 +519,28 @@ Android 14+: system confirmed RESTRICTED bucket via appops. Jobs and Alarms are 
 <details>
 <summary>Android 13 and below triggers</summary>
 
-- **Chain Launch (BAL blocked)**
+- **Chain Launch (BAL blocked)**.
 Android 13 and below: system blocked attempt to start Activity or FGS from background without valid exemption. App tried to start but was denied.
 
-- **Process Frozen**
+- **Process Frozen**.
 Android 11–13: process is frozen by system via cgroup freezer — execution is paused, but not killed. Unfreezes automatically upon access.
 
-- **FGS Start Blocked**
+- **FGS Start Blocked**.
 Android 12–13: attempt to start Foreground Service from background without allowed exemption. Service didn't start.
 
-- **Network Blocked (Data Saver)**
+- **Network Blocked (Data Saver)**.
 Android 10–13: user enabled Data Saver or restricted background network access. App can't use network in background on mobile data.
 
-- **Background Network Allowed (Data Saver)**
+- **Background Network Allowed (Data Saver)**.
 Android 10–13: app is whitelisted in Data Saver settings — unrestricted network access in background.
 
-- **BT Permissions (BLUETOOTH_SCAN / BLUETOOTH_CONNECT)**
+- **BT Permissions (BLUETOOTH_SCAN / BLUETOOTH_CONNECT)**.
 Android 12–13: app has permissions for Bluetooth scanning and/or connection. Can initiate scanning upon receiving a broadcast.
 
-- **Dynamic Receivers (exported=true)**
+- **Dynamic Receivers (exported=true)**.
 Android 13: dynamically registered receiver with `exported=true` is accessible to other apps and can receive broadcasts from any sender.
 
-- **Doze State Fallback**
+- **Doze State Fallback**.
 Android 11–13: device is in Deep Doze or Light Doze. Wakelocks, network, jobs, and alarms (except ALLOW_WHILE_IDLE) are blocked for apps without doze exemption.
 
 </details>
