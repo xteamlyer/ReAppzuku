@@ -81,6 +81,7 @@ public class SettingsActivity extends BaseActivity {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private int easterEggClickCount = 0;
     private static final int EASTER_EGG_THRESHOLD = 5;
+    private PresetManager presetManager;
 
     private final ActivityResultLauncher<String> createBackupLauncher = registerForActivityResult(
             new ActivityResultContracts.CreateDocument("application/json"),
@@ -105,6 +106,7 @@ public class SettingsActivity extends BaseActivity {
                 getApplicationContext(), handler, executor, shellManager, appManager);
         additionalScenariosManager = new AdditionalScenariosManager(this);
         ramKillShortcutManager = new RamKillShortcutManager(this, shellManager);
+        presetManager = new PresetManager(this);
 
         setupToolbar();
         loadSettings();
@@ -237,20 +239,20 @@ public class SettingsActivity extends BaseActivity {
         int notificationMode = sharedPreferences.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
         updateNotificationModeText(notificationMode);
 
-        boolean serviceEnabled = sharedPreferences.getBoolean(KEY_AUTO_KILL_ENABLED, false);
+        boolean serviceEnabled = getAutoKillPref(KEY_AUTO_KILL_ENABLED, false);
         binding.switchAutoKill.setChecked(serviceEnabled);
 
-        boolean periodicKillEnabled = sharedPreferences.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
+        boolean periodicKillEnabled = getAutoKillPref(KEY_PERIODIC_KILL_ENABLED, false);
         binding.switchPeriodicKill.setChecked(periodicKillEnabled);
 
-        int killInterval = sharedPreferences.getInt(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
+        int killInterval = getAutoKillIntPref(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
         updateKillIntervalText(killInterval);
 
-        binding.switchKillScreenOff.setChecked(sharedPreferences.getBoolean(KEY_KILL_ON_SCREEN_OFF, false));
+        binding.switchKillScreenOff.setChecked(getAutoKillPref(KEY_KILL_ON_SCREEN_OFF, false));
 
-        boolean ramThresholdEnabled = sharedPreferences.getBoolean(KEY_RAM_THRESHOLD_ENABLED, false);
+        boolean ramThresholdEnabled = getAutoKillPref(KEY_RAM_THRESHOLD_ENABLED, false);
         binding.switchRamThreshold.setChecked(ramThresholdEnabled);
-        int ramThreshold = sharedPreferences.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
+        int ramThreshold = getAutoKillIntPref(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
         updateRamThresholdText(ramThreshold);
         updateRamThresholdLimitVisibility(ramThresholdEnabled && serviceEnabled);
 
@@ -291,7 +293,7 @@ public class SettingsActivity extends BaseActivity {
                 Toast.makeText(this, getString(R.string.settings_requires_privilege), Toast.LENGTH_LONG).show();
                 return;
             }
-            sharedPreferences.edit().putBoolean(KEY_AUTO_KILL_ENABLED, isChecked).apply();
+            putAutoKillPref(KEY_AUTO_KILL_ENABLED, isChecked);
             boolean periodicEnabled = binding.switchPeriodicKill.isChecked();
             updateAutomationOptionsVisibility(isChecked, periodicEnabled);
             applyServiceDependentState(isChecked);
@@ -305,16 +307,16 @@ public class SettingsActivity extends BaseActivity {
         });
 
         binding.switchPeriodicKill.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            sharedPreferences.edit().putBoolean(KEY_PERIODIC_KILL_ENABLED, isChecked).apply();
+            putAutoKillPref(KEY_PERIODIC_KILL_ENABLED, isChecked);
             boolean serviceEnabled = binding.switchAutoKill.isChecked();
             updateAutomationOptionsVisibility(serviceEnabled, isChecked);
         });
 
         binding.switchKillScreenOff.setOnCheckedChangeListener((buttonView, isChecked) ->
-                sharedPreferences.edit().putBoolean(KEY_KILL_ON_SCREEN_OFF, isChecked).apply());
+                putAutoKillPref(KEY_KILL_ON_SCREEN_OFF, isChecked));
 
         binding.switchRamThreshold.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            sharedPreferences.edit().putBoolean(KEY_RAM_THRESHOLD_ENABLED, isChecked).apply();
+            putAutoKillPref(KEY_RAM_THRESHOLD_ENABLED, isChecked);
             updateRamThresholdLimitVisibility(isChecked && binding.switchAutoKill.isChecked());
         });
         binding.layoutRamThreshold.setOnClickListener(v -> showRamThresholdDialog());
@@ -437,8 +439,44 @@ public class SettingsActivity extends BaseActivity {
     }
 
 
+    private boolean isPresetActive() {
+        return presetManager != null && presetManager.getActivePresetNumber() != 0;
+    }
+
+    private boolean getAutoKillPref(String key, boolean defVal) {
+        if (isPresetActive()) {
+            return sharedPreferences.getBoolean(PresetManager.KEY_BACKUP_PREFIX + key, defVal);
+        }
+        return sharedPreferences.getBoolean(key, defVal);
+    }
+
+    private void putAutoKillPref(String key, boolean value) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(key, value);
+        if (isPresetActive()) {
+            editor.putBoolean(PresetManager.KEY_BACKUP_PREFIX + key, value);
+        }
+        editor.apply();
+    }
+
+    private int getAutoKillIntPref(String key, int defVal) {
+        if (isPresetActive()) {
+            return sharedPreferences.getInt(PresetManager.KEY_BACKUP_PREFIX + key, defVal);
+        }
+        return sharedPreferences.getInt(key, defVal);
+    }
+
+    private void putAutoKillIntPref(String key, int value) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(key, value);
+        if (isPresetActive()) {
+            editor.putInt(PresetManager.KEY_BACKUP_PREFIX + key, value);
+        }
+        editor.apply();
+    }
+
     private boolean isServiceEnabled() {
-        return sharedPreferences.getBoolean(KEY_AUTO_KILL_ENABLED, false);
+        return getAutoKillPref(KEY_AUTO_KILL_ENABLED, false);
     }
 
 
@@ -488,7 +526,10 @@ public class SettingsActivity extends BaseActivity {
                     binding.switchAutoKill.setAlpha(0.5f);
 
                     if (sharedPreferences.getBoolean(KEY_AUTO_KILL_ENABLED, false)) {
-                        sharedPreferences.edit().putBoolean(KEY_AUTO_KILL_ENABLED, false).apply();
+                        sharedPreferences.edit()
+                                .putBoolean(KEY_AUTO_KILL_ENABLED, false)
+                                .putBoolean(PresetManager.KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED, false)
+                                .apply();
                         binding.switchAutoKill.setChecked(false);
                         stopService(new Intent(SettingsActivity.this, ShappkyService.class));
                         AutoKillWorker.cancel(SettingsActivity.this);
@@ -571,7 +612,7 @@ public class SettingsActivity extends BaseActivity {
                     autoKillManager.setKillMode(which);
                     updateKillModeVisibility();
                     if (which == 0) {
-                        boolean autoKillEnabled = sharedPreferences.getBoolean(KEY_AUTO_KILL_ENABLED, false);
+                        boolean autoKillEnabled = getAutoKillPref(KEY_AUTO_KILL_ENABLED, false);
                         Set<String> whitelistedApps = sharedPreferences.getStringSet(KEY_WHITELISTED_APPS, new HashSet<>());
                         if (autoKillEnabled && whitelistedApps.isEmpty()) {
                             resetDialogButtonColors(new MaterialAlertDialogBuilder(this)
@@ -1004,14 +1045,14 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void showRamThresholdDialog() {
-        int current = sharedPreferences.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
+        int current = getAutoKillIntPref(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
         int selected = 1;
         for (int i = 0; i < RAM_THRESHOLD_VALUES.length; i++) {
             if (RAM_THRESHOLD_VALUES[i] == current) { selected = i; break; }
         }
         showSingleChoiceDialog(getString(R.string.settings_ram_threshold_dialog_title),
                 getResources().getStringArray(R.array.settings_ram_threshold_labels), selected, which -> {
-                    sharedPreferences.edit().putInt(KEY_RAM_THRESHOLD, RAM_THRESHOLD_VALUES[which]).apply();
+                    putAutoKillIntPref(KEY_RAM_THRESHOLD, RAM_THRESHOLD_VALUES[which]);
                     updateRamThresholdText(RAM_THRESHOLD_VALUES[which]);
                 });
     }
@@ -1247,14 +1288,14 @@ public class SettingsActivity extends BaseActivity {
 
     private void showKillIntervalDialog() {
         if (!binding.switchAutoKill.isChecked() || !binding.switchPeriodicKill.isChecked()) return;
-        int currentInterval = sharedPreferences.getInt(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
+        int currentInterval = getAutoKillIntPref(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
         int selectedIndex = 1;
         for (int i = 0; i < KILL_INTERVALS_MS.length; i++) {
             if (KILL_INTERVALS_MS[i] == currentInterval) { selectedIndex = i; break; }
         }
         showSingleChoiceDialog(getString(R.string.settings_check_frequency_title),
                 getResources().getStringArray(R.array.settings_kill_interval_labels), selectedIndex, which -> {
-                    sharedPreferences.edit().putInt(KEY_KILL_INTERVAL, KILL_INTERVALS_MS[which]).apply();
+                    putAutoKillIntPref(KEY_KILL_INTERVAL, KILL_INTERVALS_MS[which]);
                     updateKillIntervalText(KILL_INTERVALS_MS[which]);
                 });
     }
@@ -1854,7 +1895,10 @@ public class SettingsActivity extends BaseActivity {
             int killMode = sharedPreferences.getInt(KEY_KILL_MODE, 0);
             Set<String> whitelistedApps = sharedPreferences.getStringSet(KEY_WHITELISTED_APPS, new HashSet<>());
             if (killMode == 0 && whitelistedApps.isEmpty()) {
-                sharedPreferences.edit().putBoolean(KEY_AUTO_KILL_ENABLED, false).apply();
+                sharedPreferences.edit()
+                        .putBoolean(KEY_AUTO_KILL_ENABLED, false)
+                        .putBoolean(PresetManager.KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED, false)
+                        .apply();
                 if (binding.switchAutoKill != null) binding.switchAutoKill.setChecked(false);
                 resetDialogButtonColors(new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.dialog_unsafe_whitelist_title)
@@ -2343,10 +2387,10 @@ public class SettingsActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         if (binding == null) return;
-        boolean autoKill = sharedPreferences.getBoolean(KEY_AUTO_KILL_ENABLED, false);
-        boolean periodic = sharedPreferences.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
-        boolean screenOff = sharedPreferences.getBoolean(KEY_KILL_ON_SCREEN_OFF, false);
-        boolean ramEnabled = sharedPreferences.getBoolean(KEY_RAM_THRESHOLD_ENABLED, false);
+        boolean autoKill = getAutoKillPref(KEY_AUTO_KILL_ENABLED, false);
+        boolean periodic = getAutoKillPref(KEY_PERIODIC_KILL_ENABLED, false);
+        boolean screenOff = getAutoKillPref(KEY_KILL_ON_SCREEN_OFF, false);
+        boolean ramEnabled = getAutoKillPref(KEY_RAM_THRESHOLD_ENABLED, false);
         binding.switchAutoKill.setChecked(autoKill);
         binding.switchPeriodicKill.setChecked(periodic);
         binding.switchKillScreenOff.setChecked(screenOff);

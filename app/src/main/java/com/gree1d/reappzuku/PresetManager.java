@@ -33,7 +33,7 @@ public class PresetManager {
     static final String ACTION_PRESET_DEACTIVATE = "com.gree1d.reappzuku.PRESET_DEACTIVATE";
     static final String EXTRA_PRESET_NUMBER = "preset_number";
 
-    private static final String KEY_BACKUP_PREFIX = "preset_backup_";
+    static final String KEY_BACKUP_PREFIX = "preset_backup_";
 
     private static final String P_NAME = "name";
     private static final String P_ENABLED = "enabled";
