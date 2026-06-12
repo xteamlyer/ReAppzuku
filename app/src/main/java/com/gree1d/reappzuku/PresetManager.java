@@ -12,7 +12,9 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -389,6 +391,31 @@ public class PresetManager {
             }
         } catch (IOException | JSONException e) {
             Log.e(TAG, "exportPresetToJson #" + model.presetNumber + " FAILED", e);
+        }
+    }
+
+    public PresetModel importPresetFromJson(int presetNumber, Uri uri) {
+        Log.d(TAG, "importPresetFromJson #" + presetNumber + " uri=" + uri);
+        try (InputStream is = context.getContentResolver().openInputStream(uri)) {
+            if (is == null) throw new IOException("InputStream is null for uri: " + uri);
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int read;
+            while ((read = is.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            JSONObject json = new JSONObject(buffer.toString("UTF-8"));
+            PresetModel model = PresetModel.fromJson(presetNumber, json);
+            Log.d(TAG, "importPresetFromJson #" + presetNumber + " OK | name=" + model.name
+                    + " enabled=" + model.enabled
+                    + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
+                    + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute)
+                    + " whitelist=" + model.whitelistedApps.size()
+                    + " blacklist=" + model.blacklistedApps.size());
+            return model;
+        } catch (IOException | JSONException e) {
+            Log.e(TAG, "importPresetFromJson #" + presetNumber + " FAILED", e);
+            return null;
         }
     }
 

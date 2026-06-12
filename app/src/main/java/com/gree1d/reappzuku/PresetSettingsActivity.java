@@ -1,5 +1,7 @@
 package com.gree1d.reappzuku;
 
+import com.gree1d.reappzuku.databinding.ActivityPresetSettingsBinding;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -33,7 +35,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
-import com.gree1d.reappzuku.databinding.ActivityPresetSettingsBinding;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
@@ -80,6 +81,28 @@ public class PresetSettingsActivity extends BaseActivity {
                         presetManager.exportPresetToJson(workingModel, uri);
                         Toast.makeText(this, getString(R.string.preset_export_success), Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "Export to uri=" + uri);
+                    }
+                }
+            });
+
+    private final ActivityResultLauncher<Intent> importLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        PresetModel imported = presetManager.importPresetFromJson(presetNumber, uri);
+                        if (imported != null) {
+                            workingModel = imported;
+                            ownWhitelist = new HashSet<>(imported.whitelistedApps);
+                            ownBlacklist = new HashSet<>(imported.blacklistedApps);
+                            boolean hasOwnList = !ownWhitelist.isEmpty() || !ownBlacklist.isEmpty();
+                            appListMode = hasOwnList ? APP_LIST_MODE_OWN : APP_LIST_MODE_CURRENT;
+                            loadSettings();
+                            Toast.makeText(this, getString(R.string.preset_import_success), Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "Import from uri=" + uri);
+                        } else {
+                            Toast.makeText(this, getString(R.string.preset_import_failed), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             });
@@ -228,6 +251,8 @@ public class PresetSettingsActivity extends BaseActivity {
 
         binding.fabSavePreset.setOnClickListener(v -> savePreset());
         binding.btnExportJson.setOnClickListener(v -> launchJsonExport());
+        binding.btnImportJson.setOnClickListener(v -> launchJsonImport());
+        binding.btnResetPreset.setOnClickListener(v -> showResetConfirmationDialog());
     }
 
     private void applyAccentColors() {
@@ -302,6 +327,60 @@ public class PresetSettingsActivity extends BaseActivity {
         intent.setType("application/json");
         intent.putExtra(Intent.EXTRA_TITLE, "preset" + presetNumber + ".json");
         exportLauncher.launch(intent);
+    }
+
+    private void launchJsonImport() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        importLauncher.launch(intent);
+    }
+
+    private void showResetConfirmationDialog() {
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.preset_reset_dialog_title))
+                .setMessage(getString(R.string.preset_reset_dialog_message, presetNumber))
+                .setPositiveButton(getString(R.string.preset_reset_button), (d, w) -> resetPreset())
+                .setNegativeButton(getString(R.string.dialog_cancel), null)
+                .create();
+        dialog.show();
+        resetDialogButtonColors(dialog);
+        android.widget.Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (positive != null) {
+            positive.setTextColor(ContextCompat.getColor(this, R.color.sheet_delete_color));
+        }
+    }
+
+    private void resetPreset() {
+        Log.d(TAG, "resetPreset #" + presetNumber + " (local only, not yet saved)");
+
+        workingModel = new PresetModel(presetNumber);
+        workingModel.autoKillEnabled = sharedPreferences.getBoolean(KEY_AUTO_KILL_ENABLED, false);
+        workingModel.periodicKillEnabled = sharedPreferences.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
+        workingModel.killInterval = sharedPreferences.getInt(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
+        workingModel.killOnScreenOff = sharedPreferences.getBoolean(KEY_KILL_ON_SCREEN_OFF, false);
+        workingModel.ramThresholdEnabled = sharedPreferences.getBoolean(KEY_RAM_THRESHOLD_ENABLED, false);
+        workingModel.ramThreshold = sharedPreferences.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
+        workingModel.autoKillType = autoKillManager.getAutoKillType();
+        workingModel.killMode = autoKillManager.getKillMode();
+        workingModel.hwTriggerHeadset = sharedPreferences.getBoolean(KEY_HW_TRIGGER_HEADSET, false);
+        workingModel.hwTriggerUsb = sharedPreferences.getBoolean(KEY_HW_TRIGGER_USB, false);
+        workingModel.hwTriggerCharger = sharedPreferences.getBoolean(KEY_HW_TRIGGER_CHARGER, false);
+        workingModel.hwTriggerWifi = sharedPreferences.getBoolean(KEY_HW_TRIGGER_WIFI, false);
+        workingModel.hwTriggerBluetooth = sharedPreferences.getBoolean(KEY_HW_TRIGGER_BLUETOOTH, false);
+        workingModel.hwTriggerGps = sharedPreferences.getBoolean(KEY_HW_TRIGGER_GPS, false);
+        workingModel.hwTriggerHotspot = sharedPreferences.getBoolean(KEY_HW_TRIGGER_HOTSPOT, false);
+        workingModel.appLaunchTriggerEnabled = sharedPreferences.getBoolean(KEY_APP_LAUNCH_TRIGGER_ENABLED, false);
+        workingModel.appLaunchClearCache = sharedPreferences.getBoolean(KEY_APP_LAUNCH_CLEAR_CACHE, false);
+        workingModel.appLaunchTriggerPackages = new HashSet<>(
+                sharedPreferences.getStringSet(KEY_APP_LAUNCH_TRIGGER_PACKAGES, new HashSet<>()));
+
+        ownWhitelist = new HashSet<>();
+        ownBlacklist = new HashSet<>();
+        appListMode = APP_LIST_MODE_CURRENT;
+
+        loadSettings();
+        Toast.makeText(this, getString(R.string.preset_reset_success, presetNumber), Toast.LENGTH_SHORT).show();
     }
 
     private void showPresetNameDialog() {

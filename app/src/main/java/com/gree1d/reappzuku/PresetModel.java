@@ -54,7 +54,6 @@ public class PresetModel {
 
     public JSONObject toJson() throws JSONException {
         JSONObject obj = new JSONObject();
-        obj.put("presetNumber", presetNumber);
         obj.put("name", name);
         obj.put("enabled", enabled);
         obj.put("autoKillEnabled", autoKillEnabled);
@@ -93,10 +92,9 @@ public class PresetModel {
         return obj;
     }
 
-    public static PresetModel fromJson(JSONObject obj) throws JSONException {
-        int number = obj.getInt("presetNumber");
-        PresetModel model = new PresetModel(number);
-        model.name = obj.optString("name", "Preset " + number);
+    public static PresetModel fromJson(int presetNumber, JSONObject obj) throws JSONException {
+        PresetModel model = new PresetModel(presetNumber);
+        model.name = obj.optString("name", "Preset " + presetNumber);
         model.enabled = obj.optBoolean("enabled", true);
         model.autoKillEnabled = obj.optBoolean("autoKillEnabled", false);
         model.periodicKillEnabled = obj.optBoolean("periodicKillEnabled", false);
