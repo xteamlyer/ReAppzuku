@@ -126,10 +126,20 @@ public class HardwareEventReceiver extends BroadcastReceiver {
             autoKillManager.performAutoKill(() -> {
                 Log.i(TAG, "Auto-Kill completed for event: " + finalDescription);
                 executor.shutdown();
-            }, "Hardware event: " + finalDescription);
+            }, resolveKillSource(appContext, "Hardware event: " + finalDescription));
         };
 
         Log.i(TAG, "Scheduling Auto-Kill in " + (TRIGGER_DELAY_MS / 1000) + "s after: " + finalDescription);
         debounceHandler.postDelayed(pendingKill, TRIGGER_DELAY_MS);
+    }
+
+    private static String resolveKillSource(Context context, String defaultSource) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+        int activePreset = prefs.getInt(KEY_ACTIVE_PRESET, 0);
+        if (activePreset != 0) {
+            PresetManager pm = new PresetManager(context);
+            return defaultSource + " · " + pm.getPresetName(activePreset);
+        }
+        return defaultSource;
     }
 }

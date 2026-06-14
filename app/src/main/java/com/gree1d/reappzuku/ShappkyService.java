@@ -405,7 +405,7 @@ public class ShappkyService extends Service {
         int activePreset = prefs.getInt(KEY_ACTIVE_PRESET, 0);
         if (activePreset != 0) {
             PresetManager pm = new PresetManager(this);
-            return "Auto-Kill: " + pm.getPresetName(activePreset);
+            return defaultSource + " · " + pm.getPresetName(activePreset);
         }
         return defaultSource;
     }

@@ -377,9 +377,9 @@ public class PresetManager {
             String source;
             if (activePresetNumber != 0) {
                 String presetName = getPresetName(activePresetNumber);
-                source = "Auto-Kill: " + presetName;
+                source = "Periodic Kill · " + presetName;
             } else {
-                source = "Auto-Kill";
+                source = "Periodic Kill";
             }
             AutoKillWorker.schedule(context, source);
             Log.d(TAG, "rescheduleWorker — scheduled with interval=" + interval + " source=" + source);
