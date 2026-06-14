@@ -3,6 +3,7 @@ package com.gree1d.reappzuku;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.gree1d.reappzuku.AppConstants.*;
+import static com.gree1d.reappzuku.PreferenceKeys.*;
 
 public class HardwareEventReceiver extends BroadcastReceiver {
 
