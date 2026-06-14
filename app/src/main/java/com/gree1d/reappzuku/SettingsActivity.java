@@ -548,6 +548,21 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
             if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
             showAutoKillTypeDialog();
         });
+        binding.layoutBlacklist.setAlpha(alpha);
+        binding.layoutBlacklist.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> {
+            if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            showBlacklistDialog();
+        });
+        binding.layoutWhitelist.setAlpha(alpha);
+        binding.layoutWhitelist.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> {
+            if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            showWhitelistDialog();
+        });
+        binding.layoutAdditionalScenarios.setAlpha(alpha);
+        binding.layoutAdditionalScenarios.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> {
+            if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            showAdditionalScenariosDialog();
+        });
     }
 
     private void showPresetActiveDialog() {
