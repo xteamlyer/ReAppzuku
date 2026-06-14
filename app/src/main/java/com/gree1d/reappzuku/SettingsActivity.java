@@ -433,6 +433,7 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
 
         updateKillModeVisibility();
         applyServiceDependentState(isServiceEnabled());
+        applyPresetActiveState(isPresetActive());
         setupAdditionalScenariosListeners();
     }
 
@@ -517,7 +518,44 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
         binding.layoutSleepModeDelay.setAlpha(alpha);
     }
 
-    private void updateShellModeText() {
+    private void applyPresetActiveState(boolean presetActive) {
+        float alpha = presetActive ? 0.5f : 1.0f;
+        View.OnClickListener presetBlocker = presetActive ? v -> showPresetActiveDialog() : null;
+
+        binding.switchAutoKill.setEnabled(!presetActive);
+        binding.switchAutoKill.setAlpha(alpha);
+        binding.switchPeriodicKill.setEnabled(!presetActive);
+        binding.switchKillScreenOff.setEnabled(!presetActive);
+        binding.switchRamThreshold.setEnabled(!presetActive);
+
+        binding.layoutPeriodicKill.setAlpha(alpha);
+        binding.layoutPeriodicKill.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : null);
+        binding.layoutScreenLock.setAlpha(alpha);
+        binding.layoutScreenLock.setOnClickListener(presetBlocker);
+        binding.layoutRamThresholdToggle.setAlpha(alpha);
+        binding.layoutRamThresholdToggle.setOnClickListener(presetBlocker);
+        binding.layoutRamThreshold.setAlpha(alpha);
+        binding.layoutRamThreshold.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> showRamThresholdDialog());
+        binding.layoutKillInterval.setAlpha(alpha);
+        binding.layoutKillInterval.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> showKillIntervalDialog());
+        binding.layoutKillMode.setAlpha(alpha);
+        binding.layoutKillMode.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> {
+            if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            showKillModeDialog();
+        });
+        binding.layoutAutoKillType.setAlpha(alpha);
+        binding.layoutAutoKillType.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> {
+            if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            showAutoKillTypeDialog();
+        });
+    }
+
+    private void showPresetActiveDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setMessage(R.string.antichange_settings)
+                .setPositiveButton(R.string.dialog_close, null)
+                .show();
+    }
         executor.execute(() -> {
             final boolean privileged = shellManager.hasShizukuPermission() || shellManager.resolveAnyShellPermission();
             final String text;
@@ -2408,6 +2446,7 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
         binding.switchRamThreshold.setChecked(ramEnabled);
         updateAutomationOptionsVisibility(autoKill, periodic);
         applyServiceDependentState(autoKill);
+        applyPresetActiveState(isPresetActive());
         updateRamThresholdLimitVisibility(ramEnabled && autoKill);
     }
 
@@ -2470,6 +2509,9 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
                 binding.layoutWhitelist.setVisibility(mode == 0 ? View.VISIBLE : View.GONE);
                 break;
             }
+            case KEY_ACTIVE_PRESET:
+                applyPresetActiveState(isPresetActive());
+                break;
         }
     }
 
