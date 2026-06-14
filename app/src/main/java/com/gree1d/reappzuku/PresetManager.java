@@ -373,8 +373,16 @@ public class PresetManager {
         boolean presetActive = mainPrefs.getInt(KEY_ACTIVE_PRESET, 0) != 0;
         AutoKillWorker.cancel(context);
         if ((autoKillEnabled || presetActive) && periodicEnabled) {
-            AutoKillWorker.schedule(context);
-            Log.d(TAG, "rescheduleWorker — scheduled with interval=" + interval);
+            int activePresetNumber = mainPrefs.getInt(KEY_ACTIVE_PRESET, 0);
+            String source;
+            if (activePresetNumber != 0) {
+                String presetName = getPresetName(activePresetNumber);
+                source = "Auto-Kill: " + presetName;
+            } else {
+                source = "Auto-Kill";
+            }
+            AutoKillWorker.schedule(context, source);
+            Log.d(TAG, "rescheduleWorker — scheduled with interval=" + interval + " source=" + source);
         } else {
             Log.d(TAG, "rescheduleWorker — worker cancelled");
         }

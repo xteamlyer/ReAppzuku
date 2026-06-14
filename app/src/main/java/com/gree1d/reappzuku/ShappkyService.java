@@ -151,12 +151,12 @@ public class ShappkyService extends Service {
                     if (ramThresholdEnabled) {
                         int threshold = prefs.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
                         if (getCurrentRamUsagePercent() >= threshold) {
-                            autoKillManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock());
+                            autoKillManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock(), "Kill Trigger");
                         } else {
                             KillTriggerReceiver.releaseAutoKillWakeLock();
                         }
                     } else {
-                        autoKillManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock());
+                        autoKillManager.performAutoKill(() -> KillTriggerReceiver.releaseAutoKillWakeLock(), "Kill Trigger");
                     }
                 });
                 break;
@@ -373,12 +373,12 @@ public class ShappkyService extends Service {
                     if (ramThresholdEnabled) {
                         int threshold = prefs.getInt(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
                         if (getCurrentRamUsagePercent() >= threshold) {
-                            autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill));
+                            autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill), "Service Periodic Kill");
                         } else {
                             handler.post(this::scheduleNextKill);
                         }
                     } else {
-                        autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill));
+                        autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill), "Service Periodic Kill");
                     }
                 } else {
                     handler.post(this::scheduleNextKill);

@@ -126,7 +126,7 @@ public class HardwareEventReceiver extends BroadcastReceiver {
             autoKillManager.performAutoKill(() -> {
                 Log.i(TAG, "Auto-Kill completed for event: " + finalDescription);
                 executor.shutdown();
-            });
+            }, "Hardware event: " + finalDescription);
         };
 
         Log.i(TAG, "Scheduling Auto-Kill in " + (TRIGGER_DELAY_MS / 1000) + "s after: " + finalDescription);
