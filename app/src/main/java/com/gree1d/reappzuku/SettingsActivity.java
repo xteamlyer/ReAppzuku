@@ -556,6 +556,8 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
                 .setPositiveButton(R.string.dialog_close, null)
                 .show();
     }
+
+    private void updateShellModeText() {
         executor.execute(() -> {
             final boolean privileged = shellManager.hasShizukuPermission() || shellManager.resolveAnyShellPermission();
             final String text;

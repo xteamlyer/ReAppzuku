@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
+import com.gree1d.reappzuku.AdditionalScenariosManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -361,6 +362,7 @@ public class PresetManager {
         e.apply();
 
         Log.d(TAG, "restoreBackup DONE — rescheduling worker");
+        new AdditionalScenariosManager(context).updateHardwareReceiverState();
         rescheduleWorker();
     }
 
