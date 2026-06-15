@@ -152,7 +152,7 @@ public class SleepModeManager {
     public void loadSleepModeApps(Consumer<List<AppModel>> callback) {
         executor.execute(() -> {
             PackageManager pm = context.getPackageManager();
-            List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+            List<ApplicationInfo> packages = shellManager.getInstalledApplicationsFull();
             Set<String> timerApps = getSleepModeApps();
             Set<String> permanentApps = getPermanentFreezeApps();
             List<AppModel> result = new ArrayList<>();

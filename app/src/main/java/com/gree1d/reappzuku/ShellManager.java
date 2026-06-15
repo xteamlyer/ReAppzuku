@@ -14,6 +14,8 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -335,6 +337,29 @@ public class ShellManager {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    public List<ApplicationInfo> getInstalledApplicationsFull() {
+        if (hasAnyShellPermission()) {
+            try {
+                Class<?> serviceManager = Class.forName("android.os.ServiceManager");
+                IBinder binder = (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", "package");
+                Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
+                Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
+                Object parceledList = HiddenApiBypass.invoke(ipm.getClass(), ipm,
+                        "getInstalledApplications", PackageManager.GET_META_DATA, 0);
+                Class<?> parceledListClass = Class.forName("android.content.pm.ParceledListSlice");
+                @SuppressWarnings("unchecked")
+                List<ApplicationInfo> list = (List<ApplicationInfo>) HiddenApiBypass.invoke(
+                        parceledListClass, parceledList, "getList");
+                if (list != null && !list.isEmpty()) {
+                    return list;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "getInstalledApplicationsFull failed, falling back to PM", e);
+            }
+        }
+        return context.getPackageManager().getInstalledApplications(PackageManager.GET_META_DATA);
     }
 
     private boolean executeRootCommand(String command, Consumer<String> outputProcessor) {
