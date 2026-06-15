@@ -139,8 +139,8 @@ public class SleepModeManager {
             List<AppModel> result = new ArrayList<>();
             for (ApplicationInfo appInfo : packages) {
                 if (appInfo.packageName.equals(context.getPackageName())) continue;
-                boolean isSystem = (appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
-                if (isSystem) continue;
+                if (ProtectedApps.isProtected(context, appInfo.packageName)) continue;
+                if ((appInfo.flags & ApplicationInfo.FLAG_PERSISTENT) != 0) continue;
                 AppModel model = new AppModel(
                         pm.getApplicationLabel(appInfo).toString(),
                         appInfo.packageName,

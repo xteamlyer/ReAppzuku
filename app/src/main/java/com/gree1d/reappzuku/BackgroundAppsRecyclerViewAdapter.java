@@ -120,6 +120,8 @@ public class BackgroundAppsRecyclerViewAdapter extends RecyclerView.Adapter<Back
 
             binding.whitelistIcon.setVisibility(app.isWhitelisted() ? View.VISIBLE : View.GONE);
             binding.protectedIcon.setVisibility(app.isProtected() ? View.VISIBLE : View.GONE);
+            binding.freezeIcon.setVisibility(
+                    app.getFreezeType() == SleepModeManager.FreezeType.TIMER ? View.VISIBLE : View.GONE);
 
             binding.linear1.setSelected(false);
             binding.linearOverflow.setVisibility(View.GONE);
