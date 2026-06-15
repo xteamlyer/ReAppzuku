@@ -81,7 +81,7 @@
                     android:id="@+id/freeze_icon"
                     android:layout_width="14dp"
                     android:layout_height="14dp"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="6dp"
                     android:src="@drawable/ic_freeze"
                     android:visibility="gone"
                     android:focusable="false"
