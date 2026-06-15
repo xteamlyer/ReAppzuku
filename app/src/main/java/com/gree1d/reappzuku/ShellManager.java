@@ -2,25 +2,26 @@ package com.gree1d.reappzuku;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.IPackageManager;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.ServiceManager;
 import android.util.Log;
+
+import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import rikka.shizuku.Shizuku;
 import rikka.shizuku.ShizukuRemoteProcess;
-import rikka.shizuku.ShizukuBinderWrapper;
-import rikka.shizuku.SystemServiceHelper;
 
 
 public class ShellManager {
@@ -275,16 +276,21 @@ public class ShellManager {
         }
         try {
             Log.d(TAG, "[api disable] obtaining binder for: " + packageName);
-            IBinder binder = ShizukuBinderWrapper.newInstance(
-                    SystemServiceHelper.getSystemService("package"));
+            IBinder binder = (IBinder) HiddenApiBypass.invoke(
+                    ServiceManager.class, null, "getService", "package");
             Log.d(TAG, "[api disable] binder=" + (binder != null ? binder.getInterfaceDescriptor() : "null"));
-            IPackageManager ipm = IPackageManager.Stub.asInterface(binder);
-            ipm.setApplicationEnabledSetting(
+
+            Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
+            Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
+
+            HiddenApiBypass.invoke(ipm.getClass(), ipm, "setApplicationEnabledSetting",
                     packageName,
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER,
                     0, 0,
                     context.getPackageName());
-            int state = ipm.getApplicationEnabledSetting(packageName, 0);
+
+            int state = (int) HiddenApiBypass.invoke(ipm.getClass(), ipm,
+                    "getApplicationEnabledSetting", packageName, 0);
             Log.d(TAG, "[api disable] post-call enabledState=" + state + " pkg=" + packageName);
             boolean ok = state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
                     || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
@@ -308,16 +314,21 @@ public class ShellManager {
         }
         try {
             Log.d(TAG, "[api enable] obtaining binder for: " + packageName);
-            IBinder binder = ShizukuBinderWrapper.newInstance(
-                    SystemServiceHelper.getSystemService("package"));
+            IBinder binder = (IBinder) HiddenApiBypass.invoke(
+                    ServiceManager.class, null, "getService", "package");
             Log.d(TAG, "[api enable] binder=" + (binder != null ? binder.getInterfaceDescriptor() : "null"));
-            IPackageManager ipm = IPackageManager.Stub.asInterface(binder);
-            ipm.setApplicationEnabledSetting(
+
+            Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
+            Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
+
+            HiddenApiBypass.invoke(ipm.getClass(), ipm, "setApplicationEnabledSetting",
                     packageName,
                     PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
                     0, 0,
                     context.getPackageName());
-            int state = ipm.getApplicationEnabledSetting(packageName, 0);
+
+            int state = (int) HiddenApiBypass.invoke(ipm.getClass(), ipm,
+                    "getApplicationEnabledSetting", packageName, 0);
             Log.d(TAG, "[api enable] post-call enabledState=" + state + " pkg=" + packageName);
             boolean ok = state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
                     || state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
