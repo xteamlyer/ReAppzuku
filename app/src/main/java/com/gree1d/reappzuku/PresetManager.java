@@ -277,6 +277,7 @@ public class PresetManager {
         editor.apply();
 
         Log.d(TAG, "applyPreset #" + model.presetNumber + " prefs written — rescheduling worker");
+        notifyServiceUpdateHwReceivers();
         rescheduleWorker();
     }
 
@@ -362,8 +363,16 @@ public class PresetManager {
         e.apply();
 
         Log.d(TAG, "restoreBackup DONE — rescheduling worker");
-        new AdditionalScenariosManager(context).updateHardwareReceiverState();
+        notifyServiceUpdateHwReceivers();
         rescheduleWorker();
+    }
+
+    private void notifyServiceUpdateHwReceivers() {
+        if (ShappkyService.isRunning()) {
+            Intent intent = new Intent(context, ShappkyService.class);
+            intent.setAction("UPDATE_HW_RECEIVERS");
+            context.startService(intent);
+        }
     }
 
     private void rescheduleWorker() {

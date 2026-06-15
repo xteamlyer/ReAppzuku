@@ -209,6 +209,10 @@ public class ShappkyService extends Service {
             case "WIDGET_KILL":
                 ramKillShortcutManager.performKillAndUpdate(autoKillManager);
                 break;
+
+            case "UPDATE_HW_RECEIVERS":
+                additionalScenariosManager.updateHardwareReceiverState();
+                break;
         }
 
         return START_STICKY;
