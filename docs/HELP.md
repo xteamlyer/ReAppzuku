@@ -275,7 +275,7 @@ Performs scan of current load on system from all active apps in list. Load categ
 > [!NOTE]
 > Scan does not work on Persistent and Protected apps, even if they appear in active apps list.
 
-> [!TIP]
+> [!WARNING]
 > Keep in mind that more active apps displayed (e.g. system apps display is enabled), longer scan will take.
 
 ### App Actions
