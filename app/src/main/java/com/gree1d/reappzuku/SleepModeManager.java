@@ -32,6 +32,7 @@ public class SleepModeManager {
     private final ShellManager shellManager;
     private final SharedPreferences sharedpreferences;
     private RestrictionsScheduler scheduler;
+    private final Set<String> systemPackages = new HashSet<>();
 
     public SleepModeManager(Context context, Handler handler, ExecutorService executor,
             ShellManager shellManager) {
@@ -77,21 +78,17 @@ public class SleepModeManager {
     }
 
     private boolean freezeApp(String packageName) {
-        boolean ok = shellManager.runShellCommandBlocking("pm disable-user --user 0 " + packageName);
-        if (!ok && shellManager.isSystemApp(packageName)) {
-            Log.d(TAG, "shell freeze failed for system app, trying API: " + packageName);
-            ok = shellManager.disableSystemAppViaApi(packageName);
+        if (systemPackages.contains(packageName)) {
+            return shellManager.suspendSystemApp(packageName);
         }
-        return ok;
+        return shellManager.runShellCommandBlocking("pm disable-user --user 0 " + packageName);
     }
 
     private boolean unfreezeApp(String packageName) {
-        boolean ok = shellManager.runShellCommandBlocking("pm enable " + packageName);
-        if (!ok && shellManager.isSystemApp(packageName)) {
-            Log.d(TAG, "shell unfreeze failed for system app, trying API: " + packageName);
-            ok = shellManager.enableSystemAppViaApi(packageName);
+        if (systemPackages.contains(packageName)) {
+            return shellManager.unsuspendSystemApp(packageName);
         }
-        return ok;
+        return shellManager.runShellCommandBlocking("pm enable " + packageName);
     }
 
     public void saveSleepModeApps(Set<String> timerPackages, Set<String> permanentPackages,
@@ -152,14 +149,18 @@ public class SleepModeManager {
     public void loadSleepModeApps(Consumer<List<AppModel>> callback) {
         executor.execute(() -> {
             PackageManager pm = context.getPackageManager();
-            List<ApplicationInfo> packages = shellManager.getInstalledApplicationsFull();
+            List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
             Set<String> timerApps = getSleepModeApps();
             Set<String> permanentApps = getPermanentFreezeApps();
             List<AppModel> result = new ArrayList<>();
+            systemPackages.clear();
             for (ApplicationInfo appInfo : packages) {
                 if (appInfo.packageName.equals(context.getPackageName())) continue;
                 if (ProtectedApps.isProtected(context, appInfo.packageName)) continue;
                 if ((appInfo.flags & ApplicationInfo.FLAG_PERSISTENT) != 0) continue;
+                if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
+                    systemPackages.add(appInfo.packageName);
+                }
                 AppModel model = new AppModel(
                         pm.getApplicationLabel(appInfo).toString(),
                         appInfo.packageName,

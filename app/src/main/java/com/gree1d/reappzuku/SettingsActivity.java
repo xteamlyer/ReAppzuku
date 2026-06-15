@@ -1068,8 +1068,8 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
         dialog.show();
         resetDialogButtonColors(dialog);
 
-        sleepModeManager.loadSleepModeApps(allApps -> {
-            allApps = filterOutProtected(allApps);
+        sleepModeManager.loadSleepModeApps(rawApps -> {
+            List<AppModel> allApps = filterOutProtected(rawApps);
             Set<String> timerApps = sleepModeManager.getSleepModeApps();
             Set<String> permanentApps = sleepModeManager.getPermanentFreezeApps();
             FilterAppsAdapter filterAdapter = new FilterAppsAdapter(this, allApps, timerApps, permanentApps, true);
@@ -1081,12 +1081,18 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
             progressBar.setVisibility(View.GONE);
             listView.setVisibility(View.VISIBLE);
             searchBox.setVisibility(View.VISIBLE);
+            filterOptions.setVisibility(View.VISIBLE);
 
-            searchBox.addTextChangedListener(new android.text.TextWatcher() {
+            setupFilterListeners(dialogView, filterAdapter);
+
+            searchBox.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) { filterAdapter.getFilter().filter(s); }
-                @Override public void afterTextChanged(android.text.Editable s) {}
+                @Override public void afterTextChanged(Editable s) {}
             });
+
+            filterAdapter.setOnSelectionChangedListener(() ->
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText(getString(R.string.dialog_apply)));
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 sleepModeManager.saveSleepModeApps(

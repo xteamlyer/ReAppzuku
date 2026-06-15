@@ -4,18 +4,13 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
-
-import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -265,101 +260,12 @@ public class ShellManager {
     }
 
 
-    public boolean disableSystemAppViaApi(String packageName) {
-        if (!hasShizukuPermission()) {
-            Log.w(TAG, "[api disable] Shizuku not available: " + packageName);
-            return false;
-        }
-        try {
-            Log.d(TAG, "[api disable] obtaining binder for: " + packageName);
-            Class<?> serviceManager = Class.forName("android.os.ServiceManager");
-            IBinder binder = (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", "package");
-            Log.d(TAG, "[api disable] binder=" + (binder != null ? binder.getInterfaceDescriptor() : "null"));
-            Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
-            Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
-            HiddenApiBypass.invoke(ipm.getClass(), ipm, "setApplicationEnabledSetting",
-                    packageName,
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER,
-                    0, 0,
-                    context.getPackageName());
-            int state = (int) HiddenApiBypass.invoke(ipm.getClass(), ipm,
-                    "getApplicationEnabledSetting", packageName, 0);
-            Log.d(TAG, "[api disable] post-call enabledState=" + state + " pkg=" + packageName);
-            boolean ok = state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
-                    || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-            if (!ok) {
-                Log.w(TAG, "[api disable] unexpected state=" + state + " pkg=" + packageName);
-            }
-            return ok;
-        } catch (Exception e) {
-            Log.e(TAG, "[api disable] exception for " + packageName + ": " + e);
-            return false;
-        }
+    public boolean suspendSystemApp(String packageName) {
+        return runShellCommandBlocking("pm suspend --user 0 " + packageName);
     }
 
-    public boolean enableSystemAppViaApi(String packageName) {
-        if (!hasShizukuPermission()) {
-            Log.w(TAG, "[api enable] Shizuku not available: " + packageName);
-            return false;
-        }
-        try {
-            Log.d(TAG, "[api enable] obtaining binder for: " + packageName);
-            Class<?> serviceManager = Class.forName("android.os.ServiceManager");
-            IBinder binder = (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", "package");
-            Log.d(TAG, "[api enable] binder=" + (binder != null ? binder.getInterfaceDescriptor() : "null"));
-            Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
-            Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
-            HiddenApiBypass.invoke(ipm.getClass(), ipm, "setApplicationEnabledSetting",
-                    packageName,
-                    PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
-                    0, 0,
-                    context.getPackageName());
-            int state = (int) HiddenApiBypass.invoke(ipm.getClass(), ipm,
-                    "getApplicationEnabledSetting", packageName, 0);
-            Log.d(TAG, "[api enable] post-call enabledState=" + state + " pkg=" + packageName);
-            boolean ok = state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-                    || state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-            if (!ok) {
-                Log.w(TAG, "[api enable] unexpected state=" + state + " pkg=" + packageName);
-            }
-            return ok;
-        } catch (Exception e) {
-            Log.e(TAG, "[api enable] exception for " + packageName + ": " + e);
-            return false;
-        }
-    }
-
-    public boolean isSystemApp(String packageName) {
-        try {
-            ApplicationInfo info = context.getPackageManager().getApplicationInfo(packageName, 0);
-            return (info.flags & ApplicationInfo.FLAG_SYSTEM) != 0
-                    && (info.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
-        }
-    }
-
-    public List<ApplicationInfo> getInstalledApplicationsFull() {
-        if (hasAnyShellPermission()) {
-            try {
-                Class<?> serviceManager = Class.forName("android.os.ServiceManager");
-                IBinder binder = (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", "package");
-                Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
-                Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
-                Object parceledList = HiddenApiBypass.invoke(ipm.getClass(), ipm,
-                        "getInstalledApplications", PackageManager.GET_META_DATA, 0);
-                Class<?> parceledListClass = Class.forName("android.content.pm.ParceledListSlice");
-                @SuppressWarnings("unchecked")
-                List<ApplicationInfo> list = (List<ApplicationInfo>) HiddenApiBypass.invoke(
-                        parceledListClass, parceledList, "getList");
-                if (list != null && !list.isEmpty()) {
-                    return list;
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "getInstalledApplicationsFull failed, falling back to PM", e);
-            }
-        }
-        return context.getPackageManager().getInstalledApplications(PackageManager.GET_META_DATA);
+    public boolean unsuspendSystemApp(String packageName) {
+        return runShellCommandBlocking("pm unsuspend --user 0 " + packageName);
     }
 
     private boolean executeRootCommand(String command, Consumer<String> outputProcessor) {
