@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.ServiceManager;
 import android.util.Log;
 
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
@@ -15,7 +14,6 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -265,10 +263,6 @@ public class ShellManager {
     }
 
 
-    /**
-     * Отключает приложение через Shizuku binder (IPackageManager.setApplicationEnabledSetting).
-     * Fallback для системных приложений, которые pm disable-user блокирует через SecurityException.
-     */
     public boolean disableSystemAppViaApi(String packageName) {
         if (!hasShizukuPermission()) {
             Log.w(TAG, "[api disable] Shizuku not available: " + packageName);
@@ -276,19 +270,16 @@ public class ShellManager {
         }
         try {
             Log.d(TAG, "[api disable] obtaining binder for: " + packageName);
-            IBinder binder = (IBinder) HiddenApiBypass.invoke(
-                    ServiceManager.class, null, "getService", "package");
+            Class<?> serviceManager = Class.forName("android.os.ServiceManager");
+            IBinder binder = (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", "package");
             Log.d(TAG, "[api disable] binder=" + (binder != null ? binder.getInterfaceDescriptor() : "null"));
-
             Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
             Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
-
             HiddenApiBypass.invoke(ipm.getClass(), ipm, "setApplicationEnabledSetting",
                     packageName,
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER,
                     0, 0,
                     context.getPackageName());
-
             int state = (int) HiddenApiBypass.invoke(ipm.getClass(), ipm,
                     "getApplicationEnabledSetting", packageName, 0);
             Log.d(TAG, "[api disable] post-call enabledState=" + state + " pkg=" + packageName);
@@ -304,9 +295,6 @@ public class ShellManager {
         }
     }
 
-    /**
-     * Включает приложение через Shizuku binder. Пара к disableSystemAppViaApi.
-     */
     public boolean enableSystemAppViaApi(String packageName) {
         if (!hasShizukuPermission()) {
             Log.w(TAG, "[api enable] Shizuku not available: " + packageName);
@@ -314,19 +302,16 @@ public class ShellManager {
         }
         try {
             Log.d(TAG, "[api enable] obtaining binder for: " + packageName);
-            IBinder binder = (IBinder) HiddenApiBypass.invoke(
-                    ServiceManager.class, null, "getService", "package");
+            Class<?> serviceManager = Class.forName("android.os.ServiceManager");
+            IBinder binder = (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", "package");
             Log.d(TAG, "[api enable] binder=" + (binder != null ? binder.getInterfaceDescriptor() : "null"));
-
             Class<?> stubClass = Class.forName("android.content.pm.IPackageManager$Stub");
             Object ipm = HiddenApiBypass.invoke(stubClass, null, "asInterface", binder);
-
             HiddenApiBypass.invoke(ipm.getClass(), ipm, "setApplicationEnabledSetting",
                     packageName,
                     PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
                     0, 0,
                     context.getPackageName());
-
             int state = (int) HiddenApiBypass.invoke(ipm.getClass(), ipm,
                     "getApplicationEnabledSetting", packageName, 0);
             Log.d(TAG, "[api enable] post-call enabledState=" + state + " pkg=" + packageName);
