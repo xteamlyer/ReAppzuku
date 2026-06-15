@@ -412,7 +412,7 @@
     <!-- ── Раздел «Информация» ── -->
     <string name="settings_section_information">Информация</string>
     <string name="settings_help_title">Помощь</string>
-    <string name="settings_help_subtitle">Инструкция по настройке и использованию</string>
+    <string name="settings_help_subtitle">Руководство пользователя</string>
     <string name="settings_telegram_title">Telegram</string>
     <string name="settings_telegram_subtitle">Связаться с разработчиком</string>
     <string name="settings_source_code_title">Исходный код</string>
