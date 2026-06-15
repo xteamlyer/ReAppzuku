@@ -47,6 +47,7 @@
 - **Root** — preferred mode, used automatically if available
 - **Shizuku** — root-free alternative. Installed from Play Store, requires initial setup via ADB or MIUI/HyperOS developer mode
 
+> [!NOTE]
 > Current operating mode is always shown in **Settings → Information → Operating Mode**
 
 ---
@@ -205,7 +206,8 @@ After setup:
 3. Unlock and open ReAppzuku — service should still be active
 4. If service stopped — repeat steps for your firmware
 
-> 💡 Device-specific instructions: [dontkillmyapp.com](https://dontkillmyapp.com)
+> [!TIP]
+> Device-specific instructions: [dontkillmyapp.com](https://dontkillmyapp.com)
 
 ---
 
@@ -270,9 +272,11 @@ Performs scan of current load on system from all active apps in list. Load categ
 - Sensor hold
 - GPS hold
 
-> ℹ️ Scan does not work on Persistent and Protected apps, even if they appear in active apps list.
+> [!NOTE]
+> Scan does not work on Persistent and Protected apps, even if they appear in active apps list.
 
-> 💡 Keep in mind that more active apps displayed (e.g. system apps display is enabled), longer scan will take.
+> [!TIP]
+> Keep in mind that more active apps displayed (e.g. system apps display is enabled), longer scan will take.
 
 ### App Actions
 
@@ -313,12 +317,14 @@ Evaluated on a 100-point scale based on triggers.
 - Can wake app at any time: + **5 points** each.
 - Other triggers: **0–4 points** depending on importance. Some are informational only and don't affect score.
 
-> 💡 What you can do based on aggression score:
+> [!TIP]
+> What you can do based on aggression score:
 > - 0–40 — system can handle this on its own. No urgent need for restrictions.
 > - 41–65 — medium level. Auto-Kill or Soft ,type of Background Restrictions may be enough.
 > - 66+ — ideal candidate for Auto-Kill, Hard or Manual type of Background Restrictions, or Sleep Mode.
 
-> ℹ️ This note is provided for informational purposes only and should not be treated as a recommendation. Decide whether to apply restrictions to an app based on factors such as:
+> [!CAUTION]
+> This note is provided for informational purposes only and should not be treated as a recommendation. Decide whether to apply restrictions to an app based on factors such as:
 > - app’s behavior.
 > - its triggers and aggression score.
 > - current status assigned by system.
@@ -545,7 +551,8 @@ Android 11–13: device is in Deep Doze or Light Doze. Wakelocks, network, jobs,
 
 </details>
 
-> 💡 For Root users: [Blocker](https://github.com/lihenggui/blocker) pairs very well with ReAppzuku. Together they give you a new level of app control.
+> [!TIP]
+> For Root users: [Blocker](https://github.com/lihenggui/blocker) pairs very well with ReAppzuku. Together they give you a new level of app control.
 
 ---
 
@@ -631,13 +638,15 @@ Auto-Kill launches automatically on selected events: headphone or USB connect/di
 - **App Launch**. 
 Auto-Kill triggers right when selected target apps are opened — useful on budget devices to free RAM and CPU before launching heavy games or programs. Target apps themselves do not get killed.  
   - **Clear Cache**. Additionally clears cache of all apps, except Protected, Persistent and other target apps.
-> ℹ️ **App Launch** function requires special permission in "Accessibility" settings. This feature can also slightly increase battery usage by ReAppzuku itself.
+> [!IMPORTANT]
+> **App Launch** function requires special permission in "Accessibility" settings. This feature can also slightly increase battery usage by ReAppzuku itself.
 
 
 **Auto-Kill Presets**\
 Save your own set of Auto-Kill settings that activates automatically at a specific time of day and replaces the current settings for the duration of its active window. When the window ends, the original settings are restored automatically.
 **2 presets** are available. Each can be configured independently: its own name, its own active time range, its own Auto-Kill rules, its own app lists, and its own additional scenarios.
-> ℹ️ While active, presets ignore the immunity granted to apps by the Restrictions Scheduler. This is done to avoid confusion in the settings.
+> [!WARNING]
+> While active, presets ignore the immunity granted to apps by the Restrictions Scheduler. This is done to avoid confusion in the settings.
 
 - **Enable preset**.
 The master switch. If disabled, the preset **will not activate** on schedule, even if its time window starts. If the preset is currently active and this switch is turned off, it deactivates immediately and the original settings are restored.
@@ -647,7 +656,8 @@ A custom name, up to 30 characters. Shown in the preset picker dialog in the mai
 
 - **Active time**.
 A "From — To" range, displayed using the device's time format (12/24-hour). Ranges that cross midnight are supported (e.g. 22:00 – 06:00).
-> ℹ️ The two presets cannot overlap in their active time. If you try to save a preset with an overlapping range, a warning will show the conflicting preset's time range — adjust one of the presets' times to resolve it.
+> [!WARNING]
+> The two presets cannot overlap in their active time. If you try to save a preset with an overlapping range, a warning will show the conflicting preset's time range — adjust one of the presets' times to resolve it.
 
 - **App list source**
 Choose between:
@@ -674,6 +684,7 @@ Adds small 1x1 shortcut to home screen. Tapping shortcut launches Auto-Kill acco
 ### 🔧 Advanced Tools
 
 **Background Restrictions**
+> [!WARNING]
 > Available on **Android 11+** only
 
 Uses Android's `appops` to **block an app from running in background at OS level**. Deeper than regular Kill.
@@ -722,7 +733,8 @@ Once app is minimized or switched away from — system kills it immediately. App
 You choose which restrictions to apply.\
 **How it works**: ReAppzuku applies only restrictions you select.
 
-> 💡 App Standby Bucket resets upon user interaction with target app. System does not always restore it back. ReAppzuku will automatically restore app Bucket on next restriction integrity check cycle.
+> [!IMPORTANT]
+> App Standby Bucket resets upon user interaction with target app. System does not always restore it back. ReAppzuku will automatically restore app Bucket on next restriction integrity check cycle.
 
 ---
 
@@ -819,7 +831,8 @@ Manually re-applies all saved restrictions. After reboot this happens **automati
 
 **Restriction Scheduler**\
 Schedule when restrictions should be lifted and restored for specific apps.
-> Only apps with an active **Background Restriction** (Soft / Hard / Manual) appear here.
+> [!NOTE]
+> Only apps with an active **Background Restriction** (Soft / Medium/ Hard / Manual) appear here.
 > Apps with scheduled entry show 🕐 icon with scheduled time.
 
 Tap app to open scheduler configuration:
@@ -839,6 +852,7 @@ Action to take when restrictions are lifted:
 - **None** — no additional action.
 - **Launch component** — opens app's component picker (Activity, Service, Receiver, etc.).
 
+> [!NOTE]
 > Scheduled entries are limited to 15 apps to protect ReAppzuku itself.
 
 ---
@@ -852,11 +866,14 @@ How it works:
 2. Timer expires → selected apps are frozen
 3. Screen turns on and unlocks → apps unfreeze automatically
 
-> ⚠️ Only works with user-installed apps — system apps can't be frozen (Android limitation)
+> [!WARNING]
+> Due to Android limitations, pm suspend/unsuspend is used for system apps instead of pm disable/enable.
 
-> ℹ️ Enabling Sleep Mode restarts ReAppzuku — required for proper initialization
+> [!IMPORTANT]
+> Enabling Sleep Mode restarts ReAppzuku — required for proper initialization
 
-> 💡 If target app was on home screen, its icon may disappear or move after Sleep Mode activates. Expected Android behavior with pm disable/enable.
+> [!NOTE]
+> If target app was on home screen, its icon may disappear or move after Sleep Mode activates. Expected Android behavior with pm disable/enable.
 
 **Sleep Mode App List**\
 Select apps to freeze in Sleep Mode.
@@ -905,25 +922,29 @@ Interactive charts of RAM, CPU, and battery usage across tracked apps. Switch be
 | 12 hours | Last 12 hours |
 | 24 hours | Last 24 hours |
 
-> 💡 Tap an **app in chart legend** to open its **personal activity graph**
+> [!TIP]
+> Tap an **app in chart legend** to open its **personal activity graph**
 
 **Auto-Kill Log**\
 Shows activity for last **12 hours**: Auto-Kill count, restarts, RAM freed, and last event time per app.
 
-> 💡 Apps restarting more than 3 times are good candidates for Background Restrictions.
+> [!TIP]
+> Apps restarting more than 3 times are good candidates for Background Restrictions.
 
 **Top Offenders**\
 Ranks apps by combined score (kills + restarts + RAM usage). Filter by: 12 hours / 24 hours / 7 days / all time.
 
-> 💡 Score shows how aggressively app interferes with background management.\
+> [!NOTE]
+> Score shows how aggressively app interferes with background management.\
 >
 > `Score = kills × 1 + restarts × 2 + freed RAM × 0.01`
 >
 > • Kill (+1) — app was force-stopped.\
 > • Restart (+2) — app relaunched after being stopped; worth double because it's active resistance.\
-> • RAM — every 100 MB of freed memory adds +1 point; usually a small contribution.\
+> • RAM — every 100 MB of freed memory adds +1 point; usually a small contribution.
 
-> ℹ️ Freed RAM is counted only if app isn't found running at next Auto-Kill cycle. If it restarts, it reclaims same RAM — net gain 0%.
+> [!IMPORTANT]
+> Freed RAM is counted only if app isn't found running at next Auto-Kill cycle. If it restarts, it reclaims same RAM — net gain 0%.
 
 **Background Restrictions Log**\
 Detailed log of background restriction operations. Stored in cache, 200 entries max.
@@ -939,7 +960,8 @@ Detailed log of background restriction operations. Stored in cache, 200 entries 
 | `Removed from whitelist` | App removed from battery optimization exceptions |
 | `Restored to whitelist` | App restored to battery optimization exceptions |
 
-> 💡 Tapping entry in Background Restrictions Log opens log details. There you can see which AppOps didn't apply or got reset. Also can check if app Standby Bucket changed.
+> [!TIP]
+> Tapping entry in Background Restrictions Log opens log details. There you can see which AppOps didn't apply or got reset. Also can check if app Standby Bucket changed.
 
 **Sleep Mode Log**\
 Logs date and time of freeze/unfreeze for target apps.
