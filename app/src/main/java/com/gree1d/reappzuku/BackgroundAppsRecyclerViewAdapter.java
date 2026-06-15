@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.gree1d.reappzuku.databinding.ItemBinding;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BackgroundAppsRecyclerViewAdapter extends RecyclerView.Adapter<BackgroundAppsRecyclerViewAdapter.ViewHolder> {
@@ -120,8 +121,10 @@ public class BackgroundAppsRecyclerViewAdapter extends RecyclerView.Adapter<Back
 
             binding.whitelistIcon.setVisibility(app.isWhitelisted() ? View.VISIBLE : View.GONE);
             binding.protectedIcon.setVisibility(app.isProtected() ? View.VISIBLE : View.GONE);
-            binding.freezeIcon.setVisibility(
-                    app.getFreezeType() == SleepModeManager.FreezeType.TIMER ? View.VISIBLE : View.GONE);
+            boolean isTimerFreeze = context.getSharedPreferences(PreferenceKeys.PREFERENCES_NAME, Context.MODE_PRIVATE)
+                    .getStringSet(PreferenceKeys.KEY_SLEEP_MODE_APPS, Collections.emptySet())
+                    .contains(app.getPackageName());
+            binding.freezeIcon.setVisibility(isTimerFreeze ? View.VISIBLE : View.GONE);
 
             binding.linear1.setSelected(false);
             binding.linearOverflow.setVisibility(View.GONE);
