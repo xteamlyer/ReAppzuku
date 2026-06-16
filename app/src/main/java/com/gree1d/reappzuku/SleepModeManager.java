@@ -77,6 +77,22 @@ public class SleepModeManager {
         sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_FROZEN, frozen).apply();
     }
 
+    public boolean isSystemPackage(String packageName) {
+        try {
+            ApplicationInfo info = context.getPackageManager().getApplicationInfo(packageName, 0);
+            return (info.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    public boolean reapplyPermanentFreeze(String packageName) {
+        if (isSystemPackage(packageName)) {
+            return shellManager.suspendSystemApp(packageName);
+        }
+        return shellManager.runShellCommandBlocking("pm disable-user --user 0 " + packageName);
+    }
+
     private boolean freezeApp(String packageName) {
         if (systemPackages.contains(packageName)) {
             return shellManager.suspendSystemApp(packageName);

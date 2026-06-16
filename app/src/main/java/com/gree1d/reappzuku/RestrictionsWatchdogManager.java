@@ -1,21 +1,33 @@
 package com.gree1d.reappzuku;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.util.Log;
 
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RestrictionsWatchdogManager {
 
     private static final String TAG = "RestrictionsWatchdog";
     private static final long WATCHDOG_INTERVAL_MS = 35 * 60 * 1000L; // 35 minutes
 
+    private static final Pattern SLEEP_PACKAGES_SECTION =
+            Pattern.compile("(?m)^\\s*Packages:\\n(?:(?!^\\S).*\\n?)*");
+    private static final Pattern SLEEP_USER0_BLOCK =
+            Pattern.compile("(?m)^\\s*User 0:.*(?:\\n(?!\\s*User \\d+:).*)*");
+    private static final Pattern SLEEP_SUSPENDED = Pattern.compile("\\bsuspended=(true|false)\\b");
+    private static final Pattern SLEEP_ENABLED = Pattern.compile("\\benabled=(\\d+)\\b");
+
     private final Context context;
     private final Handler handler;
     private final BackgroundAppManager appManager;
     private final ShellManager shellManager;
     private final RestrictionsScheduler scheduler;
+
+    private SleepModeManager sleepModeManager;
 
     private boolean running = false;
 
@@ -38,11 +50,20 @@ public class RestrictionsWatchdogManager {
         this.scheduler    = scheduler;
     }
 
+    public void setSleepModeManager(SleepModeManager sleepModeManager) {
+        this.sleepModeManager = sleepModeManager;
+    }
+
     public void startIfNeeded() {
         if (running) return;
-        if (!appManager.supportsBackgroundRestriction()) return;
         if (!shellManager.hasAnyShellPermission()) return;
-        if (appManager.getBackgroundRestrictedApps().isEmpty()) {
+
+        boolean hasBackgroundTargets = appManager.supportsBackgroundRestriction()
+                && !appManager.getBackgroundRestrictedApps().isEmpty();
+        boolean hasSleepTargets = sleepModeManager != null
+                && !sleepModeManager.getPermanentFreezeApps().isEmpty();
+
+        if (!hasBackgroundTargets && !hasSleepTargets) {
             Log.d(TAG, "No restricted apps, watchdog not started");
             return;
         }
@@ -59,22 +80,35 @@ public class RestrictionsWatchdogManager {
 
 
     private void runCheck() {
-        if (!appManager.supportsBackgroundRestriction()
-                || !shellManager.hasAnyShellPermission()) {
+        if (!shellManager.hasAnyShellPermission()) {
             return;
         }
 
-        Set<String> desired = appManager.sanitizeBackgroundRestrictionTargets(
-                appManager.getBackgroundRestrictedApps());
+        Set<String> desired = new java.util.HashSet<>();
+        boolean backgroundRestrictionActive = false;
+        if (appManager.supportsBackgroundRestriction()) {
+            desired = appManager.sanitizeBackgroundRestrictionTargets(
+                    appManager.getBackgroundRestrictedApps());
+            backgroundRestrictionActive = !desired.isEmpty();
+        }
 
-        if (desired.isEmpty()) {
+        boolean sleepModeActive = sleepModeManager != null
+                && !sleepModeManager.getPermanentFreezeApps().isEmpty();
+
+        if (!backgroundRestrictionActive && !sleepModeActive) {
             stop();
             Log.d(TAG, "Watchdog stopped — no more restricted apps");
             return;
         }
 
-        appManager.checkAndRepairRestrictions(desired, scheduler);
-        checkAndRepairBuckets(desired);
+        if (backgroundRestrictionActive) {
+            appManager.checkAndRepairRestrictions(desired, scheduler);
+            checkAndRepairBuckets(desired);
+        }
+
+        if (sleepModeActive) {
+            checkAndRepairSleepMode();
+        }
     }
 
     private boolean isMediumLikeManual(String packageName) {
@@ -116,6 +150,52 @@ public class RestrictionsWatchdogManager {
             }
         }
         return false;
+    }
+
+    private void checkAndRepairSleepMode() {
+        Set<String> permanent = sleepModeManager.getPermanentFreezeApps();
+
+        for (String pkg : permanent) {
+            if (scheduler != null
+                    && scheduler.isProtected(pkg, RestrictionsScheduler.PROTECT_SLEEP_MODE)) {
+                continue;
+            }
+
+            String dump = shellManager.runShellCommandAndGetFullOutput("dumpsys package " + pkg);
+            if (dump == null || dump.trim().isEmpty()) continue;
+
+            Matcher packagesSectionMatcher = SLEEP_PACKAGES_SECTION.matcher(dump);
+            String packagesSection = packagesSectionMatcher.find()
+                    ? packagesSectionMatcher.group() : dump;
+
+            Pattern pkgBlockPattern = Pattern.compile(
+                    "(?m)^\\s*Package \\[" + Pattern.quote(pkg) + "\\].*\\n(?:(?!^\\s*Package \\[).*\\n?)*");
+            Matcher pkgBlockMatcher = pkgBlockPattern.matcher(packagesSection);
+            if (!pkgBlockMatcher.find()) continue;
+            String pkgBlock = pkgBlockMatcher.group();
+
+            Matcher userBlockMatcher = SLEEP_USER0_BLOCK.matcher(pkgBlock);
+            if (!userBlockMatcher.find()) continue;
+            String userBlock = userBlockMatcher.group();
+
+            boolean isSystem = sleepModeManager.isSystemPackage(pkg);
+            boolean drifted;
+            if (isSystem) {
+                Matcher suspendedMatcher = SLEEP_SUSPENDED.matcher(userBlock);
+                drifted = !suspendedMatcher.find() || !"true".equals(suspendedMatcher.group(1));
+            } else {
+                Matcher enabledMatcher = SLEEP_ENABLED.matcher(userBlock);
+                int enabledState = enabledMatcher.find()
+                        ? Integer.parseInt(enabledMatcher.group(1)) : -1;
+                drifted = enabledState != PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER;
+            }
+
+            if (!drifted) continue;
+
+            Log.w(TAG, "watchdog sleep-mode drift: " + pkg + " isSystem=" + isSystem);
+            boolean ok = sleepModeManager.reapplyPermanentFreeze(pkg);
+            SleepModeLogManager.logFreeze(context, pkg, ok, "WatchDog Repair");
+        }
     }
 
     private void checkAndRepairBuckets(Set<String> desired) {

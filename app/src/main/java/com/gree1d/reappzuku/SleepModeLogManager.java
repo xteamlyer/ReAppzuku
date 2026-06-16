@@ -23,11 +23,25 @@ public final class SleepModeLogManager {
     private SleepModeLogManager() {}
 
     public static void logFreeze(Context context, String packageName, boolean succeeded) {
-        append(context, packageName, "freeze", succeeded ? "ok" : "error");
+        append(context, packageName, "freeze", buildOutcome(succeeded, null));
+    }
+
+    public static void logFreeze(Context context, String packageName, boolean succeeded, String source) {
+        append(context, packageName, "freeze", buildOutcome(succeeded, source));
     }
 
     public static void logUnfreeze(Context context, String packageName, boolean succeeded) {
-        append(context, packageName, "unfreeze", succeeded ? "ok" : "error");
+        append(context, packageName, "unfreeze", buildOutcome(succeeded, null));
+    }
+
+    public static void logUnfreeze(Context context, String packageName, boolean succeeded, String source) {
+        append(context, packageName, "unfreeze", buildOutcome(succeeded, source));
+    }
+
+    private static String buildOutcome(boolean succeeded, String source) {
+        String base = succeeded ? "ok" : "error";
+        if (source == null || source.trim().isEmpty()) return base;
+        return base + " (" + source.trim() + ")";
     }
 
     private static void append(Context context, String packageName,
