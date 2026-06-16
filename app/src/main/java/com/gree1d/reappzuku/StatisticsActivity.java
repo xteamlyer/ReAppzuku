@@ -1364,16 +1364,25 @@ public class StatisticsActivity extends BaseActivity {
             SleepModeLogManager.LogEntry entry = logEntries.get(i);
             String title = (entry.packageName == null || entry.packageName.equals("-"))
                     ? humanizeLogAction(entry.action) : entry.packageName;
+            String typeTag = sleepModeTypeTag(entry);
             String subtitle = entry.timestamp;
-            if (entry.action != null && !entry.action.trim().isEmpty()) {
-                subtitle = subtitle.isEmpty() ? humanizeLogAction(entry.action)
-                        : subtitle + " | " + humanizeLogAction(entry.action);
+            if (!typeTag.isEmpty()) {
+                subtitle = subtitle.isEmpty() ? typeTag : subtitle + " | " + typeTag;
             }
             String detail = humanizeLogOutcome(entry.outcome);
             rows.add(new SettingsSurfaceRow("#" + (i + 1), title, subtitle, detail,
                     resolveSleepModeLogBadge(entry.action), entry.packageName));
         }
         return rows;
+    }
+
+    private String sleepModeTypeTag(SleepModeLogManager.LogEntry entry) {
+        String type = entry.freezeType;
+        String method = entry.method;
+        if (type == null || type.equals("-")) return "";
+        String typeLabel = "permanent".equals(type) ? "perm" : "temp";
+        if (method == null || method.equals("-")) return typeLabel;
+        return typeLabel + " • " + method;
     }
 
     private List<SettingsSurfaceRow> buildSchedulerLogRows(List<RestrictionsScheduler.SchedulerLog.Entry> logEntries) {

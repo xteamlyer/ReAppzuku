@@ -203,12 +203,12 @@ public class SleepModeManager {
 
                 if (needsUnfreeze) {
                     boolean ok = unfreezeAppWithMethod(packageName, oldMethod);
-                    SleepModeLogManager.logUnfreeze(context, packageName, ok, oldMethod);
+                    SleepModeLogManager.logUnfreeze(context, packageName, ok, oldMethod, oldType);
                     if (oldType == FreezeType.TIMER) markUnfrozen(packageName);
                 }
                 if (needsFreeze) {
                     boolean ok = freezeAppWithMethod(packageName, newMethod);
-                    SleepModeLogManager.logFreeze(context, packageName, ok, newMethod);
+                    SleepModeLogManager.logFreeze(context, packageName, ok, newMethod, newType);
                 }
             }
             if (onComplete != null) handler.post(onComplete);
@@ -285,7 +285,7 @@ public class SleepModeManager {
                 FreezeMethod method = getFreezeMethod(packageName);
                 boolean ok = freezeApp(packageName);
                 if (ok) markFrozen(packageName);
-                SleepModeLogManager.logFreeze(context, packageName, ok, method);
+                SleepModeLogManager.logFreeze(context, packageName, ok, method, FreezeType.TIMER);
             }
             if (onComplete != null) handler.post(onComplete);
         });
@@ -302,7 +302,7 @@ public class SleepModeManager {
                 FreezeMethod method = getFreezeMethod(packageName);
                 boolean ok = unfreezeApp(packageName);
                 if (ok) markUnfrozen(packageName);
-                SleepModeLogManager.logUnfreeze(context, packageName, ok, method);
+                SleepModeLogManager.logUnfreeze(context, packageName, ok, method, FreezeType.TIMER);
             }
             if (onComplete != null) handler.post(onComplete);
         });

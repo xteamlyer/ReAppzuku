@@ -195,7 +195,7 @@ public class RestrictionsWatchdogManager {
 
             Log.w(TAG, "watchdog sleep-mode drift: " + pkg + " isSystem=" + isSystem);
             boolean ok = sleepModeManager.reapplyPermanentFreeze(pkg);
-            SleepModeLogManager.logFreeze(context, pkg, ok, "WatchDog Repair", method);
+            SleepModeLogManager.logFreeze(context, pkg, ok, "WatchDog Repair", method, SleepModeManager.FreezeType.PERMANENT);
         }
     }
 

@@ -22,20 +22,24 @@ public final class SleepModeLogManager {
 
     private SleepModeLogManager() {}
 
-    public static void logFreeze(Context context, String packageName, boolean succeeded, SleepModeManager.FreezeMethod method) {
-        append(context, packageName, "freeze", buildOutcome(succeeded, null), method);
+    public static void logFreeze(Context context, String packageName, boolean succeeded,
+            SleepModeManager.FreezeMethod method, SleepModeManager.FreezeType freezeType) {
+        append(context, packageName, "freeze", buildOutcome(succeeded, null), method, freezeType);
     }
 
-    public static void logFreeze(Context context, String packageName, boolean succeeded, String source, SleepModeManager.FreezeMethod method) {
-        append(context, packageName, "freeze", buildOutcome(succeeded, source), method);
+    public static void logFreeze(Context context, String packageName, boolean succeeded, String source,
+            SleepModeManager.FreezeMethod method, SleepModeManager.FreezeType freezeType) {
+        append(context, packageName, "freeze", buildOutcome(succeeded, source), method, freezeType);
     }
 
-    public static void logUnfreeze(Context context, String packageName, boolean succeeded, SleepModeManager.FreezeMethod method) {
-        append(context, packageName, "unfreeze", buildOutcome(succeeded, null), method);
+    public static void logUnfreeze(Context context, String packageName, boolean succeeded,
+            SleepModeManager.FreezeMethod method, SleepModeManager.FreezeType freezeType) {
+        append(context, packageName, "unfreeze", buildOutcome(succeeded, null), method, freezeType);
     }
 
-    public static void logUnfreeze(Context context, String packageName, boolean succeeded, String source, SleepModeManager.FreezeMethod method) {
-        append(context, packageName, "unfreeze", buildOutcome(succeeded, source), method);
+    public static void logUnfreeze(Context context, String packageName, boolean succeeded, String source,
+            SleepModeManager.FreezeMethod method, SleepModeManager.FreezeType freezeType) {
+        append(context, packageName, "unfreeze", buildOutcome(succeeded, source), method, freezeType);
     }
 
     private static String buildOutcome(boolean succeeded, String source) {
@@ -45,7 +49,9 @@ public final class SleepModeLogManager {
     }
 
     private static void append(Context context, String packageName,
-                                String action, String outcome, SleepModeManager.FreezeMethod method) {
+                                String action, String outcome,
+                                SleepModeManager.FreezeMethod method,
+                                SleepModeManager.FreezeType freezeType) {
         if (context == null) return;
 
         SleepModeLog entry = new SleepModeLog();
@@ -54,6 +60,7 @@ public final class SleepModeLogManager {
         entry.action      = action;
         entry.outcome     = outcome;
         entry.method      = method != null ? method.name().toLowerCase(Locale.US) : null;
+        entry.freezeType  = freezeType != null ? freezeType.name().toLowerCase(Locale.US) : null;
 
         DB_EXECUTOR.execute(() -> {
             SleepModeLog.Dao dao = AppDatabase.getInstance(context).sleepModeLogDao();
@@ -89,7 +96,8 @@ public final class SleepModeLogManager {
                     row.action      != null ? row.action      : "event",
                     row.packageName != null ? row.packageName : "-",
                     row.outcome     != null ? row.outcome     : "unknown",
-                    row.method      != null ? row.method      : "-"
+                    row.method      != null ? row.method      : "-",
+                    row.freezeType  != null ? row.freezeType  : "-"
             ));
         }
         return result;
@@ -121,17 +129,21 @@ public final class SleepModeLogManager {
         public final String packageName;
         public final String outcome;
         public final String method;
+        public final String freezeType;
 
-        private LogEntry(String timestamp, String action, String packageName, String outcome, String method) {
+        private LogEntry(String timestamp, String action, String packageName, String outcome,
+                String method, String freezeType) {
             this.timestamp   = timestamp;
             this.action      = action;
             this.packageName = packageName;
             this.outcome     = outcome;
             this.method      = method;
+            this.freezeType  = freezeType;
         }
 
         public String toDisplayLine() {
-            return timestamp + " | " + action + " | " + packageName + " | " + outcome + " | " + method;
+            return timestamp + " | " + action + " | " + packageName + " | " + outcome
+                    + " | " + freezeType + " | " + method;
         }
     }
 }
