@@ -1084,6 +1084,10 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
             filterOptions.setVisibility(View.VISIBLE);
 
             setupFilterListeners(dialogView, filterAdapter);
+            appManager.updateRunningState(allApps, () -> {
+                if (!dialog.isShowing()) return;
+                filterAdapter.notifyDataSetChanged();
+            });
 
             searchBox.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
