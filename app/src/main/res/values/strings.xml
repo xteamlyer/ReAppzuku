@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">ReAppzuku</string>
+    <string name="special_thanks_title">Special Thanks</string>
+    <string name="special_thanks_desc">Users who contributed to development of ReAppzuku:</string>
 
     <!-- ══════════════════════════════════════════════
          QUICK SETTINGS TILES & SHORTCUTS
