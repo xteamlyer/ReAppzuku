@@ -423,6 +423,7 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
         binding.layoutGithub.setOnClickListener(v -> openUrl("https://github.com/gree1d/ReAppzuku"));
         binding.layoutCheckUpdates.setOnClickListener(v -> UpdateChecker.checkForUpdatesManual(this, sharedPreferences));
         binding.layoutTelegram.setOnClickListener(v -> openUrl("https://t.me/AkM0o"));
+        binding.layoutSpecialThanks.setOnClickListener(v -> showSpecialThanksDialog());
         binding.textVersion.setOnClickListener(v -> {
             easterEggClickCount++;
             if (easterEggClickCount == EASTER_EGG_THRESHOLD) {
@@ -1023,6 +1024,22 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
         resetDialogButtonColors(dialog);
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) messageView.setText(sb);
+    }
+
+    private void showSpecialThanksDialog() {
+        String[] names = getResources().getStringArray(R.array.special_thanks_list);
+        StringBuilder sb = new StringBuilder();
+        sb.append(getString(R.string.special_thanks_desc)).append("\n\n");
+        for (String name : names) {
+            sb.append("• ").append(name).append("\n");
+        }
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.special_thanks_title))
+                .setMessage(sb.toString().trim())
+                .setPositiveButton(getString(R.string.dialog_close), (d, w) -> d.dismiss())
+                .create();
+        dialog.show();
+        resetDialogButtonColors(dialog);
     }
 
     private void updateSleepModeDelayText(long delayMs) {
