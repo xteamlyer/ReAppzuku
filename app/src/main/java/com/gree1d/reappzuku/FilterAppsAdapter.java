@@ -44,12 +44,14 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
 
     private final Map<String, BackgroundAppManager.RestrictionType> restrictionTypeMap;
     private final Map<String, SleepModeManager.FreezeType> freezeTypeMap;
+    private final Map<String, SleepModeManager.FreezeMethod> freezeMethodMap;
 
     private final Map<String, Integer> manualOpsMaskMap;
     private final Map<String, Integer> manualBucketMap;
 
     private OnSelectionChangedListener selectionChangedListener;
     private int accentColor = 0;
+    private SleepModeManager sleepModeManager;
 
     public void setAccentColor(int color) {
         this.accentColor = color;
@@ -66,12 +68,20 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
     public FilterAppsAdapter(Context context, List<AppModel> apps,
                              Set<String> timerApps, Set<String> permanentApps,
                              boolean isSleepMode) {
+        this(context, apps, timerApps, permanentApps, null, isSleepMode);
+    }
+
+    public FilterAppsAdapter(Context context, List<AppModel> apps,
+                             Set<String> timerApps, Set<String> permanentApps,
+                             SleepModeManager sleepModeManager, boolean isSleepMode) {
         this.context = context;
         this.inflater = LayoutInflater.from(context);
         this.restrictionMode = false;
         this.sleepMode = true;
+        this.sleepModeManager = sleepModeManager;
         this.restrictionTypeMap = new HashMap<>();
         this.freezeTypeMap = new HashMap<>();
+        this.freezeMethodMap = new HashMap<>();
         this.manualOpsMaskMap = new HashMap<>();
         this.manualBucketMap = new HashMap<>();
 
@@ -83,6 +93,9 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             } else if (timerApps.contains(pkg)) {
                 app.setSelected(true);
                 freezeTypeMap.put(pkg, SleepModeManager.FreezeType.TIMER);
+            }
+            if (sleepModeManager != null) {
+                freezeMethodMap.put(pkg, sleepModeManager.getFreezeMethod(pkg));
             }
         }
 
@@ -139,6 +152,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         this.sleepMode = sleepMode;
         this.restrictionTypeMap = new HashMap<>();
         this.freezeTypeMap = new HashMap<>();
+        this.freezeMethodMap = new HashMap<>();
         this.manualOpsMaskMap = new HashMap<>();
         this.manualBucketMap = new HashMap<>();
 
@@ -220,6 +234,10 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             }
         }
         return result;
+    }
+
+    public Map<String, SleepModeManager.FreezeMethod> getFreezeMethodMap() {
+        return new HashMap<>(freezeMethodMap);
     }
 
     public Set<String> getMediumRestrictedPackages() {
@@ -434,6 +452,9 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
     private void showFreezeTypeDialog(AppModel app, TextView chipView) {
         SleepModeManager.FreezeType current = freezeTypeMap.getOrDefault(
                 app.getPackageName(), SleepModeManager.FreezeType.TIMER);
+        SleepModeManager.FreezeMethod currentMethod = freezeMethodMap.getOrDefault(
+                app.getPackageName(), SleepModeManager.FreezeMethod.DISABLE);
+        boolean isSystem = app.isSystemApp();
 
         android.widget.LinearLayout container = new android.widget.LinearLayout(context);
         container.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -442,6 +463,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         android.widget.RadioGroup radioGroup = new android.widget.RadioGroup(context);
         radioGroup.setOrientation(android.widget.RadioGroup.VERTICAL);
         int paddingH = (int) (context.getResources().getDisplayMetrics().density * 24);
+        int methodPaddingH = (int) (context.getResources().getDisplayMetrics().density * 48);
 
         android.widget.RadioButton timerBtn = new android.widget.RadioButton(context);
         timerBtn.setId(View.generateViewId());
@@ -449,6 +471,23 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         timerBtn.setPadding(paddingH, 24, paddingH, 24);
         timerBtn.setChecked(current == SleepModeManager.FreezeType.TIMER);
         radioGroup.addView(timerBtn);
+
+        android.widget.RadioGroup timerMethodGroup = new android.widget.RadioGroup(context);
+        timerMethodGroup.setOrientation(android.widget.RadioGroup.VERTICAL);
+
+        android.widget.RadioButton timerSuspendBtn = new android.widget.RadioButton(context);
+        timerSuspendBtn.setId(View.generateViewId());
+        timerSuspendBtn.setText("pm suspend");
+        timerSuspendBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        timerMethodGroup.addView(timerSuspendBtn);
+
+        android.widget.RadioButton timerDisableBtn = new android.widget.RadioButton(context);
+        timerDisableBtn.setId(View.generateViewId());
+        timerDisableBtn.setText("pm disable");
+        timerDisableBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        timerMethodGroup.addView(timerDisableBtn);
+
+        radioGroup.addView(timerMethodGroup);
 
         radioGroup.addView(makeDivider(paddingH));
 
@@ -459,6 +498,48 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         permanentBtn.setChecked(current == SleepModeManager.FreezeType.PERMANENT);
         radioGroup.addView(permanentBtn);
 
+        android.widget.RadioGroup permanentMethodGroup = new android.widget.RadioGroup(context);
+        permanentMethodGroup.setOrientation(android.widget.RadioGroup.VERTICAL);
+
+        android.widget.RadioButton permanentSuspendBtn = new android.widget.RadioButton(context);
+        permanentSuspendBtn.setId(View.generateViewId());
+        permanentSuspendBtn.setText("pm suspend");
+        permanentSuspendBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        permanentMethodGroup.addView(permanentSuspendBtn);
+
+        android.widget.RadioButton permanentDisableBtn = new android.widget.RadioButton(context);
+        permanentDisableBtn.setId(View.generateViewId());
+        permanentDisableBtn.setText("pm disable");
+        permanentDisableBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        permanentMethodGroup.addView(permanentDisableBtn);
+
+        radioGroup.addView(permanentMethodGroup);
+
+        if (isSystem) {
+            timerDisableBtn.setEnabled(false);
+            permanentDisableBtn.setEnabled(false);
+            timerSuspendBtn.setChecked(true);
+            permanentSuspendBtn.setChecked(true);
+        } else if (currentMethod == SleepModeManager.FreezeMethod.SUSPEND) {
+            timerSuspendBtn.setChecked(true);
+            permanentSuspendBtn.setChecked(true);
+        } else {
+            timerDisableBtn.setChecked(true);
+            permanentDisableBtn.setChecked(true);
+        }
+
+        timerMethodGroup.setVisibility(current == SleepModeManager.FreezeType.TIMER ? View.VISIBLE : View.GONE);
+        permanentMethodGroup.setVisibility(current == SleepModeManager.FreezeType.PERMANENT ? View.VISIBLE : View.GONE);
+
+        timerBtn.setOnClickListener(v -> {
+            timerMethodGroup.setVisibility(View.VISIBLE);
+            permanentMethodGroup.setVisibility(View.GONE);
+        });
+        permanentBtn.setOnClickListener(v -> {
+            permanentMethodGroup.setVisibility(View.VISIBLE);
+            timerMethodGroup.setVisibility(View.GONE);
+        });
+
         container.addView(radioGroup);
 
         new MaterialAlertDialogBuilder(context)
@@ -466,11 +547,18 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
                 .setView(container)
                 .setNegativeButton(context.getString(R.string.dialog_cancel), null)
                 .setPositiveButton(context.getString(R.string.dialog_apply), (dialog, which) -> {
-                    SleepModeManager.FreezeType chosen = permanentBtn.isChecked()
+                    SleepModeManager.FreezeType chosenType = permanentBtn.isChecked()
                             ? SleepModeManager.FreezeType.PERMANENT
                             : SleepModeManager.FreezeType.TIMER;
-                    freezeTypeMap.put(app.getPackageName(), chosen);
-                    chipView.setText(badgeLabelFreeze(chosen));
+                    boolean suspendChosen = chosenType == SleepModeManager.FreezeType.PERMANENT
+                            ? permanentSuspendBtn.isChecked()
+                            : timerSuspendBtn.isChecked();
+                    SleepModeManager.FreezeMethod chosenMethod = (isSystem || suspendChosen)
+                            ? SleepModeManager.FreezeMethod.SUSPEND
+                            : SleepModeManager.FreezeMethod.DISABLE;
+                    freezeTypeMap.put(app.getPackageName(), chosenType);
+                    freezeMethodMap.put(app.getPackageName(), chosenMethod);
+                    chipView.setText(badgeLabelFreeze(chosenType));
                     notifySelectionChanged();
                 })
                 .show();
@@ -480,6 +568,10 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
                     android.content.res.ColorStateList.valueOf(accentColor);
             timerBtn.setButtonTintList(tint);
             permanentBtn.setButtonTintList(tint);
+            timerSuspendBtn.setButtonTintList(tint);
+            timerDisableBtn.setButtonTintList(tint);
+            permanentSuspendBtn.setButtonTintList(tint);
+            permanentDisableBtn.setButtonTintList(tint);
         }
     }
 

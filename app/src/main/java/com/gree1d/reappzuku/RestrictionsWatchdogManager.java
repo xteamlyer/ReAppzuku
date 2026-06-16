@@ -179,8 +179,9 @@ public class RestrictionsWatchdogManager {
             String userBlock = userBlockMatcher.group();
 
             boolean isSystem = sleepModeManager.isSystemPackage(pkg);
+            SleepModeManager.FreezeMethod method = sleepModeManager.getFreezeMethod(pkg);
             boolean drifted;
-            if (isSystem) {
+            if (method == SleepModeManager.FreezeMethod.SUSPEND) {
                 Matcher suspendedMatcher = SLEEP_SUSPENDED.matcher(userBlock);
                 drifted = !suspendedMatcher.find() || !"true".equals(suspendedMatcher.group(1));
             } else {
@@ -194,7 +195,7 @@ public class RestrictionsWatchdogManager {
 
             Log.w(TAG, "watchdog sleep-mode drift: " + pkg + " isSystem=" + isSystem);
             boolean ok = sleepModeManager.reapplyPermanentFreeze(pkg);
-            SleepModeLogManager.logFreeze(context, pkg, ok, "WatchDog Repair");
+            SleepModeLogManager.logFreeze(context, pkg, ok, "WatchDog Repair", method);
         }
     }
 
