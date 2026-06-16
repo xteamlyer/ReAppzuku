@@ -26,6 +26,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import android.widget.PopupMenu;
@@ -1042,9 +1043,15 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
         int paddingV = (int) (16 * getResources().getDisplayMetrics().density);
         textView.setPadding(paddingH, paddingV, paddingH, paddingV);
 
-        ScrollView scrollView = new ScrollView(this);
+        int maxHeightPx = (int) (400 * getResources().getDisplayMetrics().density);
+        ScrollView scrollView = new ScrollView(this) {
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                int heightSpec = MeasureSpec.makeMeasureSpec(maxHeightPx, MeasureSpec.AT_MOST);
+                super.onMeasure(widthMeasureSpec, heightSpec);
+            }
+        };
         scrollView.addView(textView);
-        scrollView.setMaxHeight((int) (400 * getResources().getDisplayMetrics().density));
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.special_thanks_title))
