@@ -76,5 +76,6 @@ public final class PreferenceKeys {
     public static final String KEY_SLEEP_MODE_APPS_PERMANENT = "sleep_mode_apps_permanent";
     public static final String KEY_SLEEP_MODE_DELAY = "sleepModeDelay";
     public static final String KEY_SLEEP_MODE_APPS_FROZEN = "sleep_mode_apps_frozen";
+    public static final String KEY_SLEEP_MODE_APPS_SUSPEND_METHOD = "sleep_mode_apps_suspend_method";
 
 }
