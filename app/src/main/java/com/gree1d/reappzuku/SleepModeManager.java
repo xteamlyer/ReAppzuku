@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -84,12 +85,16 @@ public class SleepModeManager {
     public void setFreezeMethod(String packageName, FreezeMethod method) {
         if (isSystemPackage(packageName) || systemPackages.contains(packageName)) return;
         Set<String> suspendApps = getSuspendMethodApps();
+        applyMethodToSet(suspendApps, packageName, method);
+        sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_SUSPEND_METHOD, suspendApps).apply();
+    }
+
+    private void applyMethodToSet(Set<String> suspendApps, String packageName, FreezeMethod method) {
         if (method == FreezeMethod.SUSPEND) {
             suspendApps.add(packageName);
         } else {
             suspendApps.remove(packageName);
         }
-        sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_SUSPEND_METHOD, suspendApps).apply();
     }
 
     private void markFrozen(String packageName) {
@@ -118,15 +123,21 @@ public class SleepModeManager {
     }
 
     private boolean freezeApp(String packageName) {
-        FreezeMethod method = getFreezeMethod(packageName);
+        return freezeAppWithMethod(packageName, getFreezeMethod(packageName));
+    }
+
+    private boolean unfreezeApp(String packageName) {
+        return unfreezeAppWithMethod(packageName, getFreezeMethod(packageName));
+    }
+
+    private boolean freezeAppWithMethod(String packageName, FreezeMethod method) {
         if (method == FreezeMethod.SUSPEND) {
             return shellManager.runShellCommandBlocking("pm suspend --user 0 " + packageName);
         }
         return shellManager.runShellCommandBlocking("pm disable-user --user 0 " + packageName);
     }
 
-    private boolean unfreezeApp(String packageName) {
-        FreezeMethod method = getFreezeMethod(packageName);
+    private boolean unfreezeAppWithMethod(String packageName, FreezeMethod method) {
         if (method == FreezeMethod.SUSPEND) {
             return shellManager.runShellCommandBlocking("pm unsuspend --user 0 " + packageName);
         }
@@ -134,15 +145,33 @@ public class SleepModeManager {
     }
 
     public void saveSleepModeApps(Set<String> timerPackages, Set<String> permanentPackages,
-            Runnable onComplete) {
+            Map<String, FreezeMethod> newMethods, Runnable onComplete) {
         Set<String> previousPermanent = getPermanentFreezeApps();
-
         Set<String> previousTimer = getSleepModeApps();
+        Set<String> previousFrozenTimer = getFrozenTimerApps();
+
+        Map<String, FreezeMethod> oldMethods = new java.util.HashMap<>();
+        Set<String> allTouched = new HashSet<>();
+        allTouched.addAll(previousPermanent);
+        allTouched.addAll(previousTimer);
+        allTouched.addAll(permanentPackages);
+        allTouched.addAll(timerPackages);
+        for (String packageName : allTouched) {
+            oldMethods.put(packageName, getFreezeMethod(packageName));
+        }
 
         sharedpreferences.edit()
                 .putStringSet(KEY_SLEEP_MODE_APPS, new HashSet<>(timerPackages))
                 .putStringSet(KEY_SLEEP_MODE_APPS_PERMANENT, new HashSet<>(permanentPackages))
                 .apply();
+
+        if (newMethods != null) {
+            Set<String> suspendApps = getSuspendMethodApps();
+            for (Map.Entry<String, FreezeMethod> entry : newMethods.entrySet()) {
+                applyMethodToSet(suspendApps, entry.getKey(), entry.getValue());
+            }
+            sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_SUSPEND_METHOD, suspendApps).apply();
+        }
 
         Set<String> removedFromTimer = new HashSet<>(previousTimer);
         removedFromTimer.removeAll(timerPackages);
@@ -152,30 +181,43 @@ public class SleepModeManager {
             sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_FROZEN, frozen).apply();
         }
 
-        Set<String> toFreeze = new HashSet<>(permanentPackages);
-        toFreeze.removeAll(previousPermanent);
-
-        Set<String> toUnfreeze = new HashSet<>(previousPermanent);
-        toUnfreeze.removeAll(permanentPackages);
-
-        if (toFreeze.isEmpty() && toUnfreeze.isEmpty()) {
-            if (onComplete != null) handler.post(onComplete);
-            return;
-        }
-
+        Map<String, FreezeMethod> finalOldMethods = oldMethods;
         executor.execute(() -> {
-            for (String packageName : toFreeze) {
-                FreezeMethod method = getFreezeMethod(packageName);
-                boolean ok = freezeApp(packageName);
-                SleepModeLogManager.logFreeze(context, packageName, ok, method);
-            }
-            for (String packageName : toUnfreeze) {
-                FreezeMethod method = getFreezeMethod(packageName);
-                boolean ok = unfreezeApp(packageName);
-                SleepModeLogManager.logUnfreeze(context, packageName, ok, method);
+            for (String packageName : allTouched) {
+                FreezeType oldType = previousPermanent.contains(packageName) ? FreezeType.PERMANENT
+                        : previousTimer.contains(packageName) ? FreezeType.TIMER : null;
+                FreezeType newType = permanentPackages.contains(packageName) ? FreezeType.PERMANENT
+                        : timerPackages.contains(packageName) ? FreezeType.TIMER : null;
+                FreezeMethod oldMethod = finalOldMethods.get(packageName);
+                FreezeMethod newMethod = getFreezeMethod(packageName);
+
+                boolean wasPhysicallyFrozen = oldType == FreezeType.PERMANENT
+                        || (oldType == FreezeType.TIMER && previousFrozenTimer.contains(packageName));
+                boolean shouldBePhysicallyFrozen = newType == FreezeType.PERMANENT;
+
+                if (!wasPhysicallyFrozen && !shouldBePhysicallyFrozen) continue;
+
+                boolean methodChanged = oldMethod != newMethod;
+                boolean needsUnfreeze = wasPhysicallyFrozen && (!shouldBePhysicallyFrozen || methodChanged);
+                boolean needsFreeze = shouldBePhysicallyFrozen && (!wasPhysicallyFrozen || methodChanged);
+
+                if (needsUnfreeze) {
+                    boolean ok = unfreezeAppWithMethod(packageName, oldMethod);
+                    SleepModeLogManager.logUnfreeze(context, packageName, ok, oldMethod);
+                    if (oldType == FreezeType.TIMER) markUnfrozen(packageName);
+                }
+                if (needsFreeze) {
+                    boolean ok = freezeAppWithMethod(packageName, newMethod);
+                    SleepModeLogManager.logFreeze(context, packageName, ok, newMethod);
+                }
             }
             if (onComplete != null) handler.post(onComplete);
         });
+    }
+
+    public void saveSleepModeApps(Set<String> timerPackages, Set<String> permanentPackages,
+            Runnable onComplete) {
+        saveSleepModeApps(timerPackages, permanentPackages, null, onComplete);
     }
 
     public void saveSleepModeApps(Set<String> packages) {

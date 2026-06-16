@@ -1137,13 +1137,10 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setText(getString(R.string.dialog_apply)));
 
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                Map<String, SleepModeManager.FreezeMethod> methodMap = filterAdapter.getFreezeMethodMap();
-                for (Map.Entry<String, SleepModeManager.FreezeMethod> entry : methodMap.entrySet()) {
-                    sleepModeManager.setFreezeMethod(entry.getKey(), entry.getValue());
-                }
                 sleepModeManager.saveSleepModeApps(
                         filterAdapter.getTimerPackages(),
                         filterAdapter.getPermanentPackages(),
+                        filterAdapter.getFreezeMethodMap(),
                         null);
                 dialog.dismiss();
             });
