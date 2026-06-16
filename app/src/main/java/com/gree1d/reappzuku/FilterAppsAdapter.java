@@ -463,7 +463,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         android.widget.RadioGroup radioGroup = new android.widget.RadioGroup(context);
         radioGroup.setOrientation(android.widget.RadioGroup.VERTICAL);
         int paddingH = (int) (context.getResources().getDisplayMetrics().density * 24);
-        int methodPaddingH = (int) (context.getResources().getDisplayMetrics().density * 48);
+        int methodIndent = (int) (context.getResources().getDisplayMetrics().density * 16);
 
         android.widget.RadioButton timerBtn = new android.widget.RadioButton(context);
         timerBtn.setId(View.generateViewId());
@@ -478,16 +478,20 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         android.widget.RadioButton timerSuspendBtn = new android.widget.RadioButton(context);
         timerSuspendBtn.setId(View.generateViewId());
         timerSuspendBtn.setText("pm suspend");
-        timerSuspendBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        timerSuspendBtn.setPadding(paddingH, 12, paddingH, 12);
         timerMethodGroup.addView(timerSuspendBtn);
 
         android.widget.RadioButton timerDisableBtn = new android.widget.RadioButton(context);
         timerDisableBtn.setId(View.generateViewId());
         timerDisableBtn.setText("pm disable");
-        timerDisableBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        timerDisableBtn.setPadding(paddingH, 12, paddingH, 12);
         timerMethodGroup.addView(timerDisableBtn);
 
-        radioGroup.addView(timerMethodGroup);
+        android.widget.RadioGroup.LayoutParams timerMethodGroupParams =
+                new android.widget.RadioGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        timerMethodGroupParams.setMarginStart(paddingH + methodIndent);
+        radioGroup.addView(timerMethodGroup, timerMethodGroupParams);
 
         radioGroup.addView(makeDivider(paddingH));
 
@@ -504,38 +508,43 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         android.widget.RadioButton permanentSuspendBtn = new android.widget.RadioButton(context);
         permanentSuspendBtn.setId(View.generateViewId());
         permanentSuspendBtn.setText("pm suspend");
-        permanentSuspendBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        permanentSuspendBtn.setPadding(paddingH, 12, paddingH, 12);
         permanentMethodGroup.addView(permanentSuspendBtn);
 
         android.widget.RadioButton permanentDisableBtn = new android.widget.RadioButton(context);
         permanentDisableBtn.setId(View.generateViewId());
         permanentDisableBtn.setText("pm disable");
-        permanentDisableBtn.setPadding(methodPaddingH, 16, paddingH, 16);
+        permanentDisableBtn.setPadding(paddingH, 12, paddingH, 12);
         permanentMethodGroup.addView(permanentDisableBtn);
 
-        radioGroup.addView(permanentMethodGroup);
+        android.widget.RadioGroup.LayoutParams permanentMethodGroupParams =
+                new android.widget.RadioGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        permanentMethodGroupParams.setMarginStart(paddingH + methodIndent);
+        radioGroup.addView(permanentMethodGroup, permanentMethodGroupParams);
 
         if (isSystem) {
-            timerDisableBtn.setEnabled(false);
-            permanentDisableBtn.setEnabled(false);
-            timerSuspendBtn.setChecked(true);
-            permanentSuspendBtn.setChecked(true);
-        } else if (currentMethod == SleepModeManager.FreezeMethod.SUSPEND) {
-            timerSuspendBtn.setChecked(true);
-            permanentSuspendBtn.setChecked(true);
+            timerMethodGroup.setVisibility(View.GONE);
+            permanentMethodGroup.setVisibility(View.GONE);
         } else {
-            timerDisableBtn.setChecked(true);
-            permanentDisableBtn.setChecked(true);
+            if (currentMethod == SleepModeManager.FreezeMethod.SUSPEND) {
+                timerSuspendBtn.setChecked(true);
+                permanentSuspendBtn.setChecked(true);
+            } else {
+                timerDisableBtn.setChecked(true);
+                permanentDisableBtn.setChecked(true);
+            }
+            timerMethodGroup.setVisibility(current == SleepModeManager.FreezeType.TIMER ? View.VISIBLE : View.GONE);
+            permanentMethodGroup.setVisibility(current == SleepModeManager.FreezeType.PERMANENT ? View.VISIBLE : View.GONE);
         }
 
-        timerMethodGroup.setVisibility(current == SleepModeManager.FreezeType.TIMER ? View.VISIBLE : View.GONE);
-        permanentMethodGroup.setVisibility(current == SleepModeManager.FreezeType.PERMANENT ? View.VISIBLE : View.GONE);
-
         timerBtn.setOnClickListener(v -> {
+            if (isSystem) return;
             timerMethodGroup.setVisibility(View.VISIBLE);
             permanentMethodGroup.setVisibility(View.GONE);
         });
         permanentBtn.setOnClickListener(v -> {
+            if (isSystem) return;
             permanentMethodGroup.setVisibility(View.VISIBLE);
             timerMethodGroup.setVisibility(View.GONE);
         });
