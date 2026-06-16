@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">ReAppzuku</string>
+    <string name="special_thanks_title">Особые благодарности</string>
+    <string name="special_thanks_desc">Пользователи, которые внесли свой вклад в развитие ReAppzuku:</string>
 
     <!-- ══════════════════════════════════════════════
          ПЛИТКИ БЫСТРЫХ НАСТРОЕК И ЯРЛЫКИ
