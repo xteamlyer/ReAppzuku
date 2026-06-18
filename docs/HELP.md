@@ -691,7 +691,7 @@ Adds small 1x1 desktop shortcut showing real-time RAM usage in percent and GB.\
 Tapping shortcut triggers instant Auto-Kill based on current settings and clears RAM.
 
 > [!TIP]
-> RAM clears anyway, whether apps were closed during Auto-Kill or not. Command am send-trim-memory is used for clearing.
+> RAM clears anyway, whether apps were closed during Auto-Kill or not. To clear RAM using am send-trim-memory command. Only whitelist and application persistent are unaffected.
 
 ---
 
