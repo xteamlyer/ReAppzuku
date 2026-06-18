@@ -687,7 +687,11 @@ Save preset to JSON file or restore it from a backup file. To apply changes, cli
 Resets all current settings on screen back to their default values (taken from the app's main settings). **Changes are not applied** until "Save" is pressed — you can simply leave the screen without saving, and the reset will not affect the already-saved preset.
 
 **RAM Kill Shortcut**\
-Adds small 1x1 shortcut to home screen. Tapping shortcut launches Auto-Kill according to current list (black or white). Additionally performs RAM cleanup from active apps, but excludes whitelist, protected and persistent system apps.
+Adds small 1x1 desktop shortcut showing real-time RAM usage in percent and GB.\
+Tapping shortcut triggers instant Auto-Kill based on current settings and clears RAM.
+
+> [!TIP]
+> RAM clears anyway, whether apps were closed during Auto-Kill or not. Command am send-trim-memory is used for clearing.
 
 ---
 
@@ -837,7 +841,7 @@ Manually re-applies all saved restrictions. After reboot this happens **automati
 🔙[Table of Contents](#table-of-contents)
 
 Schedule when restrictions should be lifted and restored for specific apps.
-> [!NOTE]
+> [!IMPORTANT]
 > Only apps with an active **Background Restriction** (Soft / Medium/ Hard / Manual) appear here.
 > Apps with scheduled entry show 🕐 icon with scheduled time.
 
@@ -860,6 +864,9 @@ Action to take when restrictions are lifted:
 
 > [!NOTE]
 > Scheduled entries are limited to 15 apps to protect ReAppzuku itself.
+
+> [!IMPORTANT]
+> Scheduler protect apps only from **temporary** freeze type.
 
 ---
 
