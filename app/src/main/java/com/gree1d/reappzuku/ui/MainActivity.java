@@ -60,6 +60,9 @@ import com.gree1d.reappzuku.manager.BackgroundAppManager;
 import com.gree1d.reappzuku.manager.AutoKillManager;
 import com.gree1d.reappzuku.manager.RamMonitor;
 import com.gree1d.reappzuku.manager.CpuMonitor;
+import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
+import com.gree1d.reappzuku.core.BaseActivity;
+
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
