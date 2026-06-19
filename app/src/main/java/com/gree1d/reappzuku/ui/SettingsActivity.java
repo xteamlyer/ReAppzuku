@@ -71,7 +71,7 @@ import com.gree1d.reappzuku.utils.AppModel;
 import com.gree1d.reappzuku.manager.BackgroundAppManager;
 import com.gree1d.reappzuku.manager.AutoKillManager;
 import com.gree1d.reappzuku.manager.SleepModeManager;
-import com.gree1d.reappzuku.manager.BackupManager;
+import com.gree1d.reappzuku.core.BackupManager;
 import com.gree1d.reappzuku.manager.RestrictionsScheduler;
 import com.gree1d.reappzuku.manager.AdditionalScenariosManager;
 import com.gree1d.reappzuku.manager.RamKillShortcutManager;
