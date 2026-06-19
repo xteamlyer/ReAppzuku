@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.core.BaseActivity;
 import com.gree1d.reappzuku.manager.BatteryStatsManager;
 
 import androidx.appcompat.app.AppCompatActivity;
