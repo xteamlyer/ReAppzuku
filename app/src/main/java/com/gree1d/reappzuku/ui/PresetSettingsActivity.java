@@ -51,6 +51,7 @@ import com.gree1d.reappzuku.utils.PresetModel;
 import com.gree1d.reappzuku.manager.BackgroundAppManager;
 import com.gree1d.reappzuku.manager.AutoKillManager;
 import com.gree1d.reappzuku.manager.PresetManager;
+import com.gree1d.reappzuku.core.BaseActivity;
 
 import static com.gree1d.reappzuku.core.AppConstants.*;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
