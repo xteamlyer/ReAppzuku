@@ -24,6 +24,7 @@ import java.util.Set;
 
 import com.gree1d.reappzuku.utils.AppModel;
 import com.gree1d.reappzuku.manager.SleepModeManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
 
 public class FilterAppsAdapter extends BaseAdapter implements Filterable {
 
