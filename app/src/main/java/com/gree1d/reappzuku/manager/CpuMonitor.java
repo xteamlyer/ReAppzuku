@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.utils.AppModel;
+
 public class CpuMonitor {
 
     private static final String TAG = "CpuMonitor";

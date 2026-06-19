@@ -16,6 +16,10 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.utils.AppModel;
+import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
+
 public class ScanSystem {
 
     private static final String TAG = "ScanSystem";
