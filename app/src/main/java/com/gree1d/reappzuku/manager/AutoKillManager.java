@@ -24,6 +24,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.utils.AppModel;
+
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 

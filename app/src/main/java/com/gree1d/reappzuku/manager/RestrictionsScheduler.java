@@ -27,6 +27,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+import com.gree1d.reappzuku.core.ShellManager;
+
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
 

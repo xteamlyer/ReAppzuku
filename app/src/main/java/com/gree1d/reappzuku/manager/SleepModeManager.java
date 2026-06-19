@@ -16,8 +16,11 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.utils.AppModel;
+
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
-import com.gree1d.reappzuku.manager.utils.SleepModeLogManager;
+import com.gree1d.reappzuku.utils.SleepModeLogManager;
 
 public class SleepModeManager {
     private static final String TAG = "SleepModeManager";
