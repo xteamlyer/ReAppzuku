@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.gree1d.reappzuku.utils.AppModel;
+import com.gree1d.reappzuku.manager.SleepModeManager;
+
 public class FilterAppsAdapter extends BaseAdapter implements Filterable {
 
     public interface OnSelectionChangedListener {
