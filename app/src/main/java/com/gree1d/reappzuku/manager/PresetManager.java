@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 import com.gree1d.reappzuku.manager.AdditionalScenariosManager;
+import com.gree1d.reappzuku.service.AutoKillWorker;
 
 import org.json.JSONException;
 import org.json.JSONObject;
