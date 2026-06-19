@@ -3,7 +3,7 @@ package com.gree1d.reappzuku.utils.triggers;
 import android.content.Context;
 import android.util.Log;
 
-import com.gree1d.reappzuku.triggers.AppTriggersAnalyzer.TriggerInfo;
+import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer.TriggerInfo;
 
 import java.util.ArrayList;
 import java.util.List;
