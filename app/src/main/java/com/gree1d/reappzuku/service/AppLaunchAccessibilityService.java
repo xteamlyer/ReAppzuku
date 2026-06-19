@@ -19,6 +19,9 @@ import java.util.concurrent.Executors;
 
 import com.gree1d.reappzuku.core.ShellManager;
 import com.gree1d.reappzuku.manager.AutoKillManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
+import com.gree1d.reappzuku.manager.PresetManager;
+import com.gree1d.reappzuku.core.ProtectedApps;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
