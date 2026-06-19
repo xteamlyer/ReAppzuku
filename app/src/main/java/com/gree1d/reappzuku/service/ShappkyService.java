@@ -25,6 +25,16 @@ import java.util.concurrent.Executors;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
+import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
+import com.gree1d.reappzuku.manager.AutoKillManager;
+import com.gree1d.reappzuku.manager.SleepModeManager;
+import com.gree1d.reappzuku.manager.BatteryStatsManager;
+import com.gree1d.reappzuku.manager.RestrictionsScheduler;
+import com.gree1d.reappzuku.manager.RestrictionsWatchdogManager;
+import com.gree1d.reappzuku.manager.AdditionalScenariosManager;
+import com.gree1d.reappzuku.manager.RamKillShortcutManager;
+
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 
