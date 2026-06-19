@@ -7,14 +7,14 @@
     android:padding="20dp">
 
     <view
-        class="com.gree1d.reappzuku.ColorPickerDialog$HueSaturationView"
+        class="com.gree1d.reappzuku.ui.ColorPickerDialog$HueSaturationView"
         android:id="@+id/color_picker_hsv"
         android:layout_width="match_parent"
         android:layout_height="220dp"
         android:layout_marginBottom="16dp" />
 
     <view
-        class="com.gree1d.reappzuku.ColorPickerDialog$HueBarView"
+        class="com.gree1d.reappzuku.ui.ColorPickerDialog$HueBarView"
         android:id="@+id/color_picker_hue"
         android:layout_width="match_parent"
         android:layout_height="32dp"
