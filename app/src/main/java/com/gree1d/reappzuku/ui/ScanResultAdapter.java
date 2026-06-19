@@ -18,6 +18,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.gree1d.reappzuku.manager.ScanSystem;
+
 public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.ViewHolder> {
 
     private final Context                  context;
