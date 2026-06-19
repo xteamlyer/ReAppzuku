@@ -8,6 +8,8 @@ import org.json.JSONObject;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.gree1d.reappzuku.manager.PresetManager;
+import com.gree1d.reappzuku.utils.PresetModel;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
 public class BackupManager {
