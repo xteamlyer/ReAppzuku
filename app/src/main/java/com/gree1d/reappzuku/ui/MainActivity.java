@@ -50,6 +50,8 @@ import android.widget.CheckBox;
 
 import rikka.shizuku.Shizuku;
 
+import com.gree1d.reappzuku.utils.AppModel;
+
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 

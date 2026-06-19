@@ -46,6 +46,10 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
+import com.gree1d.reappzuku.manager.BatteryStatsManager;
+
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 
