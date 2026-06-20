@@ -25,6 +25,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import com.gree1d.reappzuku.R;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
