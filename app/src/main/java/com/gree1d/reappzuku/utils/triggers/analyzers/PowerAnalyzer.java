@@ -436,7 +436,7 @@ public class PowerAnalyzer {
         Pattern pwrP = Pattern.compile("Uid\\s+u0a\\d+:\\s*([\\d.]+)(?:\\s*mAh)?", Pattern.CASE_INSENSITIVE);
 
         boolean inPowerSection = false;
-        String  uid = analyzer.analyzer.getCachedUid();
+        String  uid = analyzer.getCachedUid();
 
         for (String line : output.split("\n")) {
             try {
@@ -477,7 +477,7 @@ public class PowerAnalyzer {
         if (powerMah >= 0)
             detail.append(String.format("%.2f mAh", powerMah));
         if (wlCnt  > 0) { if(detail.length()>0) detail.append(", ");
-            detail.append(analyzer.getContext().getString(R.string.triggers_batterystats_wakelock, wlCnt, analyzer.analyzer.formatDuration(wlMs))); }
+            detail.append(analyzer.getContext().getString(R.string.triggers_batterystats_wakelock, wlCnt, analyzer.formatDuration(wlMs))); }
         if (alarms > 0) { if(detail.length()>0) detail.append(", ");
             detail.append(analyzer.getContext().getString(R.string.triggers_batterystats_alarms, alarms)); }
         if (jobs   > 0) { if(detail.length()>0) detail.append(", ");

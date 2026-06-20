@@ -30,7 +30,7 @@ public class DozeOpsAnalyzer {
         String output = analyzer.getShellManager().runShellCommandAndGetFullOutput(
                 "dumpsys deviceidle | grep -E 'whitelist|except|power-save|restricted|exemption'");
         if (output == null || output.trim().isEmpty()) {
-            if (analyzer.analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES)
+            if (analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES)
                 return analyzeDozeExemptionFallback(packageName);
             return list;
         }
@@ -48,12 +48,12 @@ public class DozeOpsAnalyzer {
             break;
         }
 
-        if (list.isEmpty() && analyzer.analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES)
+        if (list.isEmpty() && analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES)
             list.addAll(analyzeDozeExemptionFallback(packageName));
 
         if (list.isEmpty()
-                && analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.R
-                && analyzer.analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
+                && analyzer.apiLevel >= android.os.Build.VERSION_CODES.R
+                && analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
             list.addAll(analyzeDozeStateFallback(packageName));
         }
 
@@ -140,7 +140,7 @@ public class DozeOpsAnalyzer {
         String output = analyzer.getShellManager().runShellCommandAndGetFullOutput(
                 "am get-standby-bucket " + packageName);
         if (output == null || output.trim().isEmpty()) {
-            if (analyzer.analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES)
+            if (analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES)
                 output = getStandbyBucketFallback(packageName);
         }
         if (output == null || output.trim().isEmpty()) return list;
@@ -153,7 +153,7 @@ public class DozeOpsAnalyzer {
         }
         if (bv == -1) return list;
 
-        String currentName = analyzer.analyzer.bucketValueToName(bv);
+        String currentName = analyzer.bucketValueToName(bv);
 
 
         List<String> history = new ArrayList<>();
@@ -173,7 +173,7 @@ public class DozeOpsAnalyzer {
 
                         Matcher mB = bPat.matcher(line);
                         if (!mB.find()) continue;
-                        String bn = analyzer.analyzer.bucketValueToName(Integer.parseInt(mB.group(1)));
+                        String bn = analyzer.bucketValueToName(Integer.parseInt(mB.group(1)));
 
                         String reason = "";
                         Matcher mR = rPat.matcher(line);
@@ -189,8 +189,8 @@ public class DozeOpsAnalyzer {
                                 case 0x6: reason="user-forced"; break;
                             }
                             if (main == 0x2
-                                    && analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
-                                    && analyzer.analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                    && analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
+                                    && analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
                                 int sub = reasonHex & 0xFF;
                                 switch (sub) {
                                     case 0x01: reason += "(8d inactive)";  break;
@@ -238,8 +238,8 @@ public class DozeOpsAnalyzer {
                 analyzer.getContext().getString(R.string.triggers_cat_bucket), detail, expl, sev));
 
         if (bv > 40
-                && analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
-                && analyzer.analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
+                && analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
+                && analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
             list.addAll(analyzeRestrictedBucketEffects(packageName, bv));
         }
 
@@ -376,8 +376,8 @@ public class DozeOpsAnalyzer {
             if (hasRunAny && hasRun)
                 list.removeIf(i -> i.detail != null && i.detail.startsWith("RUN_IN_BACKGROUND ·"));
 
-            if (analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.R
-                    && analyzer.analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (analyzer.apiLevel >= android.os.Build.VERSION_CODES.R
+                    && analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
                 list.addAll(analyzeRestrictedOps(packageName, out));
             }
 
@@ -433,7 +433,7 @@ public class DozeOpsAnalyzer {
                         TriggerInfo.Severity.MEDIUM));
             }
             if (hasManageMedia
-                    && analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.S) {
+                    && analyzer.apiLevel >= android.os.Build.VERSION_CODES.S) {
                 list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                         analyzer.getContext().getString(R.string.triggers_cat_appops),
                         analyzer.getContext().getString(R.string.trigger_manage_media_label),

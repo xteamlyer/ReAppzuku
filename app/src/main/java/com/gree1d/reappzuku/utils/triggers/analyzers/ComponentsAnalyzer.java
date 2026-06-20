@@ -49,7 +49,7 @@ public class ComponentsAnalyzer {
                 String t = line.trim();
                 if (t.startsWith("Receiver #") || t.startsWith("ReceiverInfo{")) inSection = true;
                 if (inSection && t.startsWith("Action:")) {
-                    String a = analyzer.analyzer.shortenAction(
+                    String a = analyzer.shortenAction(
                             t.replaceFirst("Action:\\s*\"?", "").replace("\"", "").trim());
                     if (!staticActions.contains(a)) staticActions.add(a);
                 }
@@ -79,7 +79,7 @@ public class ComponentsAnalyzer {
                     }
                     if (!inBlock) continue;
 
-                    if (analyzer.analyzer.apiLevel == android.os.Build.VERSION_CODES.TIRAMISU) {
+                    if (analyzer.apiLevel == android.os.Build.VERSION_CODES.TIRAMISU) {
                         if (t.contains("exported=true")) {
                             blockExported = true;
                             exportedDynamicReceivers++;
@@ -87,7 +87,7 @@ public class ComponentsAnalyzer {
                     }
 
                     if (t.startsWith("Action:") || t.startsWith("+ Action:")) {
-                        String a = analyzer.analyzer.shortenAction(
+                        String a = analyzer.shortenAction(
                                 t.replaceFirst("\\+?\\s*Action:\\s*\"?", "").replace("\"", "").trim());
                         if (!a.isEmpty() && !dynamicActions.contains(a)) dynamicActions.add(a);
                     }
@@ -137,7 +137,7 @@ public class ComponentsAnalyzer {
         }
 
         if (exportedDynamicReceivers > 0
-                && analyzer.analyzer.apiLevel == android.os.Build.VERSION_CODES.TIRAMISU) {
+                && analyzer.apiLevel == android.os.Build.VERSION_CODES.TIRAMISU) {
             list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                     analyzer.getContext().getString(R.string.triggers_cat_receivers_dynamic, exportedDynamicReceivers),
                     analyzer.getContext().getString(R.string.triggers_receiver_exported_detail),
@@ -206,7 +206,7 @@ public class ComponentsAnalyzer {
                 analyzer.getContext().getString(R.string.triggers_cat_boot), detail, expl,
                 TriggerInfo.Severity.HIGH));
 
-        if (analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (analyzer.apiLevel >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             list.addAll(analyzeBootFgsRestriction(packageName));
         }
 
@@ -476,7 +476,7 @@ public class ComponentsAnalyzer {
                 ? authority.substring(authority.lastIndexOf('.') + 1) : authority;
         sb.append(auth);
         if (!syncable) sb.append("(off)");
-        if (periodSec > 0) sb.append(" every ").append(analyzer.analyzer.formatInterval(periodSec * 1000L));
+        if (periodSec > 0) sb.append(" every ").append(analyzer.formatInterval(periodSec * 1000L));
         if (lastSucc != null) {
 
             String t = lastSucc.contains(" ") ? lastSucc.substring(lastSucc.indexOf(' ') + 1) : lastSucc;

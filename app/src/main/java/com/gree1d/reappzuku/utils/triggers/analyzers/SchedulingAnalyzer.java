@@ -89,10 +89,10 @@ public class SchedulingAnalyzer {
                 detail.append(analyzer.getContext().getString(R.string.triggers_alarms_normal_count, normalCount));
         }
         if (minTriggerDiff != Long.MAX_VALUE)
-            detail.append(analyzer.getContext().getString(R.string.triggers_alarms_next, analyzer.analyzer.formatInterval(minTriggerDiff)));
+            detail.append(analyzer.getContext().getString(R.string.triggers_alarms_next, analyzer.formatInterval(minTriggerDiff)));
         if (intervalSamples > 0)
             detail.append(analyzer.getContext().getString(R.string.triggers_alarms_avg_interval,
-                    analyzer.analyzer.formatInterval(sumInterval / intervalSamples)));
+                    analyzer.formatInterval(sumInterval / intervalSamples)));
         if (!topAlarmLines.isEmpty())
             detail.append("\nTop: ").append(String.join(", ", topAlarmLines));
 
@@ -126,8 +126,8 @@ public class SchedulingAnalyzer {
             }
         } catch (Exception e) { Log.w(TAG, "alarm cancellation parse failed: " + e.getMessage()); }
 
-        if (analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
-                && analyzer.analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
+        if (analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
+                && analyzer.apiLevel <= android.os.Build.VERSION_CODES.TIRAMISU) {
             list.addAll(dozeOpsAnalyzer.analyzeExactAlarmPermissions(packageName));
         }
 
@@ -155,8 +155,8 @@ public class SchedulingAnalyzer {
         if (shortTag.length() > 40 && shortTag.contains("."))
             shortTag = shortTag.substring(shortTag.lastIndexOf('.') + 1);
         sb.append(" · ").append(shortTag);
-        if (e.fireDiffMs != Long.MAX_VALUE) sb.append(" · in ").append(analyzer.analyzer.formatInterval(e.fireDiffMs));
-        if (e.intervalMs > 0)              sb.append(" · every ").append(analyzer.analyzer.formatInterval(e.intervalMs));
+        if (e.fireDiffMs != Long.MAX_VALUE) sb.append(" · in ").append(analyzer.formatInterval(e.fireDiffMs));
+        if (e.intervalMs > 0)              sb.append(" · every ").append(analyzer.formatInterval(e.intervalMs));
         if (e.exact)                        sb.append(" · exact");
         if (e.whileIdle)                    sb.append(" · while-idle");
         if (e.pendingBroadcast)             sb.append(" · [queued broadcast]");
@@ -172,9 +172,9 @@ public class SchedulingAnalyzer {
         String  lastBlocker  = null;
 
         String uidTag = null;
-        if (analyzer.analyzer.getCachedUid() != null) {
+        if (analyzer.getCachedUid() != null) {
             try {
-                int appId = Integer.parseInt(analyzer.analyzer.getCachedUid()) - 10000;
+                int appId = Integer.parseInt(analyzer.getCachedUid()) - 10000;
                 if (appId >= 0) uidTag = "u0a" + appId + ":";
             } catch (NumberFormatException ignored) {}
         }
@@ -224,7 +224,7 @@ public class SchedulingAnalyzer {
                     Matcher mFree = Pattern.compile("quotaTimeUntilFree=(\\d+)").matcher(t);
                     if (mFree.find()) {
                         long freeMs = Long.parseLong(mFree.group(1));
-                        if (lastBlocker == null) lastBlocker = "quota(free in " + analyzer.analyzer.formatDuration(freeMs) + ")";
+                        if (lastBlocker == null) lastBlocker = "quota(free in " + analyzer.formatDuration(freeMs) + ")";
                     }
                 }
             } catch (Exception e) { Log.w(TAG, "parseAlarmCancellations line failed: " + e.getMessage()); }
@@ -275,15 +275,15 @@ public class SchedulingAnalyzer {
                     if ((inPending || inRunning) && isJobHeader && t.contains(packageName)) {
                         boolean isWmLine = t.contains("androidx.work") || t.contains("WorkManager")
                                 || t.contains("systemjobscheduler");
-                        boolean isUijLine = analyzer.analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES
+                        boolean isUijLine = analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES
                                 && (t.contains("isUserInitiated=true")
                                     || t.contains("userInitiated=true")
                                     || t.contains("RUN_USER_INITIATED_JOBS"));
-                        boolean isExpeditedLine = analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
+                        boolean isExpeditedLine = analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
                                 && (t.contains("EXPEDITED")
                                     || t.contains("isExpedited=true")
                                     || t.contains("isExpedited: true"));
-                        boolean isPrefetchLine = analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
+                        boolean isPrefetchLine = analyzer.apiLevel >= android.os.Build.VERSION_CODES.S
                                 && (t.contains("isPrefetch=true") || t.contains("prefetch=true"));
 
                         if (inPending) {
@@ -357,7 +357,7 @@ public class SchedulingAnalyzer {
             }
         } catch (Exception e) { Log.w(TAG, "analyzeJobs/jobscheduler failed: " + e.getMessage()); }
 
-        if (list.isEmpty() && analyzer.analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES) {
+        if (list.isEmpty() && analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES) {
             List<String> cmdDetails = getJobsFallbackCmdJobscheduler(packageName);
             if (!cmdDetails.isEmpty()) {
                 list.add(new TriggerInfo(TriggerInfo.Group.CAN_WAKE,
@@ -416,10 +416,10 @@ public class SchedulingAnalyzer {
             if (mPeriodHr.group(2) != null) ms += Long.parseLong(mPeriodHr.group(2)) * 3600_000L;
             if (mPeriodHr.group(3) != null) ms += Long.parseLong(mPeriodHr.group(3)) * 60_000L;
             ms += Long.parseLong(mPeriodHr.group(4)) * 1000L;
-            if (ms > 0) parts.add("every " + analyzer.analyzer.formatInterval(ms));
+            if (ms > 0) parts.add("every " + analyzer.formatInterval(ms));
         } else if (mPeriodMs.find()) {
             long ms = Long.parseLong(mPeriodMs.group(1));
-            if (ms > 0) parts.add("every " + analyzer.analyzer.formatInterval(ms));
+            if (ms > 0) parts.add("every " + analyzer.formatInterval(ms));
         }
 
         Matcher mLastRun = Pattern.compile(
@@ -429,14 +429,14 @@ public class SchedulingAnalyzer {
             if (mLastRun.group(2) != null) ms += Long.parseLong(mLastRun.group(2)) * 3600_000L;
             if (mLastRun.group(3) != null) ms += Long.parseLong(mLastRun.group(3)) * 60_000L;
             ms += Long.parseLong(mLastRun.group(4)) * 1000L;
-            if (ms > 0) parts.add("last " + analyzer.analyzer.formatInterval(ms) + " ago");
+            if (ms > 0) parts.add("last " + analyzer.formatInterval(ms) + " ago");
         }
 
 
         Matcher mDL = Pattern.compile("latest-runtime=(\\d+)").matcher(block);
         if (mDL.find()) {
             long diff = Long.parseLong(mDL.group(1)) - android.os.SystemClock.elapsedRealtime();
-            if (diff > 0) parts.add("deadline:" + analyzer.analyzer.formatInterval(diff));
+            if (diff > 0) parts.add("deadline:" + analyzer.formatInterval(diff));
         }
 
 
@@ -591,7 +591,7 @@ public class SchedulingAnalyzer {
                 cls = cls.substring(cls.lastIndexOf('.') + 1);
             sb.append(" → ").append(cls);
         } else if (act != null) {
-            sb.append(" → ").append(analyzer.analyzer.shortenAction(act));
+            sb.append(" → ").append(analyzer.shortenAction(act));
         }
         entries.add(sb.toString());
     }

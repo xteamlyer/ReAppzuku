@@ -56,7 +56,7 @@ public class MiscAnalyzer {
                     if (m.find()) {
                         String caller = m.group(1);
                         if (!caller.equals(packageName) && !caller.equals("android")) {
-                            String name = analyzer.analyzer.resolveAppName(caller);
+                            String name = analyzer.resolveAppName(caller);
                             list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                                     analyzer.getContext().getString(R.string.triggers_cat_chain_launch),
                                     analyzer.getContext().getString(R.string.triggers_chain_direct_detail, name+"("+caller+")"),
@@ -65,7 +65,7 @@ public class MiscAnalyzer {
                         }
                         break;
                     }
-                    if (analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                    if (analyzer.apiLevel >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
                             && line.contains("BackgroundStartPrivileges")
                             && line.contains(packageName)) {
                         Matcher mFgs = BAL_FGS_PAT.matcher(line);
@@ -102,7 +102,7 @@ public class MiscAnalyzer {
                 for (String line : relevant.subList(start, relevant.size())) {
                     Matcher mC = cPat.matcher(line), mA = aPat.matcher(line);
                     String caller = mC.find() ? mC.group(1) : null;
-                    String action = mA.find() ? analyzer.analyzer.shortenAction(mA.group(1)) : "?";
+                    String action = mA.find() ? analyzer.shortenAction(mA.group(1)) : "?";
                     if (caller != null && !caller.equals(packageName)
                             && !caller.equals("android") && !caller.equals("null")
                             && !callers.contains(caller)) {
@@ -111,7 +111,7 @@ public class MiscAnalyzer {
                 }
                 for (int i = 0; i < Math.min(callers.size(), 3); i++) {
                     String pkg  = callers.get(i);
-                    String name = analyzer.analyzer.resolveAppName(pkg);
+                    String name = analyzer.resolveAppName(pkg);
                     list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                             analyzer.getContext().getString(R.string.triggers_cat_chain_launch),
                             analyzer.getContext().getString(R.string.triggers_chain_broadcast_detail, name+"("+pkg+")", actions.get(i)),
@@ -121,7 +121,7 @@ public class MiscAnalyzer {
             }
         } catch (Exception e) { Log.w(TAG, "chain/broadcasts failed: " + e.getMessage()); }
 
-        if (list.isEmpty() && analyzer.analyzer.apiLevel >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (list.isEmpty() && analyzer.apiLevel >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             list.addAll(analyzeChainLaunchLogcatFallback(packageName));
         }
 
@@ -489,15 +489,15 @@ public class MiscAnalyzer {
 
             StringBuilder detail = new StringBuilder(
                     analyzer.getContext().getString(R.string.triggers_usagestats_last_used,
-                            analyzer.analyzer.formatDuration(sinceUsed)));
+                            analyzer.formatDuration(sinceUsed)));
             if (sinceFg > 0)
                 detail.append(" · ")
                       .append(analyzer.getContext().getString(R.string.triggers_usagestats_last_fg,
-                              analyzer.analyzer.formatDuration(sinceFg)));
+                              analyzer.formatDuration(sinceFg)));
             if (totalFgMs > 0)
                 detail.append(" · ")
                       .append(analyzer.getContext().getString(R.string.triggers_usagestats_total_fg,
-                              analyzer.analyzer.formatDuration(totalFgMs)));
+                              analyzer.formatDuration(totalFgMs)));
 
             list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                     analyzer.getContext().getString(R.string.triggers_cat_usagestats),
