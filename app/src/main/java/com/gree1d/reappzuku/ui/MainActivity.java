@@ -62,6 +62,10 @@ import com.gree1d.reappzuku.manager.RamMonitor;
 import com.gree1d.reappzuku.manager.CpuMonitor;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
 import com.gree1d.reappzuku.core.BaseActivity;
+import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.AppConstants;
+import com.gree1d.reappzuku.manager.ScanSystem;
+import com.gree1d.reappzuku.service.ShappkyService;
 
 
 public class MainActivity extends BaseActivity {
