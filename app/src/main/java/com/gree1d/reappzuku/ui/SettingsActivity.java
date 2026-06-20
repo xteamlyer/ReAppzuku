@@ -81,6 +81,8 @@ import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.service.AutoKillWorker;
 import com.gree1d.reappzuku.service.ShappkyService;
 import com.gree1d.reappzuku.manager.UpdateChecker;
+import com.gree1d.reappzuku.utils.PresetModel;
+import com.gree1d.reappzuku.service.AppLaunchAccessibilityService;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
