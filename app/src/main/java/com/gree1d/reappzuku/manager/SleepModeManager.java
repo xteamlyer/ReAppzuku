@@ -21,6 +21,7 @@ import com.gree1d.reappzuku.utils.AppModel;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import com.gree1d.reappzuku.utils.SleepModeLogManager;
+import com.gree1d.reappzuku.core.ProtectedApps;
 
 public class SleepModeManager {
     private static final String TAG = "SleepModeManager";
