@@ -28,6 +28,9 @@ import java.util.regex.Pattern;
 
 import com.gree1d.reappzuku.utils.AppModel;
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.ProtectedApps;
+import com.gree1d.reappzuku.utils.BackgroundRestrictionLog;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
