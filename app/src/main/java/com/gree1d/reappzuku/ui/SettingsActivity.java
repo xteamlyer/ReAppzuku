@@ -396,18 +396,7 @@ public class SettingsActivity extends BaseActivity implements SharedPreferences.
                 return;
             }
             if (isChecked) {
-                resetDialogButtonColors(new MaterialAlertDialogBuilder(this)
-                        .setTitle(getString(R.string.settings_sleep_mode_title))
-                        .setMessage(getString(R.string.settings_sleep_mode_restart_message))
-                        .setPositiveButton(getString(R.string.dialog_ok), (dialog, which) -> {
-                            sleepModeManager.setSleepModeEnabled(true);
-                            // TEMP TEST: killProcess removed to verify whether restart is actually required
-                            // new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
-                            //         () -> android.os.Process.killProcess(android.os.Process.myPid()), 300);
-                        })
-                        .setNegativeButton(getString(R.string.dialog_cancel), (dialog, which) -> buttonView.setChecked(false))
-                        .setCancelable(false)
-                        .show());
+                sleepModeManager.setSleepModeEnabled(true);
             } else {
                 sleepModeManager.setSleepModeEnabled(false);
             }
