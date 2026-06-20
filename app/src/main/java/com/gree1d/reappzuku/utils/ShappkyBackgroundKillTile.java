@@ -14,6 +14,8 @@ import java.util.concurrent.Executors;
 
 import com.gree1d.reappzuku.core.ShellManager;
 import com.gree1d.reappzuku.manager.AutoKillManager;
+import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
 
 public class ShappkyBackgroundKillTile extends TileService {
 
