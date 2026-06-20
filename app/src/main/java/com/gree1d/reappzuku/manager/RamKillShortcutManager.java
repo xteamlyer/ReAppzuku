@@ -28,6 +28,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.service.ShappkyService;
+import com.gree1d.reappzuku.core.ProtectedApps;
+import com.gree1d.reappzuku.utils.KillShortcutActivity;
 
 public class RamKillShortcutManager {
 
