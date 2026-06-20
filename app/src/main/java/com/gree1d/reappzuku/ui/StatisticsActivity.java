@@ -53,6 +53,7 @@ import com.gree1d.reappzuku.utils.SleepModeLogManager;
 import com.gree1d.reappzuku.manager.RestrictionsScheduler;
 import com.gree1d.reappzuku.utils.BackgroundRestrictionLog;
 import com.gree1d.reappzuku.core.BaseActivity;
+import com.gree1d.reappzuku.service.ShappkyService;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
