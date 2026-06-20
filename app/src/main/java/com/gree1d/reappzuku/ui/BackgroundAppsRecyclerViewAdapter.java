@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.gree1d.reappzuku.utils.AppModel;
+import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.PreferenceKeys;
 
 public class BackgroundAppsRecyclerViewAdapter extends RecyclerView.Adapter<BackgroundAppsRecyclerViewAdapter.ViewHolder> {
 
