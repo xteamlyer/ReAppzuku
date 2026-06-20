@@ -16,7 +16,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     
     <application
-        android:name=".App"
+        android:name="com.gree1d.reappzuku.core.App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -24,11 +24,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".AppResourceDetailActivity"
-            android:parentActivityName=".StatisticsActivity"
+            android:name="com.gree1d.reappzuku.ui.AppResourceDetailActivity"
+            android:parentActivityName="com.gree1d.reappzuku.ui.StatisticsActivity"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".MainActivity"
+            android:name="com.gree1d.reappzuku.ui.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.NoAnimation"
@@ -42,28 +42,28 @@
                 android:resource="@xml/shortcuts" />
         </activity>
         <activity
-            android:name=".KillShortcutActivity"
+            android:name="com.gree1d.reappzuku.utils.KillShortcutActivity"
             android:exported="false"
             android:noHistory="true"
             android:excludeFromRecents="true"
             android:theme="@style/Theme.Transparent" />
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.gree1d.reappzuku.ui.SettingsActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.gree1d.reappzuku.ui.MainActivity"
             android:theme="@style/AppTheme.NoAnimation" />
         <activity
-            android:name=".StatisticsActivity"
+            android:name="com.gree1d.reappzuku.ui.StatisticsActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName="com.gree1d.reappzuku.ui.MainActivity"
             android:theme="@style/AppTheme.NoAnimation" />
         <activity
-            android:name=".PresetSettingsActivity"
+            android:name="com.gree1d.reappzuku.ui.PresetSettingsActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
   
         <service
-            android:name=".ShappkyService"
+            android:name="com.gree1d.reappzuku.service.ShappkyService"
             android:foregroundServiceType="specialUse"
             android:stopWithTask="false"
             android:exported="false">
@@ -73,7 +73,7 @@
         </service>
 
         <service
-            android:name=".AppLaunchAccessibilityService"
+            android:name="com.gree1d.reappzuku.service.AppLaunchAccessibilityService"
             android:exported="true"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -86,7 +86,7 @@
         </service>
 
         <service
-            android:name=".ShappkyQuickTile"
+            android:name="com.gree1d.reappzuku.utils.ShappkyQuickTile"
             android:icon="@drawable/ic_force_stop"
             android:label="@string/tile_kill_app_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
@@ -100,7 +100,7 @@
         </service>
 
         <service
-            android:name=".ShappkyBackgroundKillTile"
+            android:name="com.gree1d.reappzuku.utils.ShappkyBackgroundKillTile"
             android:icon="@drawable/ic_force_stop"
             android:label="@string/tile_background_kill_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
@@ -113,13 +113,13 @@
                 android:value="true" />
         </service>
 
-        <receiver android:name=".KillTriggerReceiver" android:exported="false">
+        <receiver android:name="com.gree1d.reappzuku.service.KillTriggerReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="com.gree1d.reappzuku.IDLE_FREEZE" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".BootReceiver" android:exported="true">
+        <receiver android:name="com.gree1d.reappzuku.core.BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
@@ -127,15 +127,15 @@
         </receiver>
 
         <receiver
-            android:name=".ShappkyService$RestartReceiver"
+            android:name="com.gree1d.reappzuku.service.ShappkyService$RestartReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".RestrictionsScheduler$SchedulerReceiver"
+            android:name="com.gree1d.reappzuku.manager.RestrictionsScheduler$SchedulerReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".AppzukuWidgetReceiver"
+            android:name="com.gree1d.reappzuku.utils.AppzukuWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -146,7 +146,7 @@
         </receiver>
 
         <receiver
-            android:name=".PresetManager$PresetReceiver"
+            android:name="com.gree1d.reappzuku.manager.PresetManager$PresetReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.gree1d.reappzuku.PRESET_ACTIVATE" />
@@ -163,3 +163,4 @@
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
     </application>
 </manifest>
+            
