@@ -154,7 +154,7 @@ public class AppTriggersAnalyzer {
     private static final Pattern FGS_EXCEEDED_PAT    = Pattern.compile("timeLimitExceeded=(true|false)");
     private static final Pattern FGS_ALLOW_START_PAT = Pattern.compile("getFgsAllowStart=([A-Z_]+)");
 
-    static final class AlarmDumpsysParser {
+    public static final class AlarmDumpsysParser {
 
         private static final Pattern TYPE_LINE_PAT = Pattern.compile(
                 "^\\s*(RTC_WAKEUP|RTC|ELAPSED_WAKEUP|ELAPSED)\\s+#\\d+");
