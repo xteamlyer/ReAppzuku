@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.R;
 
 public class ShappkyQuickTile extends TileService {
 
