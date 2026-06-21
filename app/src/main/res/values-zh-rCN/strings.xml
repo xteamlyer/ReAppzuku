@@ -1,0 +1,1060 @@
+<resources>
+    <string name="app_name" translatable="false">ReAppzuku</string>
+    <string name="special_thanks_title">特别鸣谢</string>
+    <string name="special_thanks_desc">为 ReAppzuku 开发做出贡献的用户：</string>
+
+    <!-- ══════════════════════════════════════════════
+         QUICK SETTINGS TILES & SHORTCUTS
+         ══════════════════════════════════════════════ -->
+    <string name="tile_kill_app_label">停止应用</string>
+    <string name="tile_kill_app_subtitle">关闭后台应用</string>
+    <string name="tile_background_kill_label">停止后台应用</string>
+    <string name="tile_background_kill_subtitle">运行已配置的 Auto-Kill</string>
+    <string name="shortcut_kill_short_label">停止应用</string>
+    <string name="shortcut_kill_long_label">强制停止后台应用</string>
+    <string name="widget_kills">Kill 12h</string>
+    <string name="widget_freed">已释放 RAM</string>
+    <string name="widget_last_kill">最近 Kill</string>
+    <string name="widget_ram">RAM</string>
+    <string name="settings_add_ram_shortcut_title">RAM Kill 快捷方式</string>
+    <string name="settings_add_ram_shortcut_subtitle">添加快捷方式到主屏幕</string>
+    <string name="ram_kill_widget_description">RAM 使用量小部件。点击可 Kill 后台应用。</string>
+    
+    <plurals name="toast_killed_apps">
+        <item quantity="one">已关闭 %1$d 个应用 · 释放 %2$s</item>
+        <item quantity="other">已关闭 %1$d 个应用 · 释放 %2$s</item>
+    </plurals>
+    <plurals name="toast_killed_apps_no_ram">
+        <item quantity="one">已关闭 %d 个应用</item>
+        <item quantity="other">已关闭 %d 个应用</item>
+    </plurals>
+    
+    <!-- ══════════════════════════════════════════════
+         COMMON / SHARED
+         ══════════════════════════════════════════════ -->
+    <string name="url_open_failed">无法打开链接</string>
+
+    <!-- Common dialog buttons -->
+    <string name="stats_top_offenders_reset">重置</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="dialog_apply">应用</string>
+    <string name="dialog_save">保存</string>
+    <string name="dialog_close">关闭</string>
+    <string name="dialog_ok">确定</string>
+    <string name="dialog_ok_got_it">知道了</string>
+    <string name="filter_sort_button">排序</string>
+
+    <!-- Units -->
+    <string name="unit_kb">%d KB</string>
+    <string name="unit_mb">%d MB</string>
+    <string name="unit_mbb">%1$.0f MB</string>
+    <string name="unit_mb_precise">%.2f MB</string>
+    <string name="unit_mb_short">MB</string>
+    <string name="unit_gb">%.1f GB</string>
+    <string name="unit_gb_precise">%.2f GB</string>
+    <string name="unit_mah">mAh</string>
+    <string name="unit_percent">%</string>
+
+    <!-- Time units -->
+    <string name="time_unit_sec">秒</string>
+    <string name="time_unit_min">分</string>
+    <string name="time_unit_hour">时</string>
+
+    <!-- Help URL -->
+    <string name="url_help">https://github.com/gree1d/ReAppzuku/blob/main/docs/HELP_ZH.md</string>
+
+    <!-- ══════════════════════════════════════════════
+         MAIN ACTIVITY
+         ══════════════════════════════════════════════ -->
+    <string name="main_search_hint">搜索应用…</string>
+    <string name="main_active_apps_count">运行中的应用：%1$d</string>
+    <string name="main_added_to_whitelist">已添加到白名单</string>
+    <string name="main_removed_from_whitelist">已从白名单移除</string>
+    <string name="main_added_to_blacklist">已添加到黑名单</string>
+    <string name="main_removed_from_blacklist">已从黑名单移除</string>
+    <string name="main_app_hidden">应用已隐藏</string>
+    <string name="main_app_visible">应用已重新显示</string>
+    <string name="main_open_app_info_error">无法打开应用信息</string>
+
+    <!-- Uninstall dialog -->
+    <string name="main_uninstall_title">卸载 %1$s</string>
+    <string name="main_uninstall_message">将使用 Shizuku/Root shell 命令卸载此应用。\n\n注意：系统应用可能无法在所有设备上移除。</string>
+    <string name="main_uninstall_confirm">卸载</string>
+
+    <!-- System app warning -->
+    <string name="main_system_app_warning_title">系统应用警告</string>
+    <string name="main_system_app_restriction_warning">限制系统应用的后台活动可能导致通知、小部件、VPN、键盘、无障碍功能或设备不稳定等问题。\n\n请自行承担风险。</string>
+
+    <!-- Background restriction sync dialogs -->
+    <string name="main_restriction_out_of_sync_title">后台限制不同步</string>
+    <string name="main_restriction_out_of_sync_message">%1$s 在 ReAppzuku 的限制列表中，但 Android 未对其进行限制。\n\n恢复限制或从列表中移除？</string>
+    <string name="main_restriction_resume">恢复</string>
+    <string name="main_restriction_remove_from_list">从列表移除</string>
+    <string name="main_restriction_external_title">限制非 ReAppzuku 所设</string>
+    <string name="main_restriction_external_message">%1$s 已被 Android 限制，但不在 ReAppzuku 的应用列表中。\n\n添加到 ReAppzuku 或解除限制？</string>
+    <string name="main_restriction_add_to_reappzuku">添加到 ReAppzuku</string>
+    <string name="main_restriction_remove">解除限制</string>
+    <string name="main_restriction_menu_out_of_sync">后台限制（不同步）</string>
+    <string name="main_restriction_menu_external">后台限制（外部）</string>
+    <string name="main_restriction_menu_saved">后台限制（已保存）</string>
+    <string name="main_restriction_menu_default">后台限制</string>
+    <string name="restriction_badge_manual">手动</string>
+    <string name="filter_restriction_manual_option">手动</string>
+    <string name="filter_manual_ops_dialog_title">限制：%1$s</string>
+    <string name="bgrest_help_manual_title">手动</string>
+    <string name="bgrest_help_manual_body">手动为每个应用选择所需的限制。</string>
+
+    <string name="manual_op_run_any_in_background">RUN_ANY_IN_BACKGROUND</string>
+    <string name="manual_op_run_in_background">RUN_IN_BACKGROUND</string>
+    <string name="manual_op_start_foreground">START_FOREGROUND</string>
+    <string name="manual_op_fgs_from_background">START_FOREGROUND_SERVICES_FROM_BACKGROUND</string>
+    <string name="manual_op_wake_lock">WAKE_LOCK</string>
+    <string name="manual_op_alarm_wakeup">ALARM_WAKEUP</string>
+    <string name="manual_op_boot_completed">RECEIVE_BOOT_COMPLETED</string>
+    <string name="manual_op_interact_across_profiles">INTERACT_ACROSS_PROFILES</string>
+
+    <!-- Main menu (main.xml) -->
+    <string name="menu_select_all">全选</string>
+    <string name="menu_deselect_all">取消全选</string>
+
+    <!-- Context menu (menu_app_options.xml) -->
+    <string name="menu_app_info">应用信息</string>
+    <string name="menu_uninstall">卸载</string>
+    <string name="menu_add_to">添加到…</string>
+    <string name="menu_hidden">已隐藏</string>
+    <string name="menu_app_triggers">应用触发器</string>
+
+    <!-- Sort dialog (dialog_sort.xml) -->
+    <string name="sort_title">排序</string>
+    <string name="sort_default">默认（用户 → 系统）</string>
+    <string name="sort_ram_desc">RAM 用量：高 → 低</string>
+    <string name="sort_ram_asc">RAM 用量：低 → 高</string>
+    <string name="sort_name_asc">名称 A → Z</string>
+    <string name="sort_name_desc">名称 Z → A</string>
+    <string name="sort_cpu_desc">CPU 用量：高 → 低</string>
+    <string name="sort_cpu_asc">CPU 用量：低 → 高</string>
+
+    <!-- Filter dialog (dialog_filter.xml) -->
+    <string name="filter_system">系统</string>
+    <string name="filter_user">用户</string>
+    <string name="filter_running">运行中</string>
+    <string name="filter_clear">清除</string>
+
+    <!-- FAB buttons -->
+    <string name="fab_kill_app">Kill 应用</string>
+    <string name="fab_kill_apps">Kill 应用</string>
+
+    <!-- App list -->
+    <string name="app_ram_label">RAM：%1$s</string>
+
+    <!-- Unsafe whitelist dialog -->
+    <string name="dialog_unsafe_whitelist_title">不安全的配置</string>
+    <string name="dialog_unsafe_whitelist_message">已选择白名单模式，但白名单为空。在 Root 模式下，这将 Kill 所有系统进程，导致重启（内核/系统崩溃）。请先将必要应用添加到白名单。</string>
+    <string name="dialog_unsafe_whitelist_ok">知道了</string>
+    <string name="toast_error_whitelist_empty">Auto-Kill 已中止 — 白名单为空</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_main">主页</string>
+    <string name="nav_settings">设置</string>
+    <string name="nav_statistics">统计</string>
+
+    <!-- ══════════════════════════════════════════════
+         BACKGROUND APP MANAGER — TOASTS & NOTIFICATIONS
+         ══════════════════════════════════════════════ -->
+    <string name="toast_free_up">释放 %1$s</string>
+    <string name="toast_failed_get_running_apps">获取运行中应用输出失败</string>
+    <string name="toast_error_getting_running_apps">获取运行中应用时出错：%1$s</string>
+    <string name="toast_bg_restriction_requires_android11">后台限制需要 Android 11+</string>
+    <string name="toast_bg_restriction_changes_partial">部分后台限制更改失败</string>
+    <string name="toast_failed_stop_app">停止 %1$s 失败</string>
+    <string name="toast_uninstall_sent">已发送 %1$s 的卸载命令</string>
+    <string name="toast_failed_uninstall">卸载 %1$s 失败</string>
+    <string name="toast_caches_cleared">缓存已清除</string>
+    <string name="toast_failed_clear_caches">清除缓存失败</string>
+
+    <string name="bg_manager_auto_kill_active">Auto-Kill 已激活</string>
+    <string name="bg_manager_stopped_apps">已停止 %1$d 个后台应用</string>
+    <string name="bg_manager_restriction_applied">后台限制设置已应用</string>
+    <string name="bg_manager_restrictions_reapplied">限制已重新应用</string>
+    <string name="bg_manager_restrictions_reapply_partial">部分限制无法应用</string>
+    <string name="bg_manager_kill_failed">Kill 选中应用失败</string>
+
+    <!-- RAM Monitor -->
+    <string name="ram_usage">RAM：%1$dMB / %2$dMB</string>
+    <string name="ram_usage_unavailable">RAM：--</string>
+
+    <!-- ══════════════════════════════════════════════
+         BACKGROUND SERVICE (ShappkyService)
+         ══════════════════════════════════════════════ -->
+    <string name="service_notification_title" translatable="false">ReAppzuku Service</string>
+    <string name="service_notification_text">正在监控后台应用</string>
+    <string name="service_shizuku_lost_title">ReAppzuku 服务</string>
+    <string name="service_shizuku_lost_text">无 Shizuku 访问权限 — 应用无法继续运行。</string>
+    <string name="service_channel_foreground_name" translatable="false">ReAppzuku Foreground Service</string>
+    <string name="service_channel_actions_name">ReAppzuku 通知</string>
+
+    <!-- ══════════════════════════════════════════════
+         SETTINGS ACTIVITY
+         ══════════════════════════════════════════════ -->
+    <string name="settings_title">设置</string>
+    <string name="settings_about_section">关于</string>
+
+    <!-- Shell / access mode status -->
+    <string name="settings_shell_shizuku_ok" translatable="false">Shizuku access ✅</string>
+    <string name="settings_shell_root_ok" translatable="false">Root access ✅</string>
+    <string name="settings_shell_no_access">无权限 ❌</string>
+    <string name="settings_shell_mode_title">访问模式</string>
+    <string name="settings_requires_privilege">需要 Root 或 Shizuku</string>
+    <string name="settings_requires_service_enabled">请先启用后台服务</string>
+
+    <!-- ── Appearance ── -->
+    <string name="settings_section_appearance">外观</string>
+    <string name="settings_theme_title">主题</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_amoled">AMOLED（纯黑）</string>
+    <string name="settings_theme_amoled_short" translatable="false">AMOLED</string>
+    <string name="settings_theme_dialog_title">选择主题</string>
+    <string name="settings_accent_title">强调色</string>
+    <string name="settings_accent_subtitle">主界面颜色</string>
+    <string name="settings_notification_mode_title">通知</string>
+    <string name="settings_notification_mode_all">全部</string>
+    <string name="settings_notification_mode_important_only">仅重要通知</string>
+    <string name="settings_accent_custom_label">自定义</string>
+    <string name="settings_accent_custom_picker_title">选择强调色</string>
+    <string name="settings_accent_on_color_title">文字颜色</string>
+    <string name="settings_accent_on_color_white">白色</string>
+    <string name="settings_accent_on_color_black">黑色</string>
+
+    <string-array name="settings_theme_labels">
+        <item>@string/settings_theme_system</item>
+        <item>@string/settings_theme_light</item>
+        <item>@string/settings_theme_dark</item>
+        <item>@string/settings_theme_amoled</item>
+    </string-array>
+
+    <string-array name="settings_accent_labels">
+        <item>默认（跟随系统）</item>
+        <item>靛蓝</item>
+        <item>深红</item>
+        <item>森林绿</item>
+        <item>石板蓝</item>
+        <item>灰玫瑰</item>
+        <item>琥珀</item>
+        <item>青绿</item>
+        <item>陶土</item>
+        <item>摩卡</item>
+        <item>橄榄</item>
+        <item>钢铁</item>
+        <item>杏色</item>
+        <item>天蓝</item>
+        <item>木瓜</item>
+        <item>薰衣草</item>
+        <item>薄荷</item>
+        <item>蜜桃</item>
+        <item>粉彩</item>
+        <item>雾灰</item>
+    </string-array>
+
+    <!-- ── Background service ── -->
+    <string name="settings_section_background_service">应用稳定性</string>
+    <string name="settings_background_service_title">后台服务</string>
+    <string name="settings_background_service_subtitle">所有应用功能正常运行所必需。</string>
+    <string name="settings_periodic_kill_title">周期性 Auto-Kill</string>
+    <string name="settings_periodic_kill_subtitle">按设定间隔运行 Auto-Kill</string>
+    <string name="settings_check_frequency_title">Auto-Kill 间隔</string>
+    <string name="settings_check_frequency_default">每 18 秒</string>
+    <string name="settings_interval_fallback">每 %1$d 秒</string>
+    <string name="settings_screen_lock_title">熄屏时 Auto-Kill</string>
+    <string name="settings_screen_lock_subtitle">屏幕关闭时运行 Auto-Kill</string>
+    <string name="settings_ram_threshold_title">RAM 阈值</string>
+    <string name="settings_ram_threshold_subtitle">RAM 使用量超过时运行 Auto-Kill</string>
+    <string name="settings_ram_threshold_summary">已选择：%1$d%%</string>
+    <string name="settings_ram_threshold_dialog_title">选择 RAM 使用量上限</string>
+    <string name="settings_ram_threshold_limit_title">RAM 使用量上限</string>
+
+    <string-array name="settings_kill_interval_labels">
+        <item>每 10 秒</item>
+        <item>每 18 秒</item>
+        <item>每 30 秒</item>
+        <item>每 1 分钟</item>
+        <item>每 5 分钟</item>
+    </string-array>
+
+    <string-array name="settings_ram_threshold_labels">
+        <item>75%</item>
+        <item>80%</item>
+        <item>85%</item>
+        <item>90%</item>
+        <item>95%</item>
+        <item>100%</item>
+    </string-array>
+
+    <!-- ── Auto-Kill management ── -->
+    <string name="settings_section_kill_rules">Auto-Kill 管理</string>
+    <string name="settings_mode_title">Auto-Kill 模式</string>
+    <string name="settings_mode_whitelist">白名单</string>
+    <string name="settings_mode_blacklist">黑名单</string>
+    <string name="settings_kill_mode_dialog_title">选择 Auto-Kill 模式</string>
+    <string name="settings_whitelist_title">白名单</string>
+    <string name="settings_whitelist_subtitle">选中的应用永远不会被 Kill</string>
+    <string name="settings_whitelist_dialog_title">白名单应用（受 Auto-Kill 保护）</string>
+    <string name="settings_blacklist_title">黑名单</string>
+    <string name="settings_blacklist_subtitle">选中的应用将被强制停止</string>
+    <string name="settings_blacklist_dialog_title">黑名单应用（Auto-Kill 目标）</string>
+    <string name="settings_show_system_apps_title">显示系统应用</string>
+    <string name="settings_show_persistent_apps_title">显示持久应用</string>
+
+    <!-- Auto-Kill type -->
+    <string name="settings_auto_kill_type_title">Auto-Kill 类型</string>
+    <string name="settings_auto_kill_type_force_stop">am force-stop（默认）</string>
+    <string name="settings_auto_kill_type_kill">am kill</string>
+    <string name="settings_auto_kill_type_help_button">这是什么？</string>
+    <string name="settings_auto_kill_type_help_title">Auto-Kill 类型</string>
+    <string name="settings_auto_kill_type_help_message">在某些 ROM 上，am force-stop 可能被系统解释为立即回收 RAM 的信号 — 导致每次 Auto-Kill 运行时强制关闭所有应用，无论设置如何。\n\n如果遇到此问题，请切换到 am kill。它是一个更温和的命令，对系统的攻击性较小。</string>
+
+    <!-- ── Advanced tools ── -->
+    <string name="settings_section_advanced_tools">高级工具</string>
+    <string name="settings_background_restriction_title">后台限制</string>
+    <string name="settings_background_restriction_subtitle">限制选中应用的后台活动</string>
+    <string name="settings_reapply_restrictions_title">重新应用后台限制设置</string>
+    <string name="settings_reapply_restrictions_subtitle">恢复已保存的限制</string>
+    <string name="settings_sleep_mode_title">休眠模式</string>
+    <string name="settings_sleep_mode_subtitle">在休眠模式下冻结应用</string>
+    <string name="settings_sleep_mode_apps_title">休眠模式应用列表</string>
+    <string name="settings_sleep_mode_apps_subtitle">在休眠模式下冻结的应用</string>
+    <string name="settings_sleep_mode_apps_dialog_title">休眠模式应用</string>
+    <string name="settings_sleep_mode_delay_title">冻结延迟时间</string>
+    <string name="settings_sleep_mode_delay_subtitle">应用冻结前的空闲时间</string>
+    <string name="settings_sleep_mode_delay_fallback">%1$d 分钟后</string>
+    <string name="settings_sleep_mode_restart_message">ReAppzuku 需要重启才能生效。应用将立即强制关闭。</string>
+    <string name="settings_clear_cache_title">清除应用缓存</string>
+    <string name="settings_clear_cache_subtitle">通过清除应用缓存释放 RAM</string>
+    <string name="settings_hidden_apps_title">隐藏应用</string>
+    <string name="settings_hidden_apps_subtitle">从主列表中隐藏应用</string>
+    <string name="settings_hidden_apps_dialog_title">选择要从主列表隐藏的应用</string>
+    <string name="freeze_badge_timer">临时</string>
+    <string name="freeze_badge_permanent">永久</string>
+    <string name="filter_freeze_type_dialog_title">冻结类型</string>
+    <string name="filter_freeze_timer_option">临时（熄屏时）</string>
+    <string name="filter_freeze_permanent_option">永久（仅手动解冻）</string>
+
+    <string-array name="settings_sleep_mode_delay_labels">
+        <item>5 分钟</item>
+        <item>10 分钟</item>
+        <item>15 分钟</item>
+        <item>20 分钟</item>
+        <item>30 分钟</item>
+        <item>60 分钟</item>
+    </string-array>
+
+    <!-- ── Restrictions Scheduler ── -->
+    <string name="settings_restrictions_scheduler_title">限制调度器</string>
+    <string name="settings_restrictions_scheduler_subtitle">安排时间窗口以保护应用</string>
+    <string name="scheduler_no_eligible_apps">没有具有活跃限制或休眠模式的应用</string>
+    <string name="scheduler_btn_remove">移除</string>
+    <string name="scheduler_error_no_flags">至少选择一种限制类型</string>
+    <string name="scheduler_error_same_time">开始和结束时间必须不同</string>
+    <string name="scheduler_error_limit">已达调度上限（最多 %d 个）</string>
+    <string name="scheduler_section_restrictions">保护范围</string>
+    <string name="scheduler_protect_auto_kill">Auto-Kill</string>
+    <string name="scheduler_protect_bg_restrictions">后台限制</string>
+    <string name="scheduler_protect_sleep_mode">休眠模式</string>
+    <string name="scheduler_section_time_window">时间窗口</string>
+    <string name="scheduler_time_from">从</string>
+    <string name="scheduler_time_to">到</string>
+    <string name="scheduler_section_on_activate">激活时</string>
+    <string name="scheduler_action_none">无操作</string>
+    <string name="scheduler_action_launch_component">启动组件</string>
+    <string name="scheduler_component_label">组件</string>
+    <string name="scheduler_component_not_selected">未选择</string>
+    <string name="scheduler_action_launch_main">启动 %s</string>
+    <string name="scheduler_component_picker_title">选择组件</string>
+    <string name="scheduler_component_none_found">没有导出的组件</string>
+    <string name="scheduler_set_bucket_active">设置 Bucket：Active</string>
+
+    <!-- ── System apps warning dialog ── -->
+    <string name="settings_system_apps_warning_title">⚠️ 警告：系统应用</string>
+    <string name="settings_system_apps_warning_message">系统应用对设备稳定性至关重要。阻止或停止它们（如小米的安全中心）可能导致崩溃、启动循环或故障。\n\n仅在您清楚自己在做什么时执行此操作。</string>
+    <string name="settings_system_apps_i_understand">我已知晓</string>
+
+    <!-- ── Background restriction warnings ── -->
+    <string name="settings_restriction_system_apps_title">已选择系统应用</string>
+    <string name="settings_restriction_system_apps_message">您已选择 %1$d 个系统应用进行后台限制。\n\n这可能会导致通知、小部件、VPN、键盘、无障碍功能、设备配对失效或系统不稳定。\n\n继续？</string>
+    <string name="settings_restriction_system_apps_confirm">是，应用</string>
+    <string name="settings_restriction_warning_title">后台限制警告</string>
+    <string name="settings_restriction_warning_message">受后台限制的应用可能会停止同步、错过通知、停止更新小部件或在再次打开前无法完成后台任务。\n\n继续？</string>
+
+    <!-- Background restriction mode explanation -->
+    <string name="settings_bgrest_help_button">有什么区别？</string>
+    <string name="dialog_backgroundrest_title">后台限制类型</string>
+    <string name="bgrest_help_soft_title">轻度</string>
+    <string name="bgrest_help_soft_body">限制后台活动，同时保留基本功能。\n\u2022 阻止标准后台服务启动。\n\u2022 应用仍可显示重要通知。\n\u2022 适用于通讯和邮件应用。</string>
+    <string name="bgrest_help_medium_title">中度</string>
+    <string name="bgrest_help_medium_body">将应用移至 Rare 备用桶并阻止关键后台操作：启动服务、调度作业和触发闹钟。应用在前台时正常工作，但离开后立即冻结。</string>
+    <string name="bgrest_help_hard_title">深度</string>
+    <string name="bgrest_help_hard_body">最大隔离。应用完全\u201c休眠\u201d。\n\u2022 阻止 Foreground Service。\n\u2022 阻止 WakeLock。\n\u2022 禁用开机自启动。\n\u2022 将应用从电池优化白名单中移除。</string>
+
+    <!-- ── Misc toasts ── -->
+    <string name="settings_no_saved_restrictions">没有已保存的后台限制可重新应用。</string>
+    <string name="settings_open_app_info_error">无法打开应用信息</string>
+
+    <!-- ── Backup &amp; Restore ── -->
+    <string name="settings_backup_restore_title">备份与恢复</string>
+    <string name="settings_backup_restore_subtitle">保存和恢复设置</string>
+    <string name="settings_backup_option_save">保存设置</string>
+    <string name="settings_backup_option_restore">恢复设置</string>
+    <string name="settings_backup_create_failed">创建备份数据失败</string>
+    <string name="settings_backup_success">设置保存成功</string>
+    <string name="settings_backup_write_failed">写入文件失败</string>
+    <string name="settings_backup_export_failed">导出失败：%1$s</string>
+    <string name="settings_restore_success">恢复成功</string>
+    <string name="settings_restore_need_permission">已保存的设置已恢复。请授予 Shizuku/Root 权限以重新应用后台限制。</string>
+    <string name="settings_restore_failed">恢复失败：数据无效</string>
+    <string name="settings_restore_import_failed">导入失败：%1$s</string>
+
+    <!-- ── Information section ── -->
+    <string name="settings_section_information">信息</string>
+    <string name="settings_help_title">帮助</string>
+    <string name="settings_help_subtitle">用户手册</string>
+    <string name="settings_telegram_title">Telegram</string>
+    <string name="settings_telegram_subtitle">联系开发者</string>
+    <string name="settings_source_code_title">源代码</string>
+    <string name="settings_source_code_subtitle">打开 GitHub 仓库</string>
+    <string name="settings_check_updates_title">检查更新</string>
+    <string name="settings_version_label">ReAppzuku v%1$s</string>
+
+    <!-- ══════════════════════════════════════════════
+         BACKGROUND RESTRICTIONS LIST
+         ══════════════════════════════════════════════ -->
+    <string name="restriction_status_saved">已保存在 ReAppzuku</string>
+    <string name="restriction_status_external">已限制，但非 ReAppzuku 所设</string>
+    <string name="restriction_status_not_applied">已保存在 ReAppzuku，但未应用</string>
+
+    <!-- Restriction type badges -->
+    <string name="restriction_badge_hard">深度</string>
+    <string name="restriction_badge_soft">轻度</string>
+    <string name="restriction_badge_removed">已移除</string>
+    <string name="restriction_badge_retry">重试</string>
+    <string name="restriction_badge_medium">中度</string>
+
+    <!-- Restriction type dialog -->
+    <string name="manual_bucket_rare">Standby Bucket：Rare</string>
+    <string name="manual_bucket_restricted">Standby Bucket：Restricted</string>
+    <string name="filter_restriction_type_dialog_title">限制类型</string>
+    <string name="filter_restriction_soft_option">轻度（默认）— 阻止自动启动</string>
+    <string name="filter_restriction_medium_option">中度 — 阻止部分后台活动</string>
+    <string name="filter_restriction_hard_option">深度 — 阻止所有后台活动</string>
+
+    <!-- ══════════════════════════════════════════════
+         STATISTICS & LOGS SCREEN
+         ══════════════════════════════════════════════ -->
+    <string name="stats_tab_title">统计与日志</string>
+
+    <!-- ── Kill history / summary ── -->
+    <string name="stats_kill_detail">Auto-Kill %1$d 次</string>
+    <string name="stats_relaunch_detail">重新启动 %1$d 次</string>
+    <string name="stats_last_relaunch_time">（最近 %1$s）</string>
+    <string name="stats_recovered_ram">已释放 RAM %1$s</string>
+    <string name="stats_summary_12h">最近 12 小时：%1$d 个应用 | Auto-Kill %2$d 次 | 重新启动 %3$d 次 | 已释放 RAM %4$s</string>
+    <string name="stats_no_activity_12h">最近 12 小时无活动。</string>
+    <string name="stats_dialog_subtitle">最近 12 小时</string>
+    <string name="stats_loading">加载中…</string>
+
+    <!-- ── Top offenders ── -->
+    <string name="settings_top_offenders_title">问题应用</string>
+    <string name="settings_top_offenders_subtitle">Auto-Kill 或重新启动次数最多的应用</string>
+    <string name="stats_top_offenders_empty">此时间段内无问题应用。</string>
+    <string name="stats_top_offenders_dialog_subtitle">按 Auto-Kill 次数、重新启动次数、已释放 RAM 排序。</string>
+    <string name="stats_top_offenders_summary">%1$s：%2$d 个应用 | Auto-Kill %3$d 次 | 重新启动 %4$d 次 | 已释放 RAM %5$s</string>
+    <string name="stats_offender_metrics">Auto-Kill：%1$d 次 | 重新启动：%2$d 次 | 已释放 RAM：%3$s</string>
+    <string name="stats_offender_score">得分 %1$s</string>
+
+    <string-array name="settings_top_offender_filter_labels">
+        <item>最近 12 小时</item>
+        <item>最近 24 小时</item>
+        <item>最近 7 天</item>
+        <item>全部时间</item>
+    </string-array>
+
+    <!-- ── Kill history log ── -->
+    <string name="settings_kill_history_title">Auto-Kill 日志</string>
+    <string name="settings_kill_history_subtitle">Auto-Kill、重新启动和已释放 RAM</string>
+
+    <!-- ── Background restriction log ── -->
+    <string name="settings_restriction_log_title">后台限制日志</string>
+    <string name="settings_restriction_log_subtitle">最近的限制结果和错误</string>
+    <string name="settings_restriction_log_empty">尚无后台限制事件。</string>
+    <string name="settings_restriction_log_dialog_subtitle">最近的限制结果。</string>
+    <string name="settings_restriction_log_clear">清除</string>
+    <string name="settings_restriction_log_summary">最近事件：%1$d 条。</string>
+    <string name="log_bg_restriction_empty">尚无后台限制事件。\n\n条目存储在应用数据库中，会自动清理。</string>
+
+    <!-- ── Sleep Mode Log ── -->
+    <string name="log_sleep_mode_title">休眠模式日志</string>
+    <string name="log_sleep_mode_subtitle">冻结/解冻历史</string>
+    <string name="log_sleep_mode_dialog_subtitle">最近的冻结/解冻事件</string>
+    <string name="log_sleep_mode_empty">尚无休眠模式事件</string>
+
+    <!-- ── Scheduler Log ── -->
+    <string name="log_scheduler_title">调度器日志</string>
+    <string name="log_scheduler_subtitle">调度限制历史</string>
+    <string name="log_scheduler_dialog_subtitle">最近的调度器事件</string>
+    <string name="log_scheduler_empty">尚无调度器事件</string>
+
+    <!-- Log outcome labels -->
+    <string name="log_outcome_ok">已发送</string>
+    <string name="log_outcome_verified">已应用</string>
+    <string name="log_outcome_failed">错误</string>
+    <string name="log_outcome_skipped">已跳过</string>
+    <string name="log_outcome_verify_failed">未应用</string>
+    <string name="log_outcome_verify_unavailable">验证不可用</string>
+    <string name="log_outcome_battery_whitelist_removed">已从白名单移除</string>
+    <string name="log_outcome_battery_whitelist_restored">已恢复到白名单</string>
+    <string name="log_action_event">事件</string>
+
+    <!-- Log badges -->
+    <string name="log_badge_freeze">冻结</string>
+    <string name="log_badge_unfreeze">解冻</string>
+    <string name="log_badge_lift">解除</string>
+    <string name="log_badge_restore">恢复</string>
+
+    <!-- ── Charts ── -->
+    <string name="stats_tab_title_charts">统计</string>
+    <string name="stats_loading_charts">正在加载数据…</string>
+    <string name="stats_no_data_hint">数据不足。\n快照每 30–60 分钟采集一次。\n稍后再来看看。</string>
+    <string name="stats_no_data_hint_short">正在采集数据…</string>
+    <string name="stats_no_data_hint_no_snapshot">尚未采集到数据。请等待约 30 分钟。</string>
+    <string name="stats_no_data_hint_no_history">历史数据不足 — 稍后再来看看。</string>
+    <string name="stats_no_data_hint_too_close">快照间隔太近。请稍后再试。</string>
+    <string name="stats_partial_data_warning">⚠ 数据不完整：历史记录仍在积累中</string>
+    <string name="stats_disclaimer">来自 Android batterystats / procstats 的估算数据。实际值可能有所不同。长时间充电后电池统计可能不准确。</string>
+    <string name="stats_service_inactive_hint">统计数据仅在后台服务活跃时采集。请在设置中启用。</string>
+
+    <string name="chart_period_labels" translatable="false">2h,6h,12h,24h</string>
+    <string-array name="chart_period_labels">
+        <item>2h</item>
+        <item>6h</item>
+        <item>12h</item>
+        <item>24h</item>
+    </string-array>
+
+    <string name="chart_title_battery">电池用量</string>
+    <string name="chart_title_cpu">CPU 用量</string>
+    <string name="chart_title_ram">RAM 用量</string>
+    <string name="chart_others_label">其他</string>
+    <string name="chart_others_expand">低功耗应用（%1$d）</string>
+    <string name="chart_others_dialog_title">低功耗应用</string>
+
+    <!-- Info cards -->
+    <string name="info_card_kills">已 Kill 进程</string>
+    <string name="info_card_relaunches">已重新启动</string>
+    <string name="info_card_ram_recovered">已释放 RAM</string>
+    <string name="info_card_self_drain">ReAppzuku 耗电</string>
+
+    <!-- Stats info tiles -->
+    <string name="stats_battery_trace">&lt; 0.1%</string>
+    <string name="stats_chart_total_battery">%.1f mAh</string>
+    <string name="stats_chart_total_ram">平均 %s</string>
+    <string name="stats_self_overhead_label">ReAppzuku 开销：</string>
+    <string name="stats_self_overhead">ReAppzuku 开销：%1$s · %2$s · %3$s</string>
+
+    <!-- ── Detail Activity ── -->
+    <string name="detail_chart_battery">电池（mAh / 小时）</string>
+    <string name="detail_chart_cpu">CPU（% / 小时）</string>
+    <string name="detail_chart_ram">RAM — 平均 PSS（MB）</string>
+    <string name="detail_avg_battery">平均 %.2f mAh/h</string>
+    <string name="detail_avg_cpu">平均 %.1f%%</string>
+    <string name="detail_avg_ram">平均 %.0f MB</string>
+    <string name="detail_stat_min">最小</string>
+    <string name="detail_stat_avg">平均</string>
+    <string name="detail_stat_max">最大</string>
+    <string name="detail_row_battery">电池</string>
+    <string name="detail_row_cpu">CPU</string>
+    <string name="detail_row_ram">RAM</string>
+    <string name="detail_chart_activity">应用活动</string>
+    <string name="detail_activity_none">—</string>
+    <string name="detail_activity_low">低</string>
+    <string name="detail_activity_medium">中</string>
+    <string name="detail_activity_high">高</string>
+    <string name="hint_12_24_scroll">图表可左右滚动</string>
+
+    <!-- ══════════════════════════════════════════════
+         APP TRIGGERS DIALOG
+         ══════════════════════════════════════════════ -->
+    <string name="triggers_loading">正在分析…</string>
+    <string name="triggers_none_title">未找到触发器</string>
+    <string name="triggers_none_detail">未检测到活跃的后台触发器</string>
+    <string name="triggers_none_explanation">应用可能在内存中，但未主动保持自身存活。</string>
+
+    <!-- Category names -->
+    <string name="triggers_cat_fg_service">Foreground Service</string>
+    <string name="triggers_cat_receivers">Broadcast Receiver（%1$d）</string>
+    <string name="triggers_cat_alarms">Alarm</string>
+    <string name="triggers_cat_jobs">Job / WorkManager</string>
+    <string name="triggers_cat_doze">Doze 豁免</string>
+    <string name="triggers_cat_wakelock">WakeLock</string>
+    <string name="triggers_cat_sticky">Sticky Service</string>
+    <string name="triggers_cat_provider">Content Provider</string>
+    <string name="triggers_cat_sync">Sync Adapter</string>
+    <string name="triggers_cat_chain_launch">链式启动</string>
+    <string name="triggers_cat_pending_intents">PendingIntent（%1$d）</string>
+    <string name="triggers_cat_boot">开机自启动</string>
+    <string name="triggers_cat_bucket">App Standby Bucket</string>
+    <string name="triggers_cat_batterystats">电池用量历史</string>
+    <string name="triggers_cat_network">网络活动</string>
+    <string name="triggers_cat_bindings">被绑定持有（%1$d）</string>
+
+    <!-- Foreground Service -->
+    <string name="triggers_fg_service_explanation">应用启动了带有持久通知的后台服务。这是避免被 Kill 的最可靠方式 — 只要通知可见，Android 就不会动此类进程。</string>
+
+    <!-- Broadcast Receivers -->
+    <string name="triggers_receivers_detail_overflow">（还有 %1$d 个）</string>
+    <string name="triggers_receivers_explanation_base">应用订阅了系统事件 — 事件触发时自动启动。</string>
+    <string name="triggers_receivers_explanation_boot"> 包括开机启动（BOOT）。</string>
+    <string name="triggers_receivers_explanation_network"> 监听网络变化 — 网络可用时唤醒。</string>
+
+    <!-- Alarms -->
+    <string name="triggers_alarms_detail_wakeup">%1$d 个唤醒</string>
+    <string name="triggers_alarms_detail_normal">%1$d 个普通</string>
+    <string name="triggers_alarms_detail_repeat"> · 重复 %1$s</string>
+    <string name="triggers_alarms_detail_exact"> · setExact</string>
+    <string name="triggers_alarms_interval_sec">每 %1$d 秒</string>
+    <string name="triggers_alarms_interval_min">每 %1$d 分钟</string>
+    <string name="triggers_alarms_interval_hour">每 %1$d 小时</string>
+    <string name="triggers_alarms_wakeup_explanation">唤醒闹钟（RTC_WAKEUP）会将设备从睡眠中拉出，即使屏幕已关闭。</string>
+    <string name="triggers_alarms_wakeup_aggressive"> 间隔不到 1 分钟 — 非常激进，严重影响电池。</string>
+    <string name="triggers_alarms_wakeup_frequent"> 间隔不到 5 分钟 — 明显的电池影响。</string>
+    <string name="triggers_alarms_normal_explanation">普通闹钟仅在设备活跃时触发 — 不会从睡眠中唤醒。</string>
+    <string name="triggers_alarms_exact_explanation"> setExactAndAllowWhileIdle — 最激进的类型：即使在 Doze 模式下也会触发。</string>
+
+    <!-- Jobs -->
+    <string name="triggers_jobs_detail_running">%1$d 个正在运行</string>
+    <string name="triggers_jobs_detail_pending">%1$d 个排队中</string>
+    <string name="triggers_jobs_running_and_pending_explanation">JobScheduler / WorkManager。应用正在运行 %1$d 个任务，还有 %2$d 个排队中。典型用途：同步、下载、分析。Android 在条件合适时运行它们 — 通常是充电或 Wi-Fi 时。</string>
+    <string name="triggers_jobs_running_explanation">JobScheduler / WorkManager — 应用正在运行 %1$d 个后台任务。典型原因：同步、下载、分析。</string>
+    <string name="triggers_jobs_pending_explanation">JobScheduler / WorkManager — %1$d 个任务等待运行。Android 在条件合适时（网络、充电）执行它们。这是唤醒闹钟的现代替代方案。</string>
+
+    <!-- Doze Exemption -->
+    <string name="triggers_doze_sys_detail">系统白名单</string>
+    <string name="triggers_doze_user_detail">用户白名单</string>
+    <string name="triggers_doze_sys_explanation">由设备制造商添加 — 始终绕过 Doze。无法移除。</string>
+    <string name="triggers_doze_user_explanation">应用请求了 Doze 豁免（\u201c不优化电池\u201d）。可随时在后台运行。可在 设置 → 电池 → 电池优化 中撤销。</string>
+
+    <!-- WakeLocks -->
+    <string name="triggers_wakelock_partial_type">PARTIAL</string>
+    <string name="triggers_wakelock_full_type">FULL</string>
+    <string name="triggers_wakelock_generic_type">WAKE_LOCK</string>
+    <string name="triggers_wakelock_partial_explain">阻止 CPU 睡眠</string>
+    <string name="triggers_wakelock_full_explain">保持屏幕和 CPU 开启</string>
+    <string name="triggers_wakelock_generic_explain">保持系统活跃</string>
+    <string name="triggers_wakelock_detail_held">，已持有 %1$s</string>
+    <string name="triggers_wakelock_explanation">WakeLock（%1$s）— 应用要求系统保持唤醒。持有时消耗电池。</string>
+
+    <!-- Sticky Service -->
+    <string name="triggers_sticky_explanation">服务声明为 START_STICKY — Android 在 Kill 后会重新启动它。不禁用就无法永久停止应用。</string>
+
+    <!-- Content Provider -->
+    <string name="triggers_provider_explanation">应用暴露了 Content Provider — 当任何其他应用访问其数据（联系人、文件、设置等）时自动启动。</string>
+
+    <!-- Sync Adapter -->
+    <string name="triggers_sync_detail">%1$d 个账户</string>
+    <string name="triggers_sync_explanation">应用向系统注册了 Sync Adapter。Android 会定期启动它以同步账户数据，即使应用未运行。</string>
+
+    <!-- Chain Launch -->
+    <string name="triggers_chain_direct_detail">来自 %s 的直接调用</string>
+    <string name="triggers_chain_direct_explanation">%1$s 通过服务或活动调用（callingPackage / clientPackage）直接启动了此进程。</string>
+    <string name="triggers_chain_broadcast_detail">来自 %1$s 的广播 → %2$s</string>
+    <string name="triggers_chain_broadcast_explanation">%1$s 发送了 action 为 %2$s 的广播，从而启动了此进程。</string>
+    <string name="triggers_chain_overflow">\n…还有 %d 个</string>
+
+    <!-- PendingIntents -->
+    <string name="triggers_pending_activity">%1$d 个 Activity</string>
+    <string name="triggers_pending_service">%1$d 个 Service</string>
+    <string name="triggers_pending_broadcast">%1$d 个 Broadcast</string>
+    <string name="triggers_pending_explanation">应用持有已注册的 PendingIntent。系统或其他应用可以随时通过通知、AlarmManager 或系统事件激活它们 — 启动进程。</string>
+
+    <!-- Boot Receivers -->
+    <string name="triggers_boot_detail_normal">BOOT_COMPLETED</string>
+    <string name="triggers_boot_detail_locked">LOCKED_BOOT_COMPLETED</string>
+    <string name="triggers_boot_detail_both">BOOT_COMPLETED + LOCKED_BOOT_COMPLETED</string>
+    <string name="triggers_boot_explanation_normal">应用通过 BOOT_COMPLETED 在每次开机时启动。在存储解锁后启动。</string>
+    <string name="triggers_boot_explanation_locked">应用在锁屏前启动（LOCKED_BOOT_COMPLETED）— 非常早的启动阶段，在 PIN/密码输入之前。</string>
+    <string name="triggers_boot_explanation_both">应用在开机时启动两次：系统启动后立即启动（LOCKED_BOOT），然后在存储解锁后再次启动（BOOT_COMPLETED）。</string>
+
+    <!-- App Standby Bucket -->
+    <string name="triggers_bucket_active_explanation">应用处于 ACTIVE 桶 — 没有后台限制。如果您最近没有使用它，说明有东西在保持它活跃。</string>
+    <string name="triggers_bucket_working_set_explanation">WORKING_SET 桶 — 应用使用频繁或系统认为其重要。限制最少；作业和闹钟按计划运行。</string>
+    <string name="triggers_bucket_frequent_explanation">FREQUENT 桶 — 应用定期使用。对罕见后台操作有一些限制。</string>
+    <string name="triggers_bucket_rare_explanation">RARE 或 RESTRICTED 桶 — 系统已限制后台活动。作业和闹钟严重延迟或阻止。</string>
+
+    <!-- Battery Stats -->
+    <string name="triggers_batterystats_wakelock">WakeLock：%1$d 次 / %2$s</string>
+    <string name="triggers_batterystats_alarms">%1$d 次闹钟唤醒</string>
+    <string name="triggers_batterystats_jobs">%1$d 次作业运行</string>
+    <string name="triggers_batterystats_syncs">%1$d 次同步</string>
+    <string name="triggers_batterystats_explanation">自上次充电重置以来的电池用量。</string>
+
+    <!-- Network Activity -->
+    <string name="triggers_network_active_connections">活跃的 TCP 连接</string>
+    <string name="triggers_network_traffic">↓ %1$s / ↑ %2$s 流量</string>
+    <string name="triggers_network_explanation">应用有活跃的后台网络活动。开放的 TCP 连接意味着与服务器进行持续数据交换 — 常见于通讯、推送客户端、同步应用。</string>
+
+    <!-- Bindings -->
+    <string name="triggers_bindings_explanation_base">一个或多个进程持有对此应用服务的绑定。持有期间，Android 无法 Kill 该进程。</string>
+    <string name="triggers_bindings_gms_note"> Google Play Services（GMS）是常见原因 — 持有推送连接和同步绑定。</string>
+    <string name="triggers_bindings_push_note"> 检测到推送/FCM 绑定 — 应用正在等待传入通知。</string>
+    <string name="triggers_bindings_overflow"> 还有 %1$d 个</string>
+    <!-- Foreground Service: killable hint -->
+    <string name="triggers_fg_service_killable">可被 Kill</string>
+    <string name="triggers_fg_service_not_killable">不可被 Kill</string>
+    
+    <!-- WakeLock: new types -->
+    <string name="triggers_wakelock_screen_type">屏幕</string>
+    <string name="triggers_wakelock_screen_explain">保持屏幕开启</string>
+    <string name="triggers_wakelock_proximity_type">接近</string>
+    <string name="triggers_wakelock_proximity_explain">靠近面部时关闭屏幕（通话）</string>
+    <!-- acquire / release counters -->
+    <string name="triggers_wakelock_acq_rel">获取 %1$d / 释放 %2$d</string>
+    <string name="triggers_wakelock_acq_only">获取 %1$d</string>
+    
+    <!-- Alarms: detailed breakdown -->
+    <string name="triggers_alarms_exact">精确：%1$d</string>
+    <string name="triggers_alarms_inexact">非精确：%1$d</string>
+    <string name="triggers_alarms_while_idle">AllowWhileIdle：%1$d</string>
+    <string name="triggers_alarms_clock">AlarmClock：%1$d</string>
+    <string name="triggers_alarms_next">，下次在 %1$s</string>
+    <string name="triggers_alarms_avg_interval">，平均间隔 %1$s</string>
+    <string name="triggers_alarms_while_idle_explanation"> AllowWhileIdle 闹钟即使在 Doze 模式下也会触发。</string>
+    
+    <!-- Jobs: stop reason -->
+    <string name="triggers_jobs_stop_reasons">，最后停止原因：%1$s</string>
+    
+    <!-- Pending Intents: special event types -->
+    <string name="triggers_pending_alarm">，闹钟：%1$d</string>
+    <string name="triggers_pending_media_button">，MEDIA_BUTTON：%1$d</string>
+    <string name="triggers_pending_push">，推送：%1$d</string>
+    <string name="triggers_pending_creators">，创建者：%1$s</string>
+    
+    <!-- Standby Bucket: history -->
+    <string name="triggers_bucket_history">，历史：%1$s</string>
+    
+    <!-- ── 16. Sensors ── -->
+    <string name="triggers_cat_sensors">传感器（%1$d）</string>
+    <string name="triggers_sensors_explanation">应用正在主动轮询硬件传感器。持续使用即使熄屏也会消耗电池。</string>
+    
+    <!-- ── 17. Location ── -->
+    <string name="triggers_cat_location">位置</string>
+    <string name="triggers_location_requests">%1$d 个请求</string>
+    <string name="triggers_location_fg">前台</string>
+    <string name="triggers_location_bg">后台</string>
+    <string name="triggers_location_fg_bg">前台 + 后台</string>
+    <string name="triggers_location_interval">，间隔 %1$s</string>
+    <string name="triggers_location_active_gps">，GPS 活跃 %1$s</string>
+    <string name="triggers_location_fg_explanation">应用正在前台请求位置。导航或健身应用正常行为。</string>
+    <string name="triggers_location_bg_explanation">应用正在后台请求位置。保持 GPS/网络活跃，显著消耗电池。</string>
+    
+    <!-- ── 18. Excessive Wakeups ── -->
+    <string name="triggers_cat_wakeups">过度唤醒</string>
+    <string name="triggers_wakeups_total">总计：%1$d</string>
+    <string name="triggers_wakeups_alarms">，闹钟：%1$d</string>
+    <string name="triggers_wakeups_jobs">，作业：%1$d</string>
+    <string name="triggers_wakeups_gcm">，推送/GCM：%1$d</string>
+    <string name="triggers_wakeups_broadcast">，广播：%1$d</string>
+    <string name="triggers_wakeups_explanation">此应用自上次充电以来造成的设备总唤醒次数。高数字表示激进的后台活动，阻止设备深度睡眠。</string>
+    
+    <!-- ── 19. Broadcast Efficiency ── -->
+    <string name="triggers_cat_bcast_eff">广播效率</string>
+    <string name="triggers_bcast_eff_total">已送达：%1$d</string>
+    <string name="triggers_bcast_eff_hour">，最近一小时：%1$d</string>
+    <string name="triggers_bcast_eff_day">，最近一天：%1$d</string>
+    <string name="triggers_bcast_eff_launched">，进程启动：%1$d（%2$d%%）</string>
+    <string name="triggers_bcast_eff_explanation">显示送达应用的广播以及有多少触发了冷启动。高启动率意味着应用被反复 Kill 和重启。</string>
+    <!-- Process State -->
+    <string name="triggers_cat_proc_state">进程状态</string>
+    <string name="triggers_proc_state_explanation">进程优先级：%1$s。adj 值越低 = 系统越努力保持其存活。</string>
+    <string name="triggers_proc_persistent">持久</string>
+    
+    <!-- WakeLock extras -->
+    <string name="triggers_wakelock_held_by_system">（由系统持有）</string>
+    <string name="triggers_wakelock_fallback_detail">%1$s · 已持有 %2$s · %3$d 次</string>
+    <string name="triggers_wakelock_fallback_explanation">来自电池统计的历史 WakeLock 数据。应用自上次充电以来多次持有 WakeLock。</string>
+    
+    <!-- Network -->
+    <string name="triggers_network_established">%1$d 个 ESTABLISHED 连接</string>
+    
+    <!-- Alarms fallback counts -->
+    <string name="triggers_alarms_wakeup_count">唤醒：%1$d</string>
+    <string name="triggers_alarms_normal_count">普通：%1$d</string>
+
+    <!-- Triggers dialog section headers -->
+    <string name="triggers_section_active_now">• 当前活跃</string>
+    <string name="triggers_section_can_wake">• 可随时唤醒应用</string>
+    <string name="triggers_section_other">• 其他触发器</string>
+
+    <!-- Foreground Service Notification -->
+    <string name="triggers_cat_fg_notification">FG 通知渠道</string>
+    <string name="triggers_fg_notification_explanation">Foreground Service 正在显示通知。渠道重要性决定其可见性和侵入性。</string>
+    <string name="triggers_fg_notification_high_explanation">Foreground Service 通知具有 HIGH 或 URGENT 重要性 — 显示为悬浮横幅，系统很难抑制。应用几乎不可能被自动 Kill。</string>
+
+    <!-- ====================================================== -->
+    <!-- AudioFocus / MediaSession                              -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_audio_focus">音频焦点</string>
+    <string name="triggers_audio_focus_gain_explanation">应用持有音频焦点，正在播放或录制音频。保持进程存活直到释放焦点。</string>
+    <string name="triggers_audio_focus_duck_explanation">应用持有临时音频焦点（duck/transient）— 暂时抑制其他音频。</string>
+
+    <string name="triggers_cat_media_session">MediaSession</string>
+    <string name="triggers_media_session_playing_explanation">应用有活跃的 MediaSession，处于 PLAYING 状态。系统保持进程存活以处理媒体控制和通知。</string>
+    <string name="triggers_media_session_paused_explanation">应用有处于暂停/停止但未释放的 MediaSession。在明确放弃之前仍保持进程在内存中。</string>
+
+    <!-- ====================================================== -->
+    <!-- Bluetooth / BLE                                        -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_ble_scan">BLE 扫描</string>
+    <string name="triggers_ble_scan_count">%d 个活跃 BLE 扫描</string>
+    <string name="triggers_ble_scan_explanation">应用正在执行 BLE 扫描。扫描内部获取唤醒锁并保持进程在后台运行。</string>
+    <string name="triggers_ble_scan_low_latency_explanation">应用正在以 LOW_LATENCY 模式扫描 BLE — 最耗电的扫描模式，阻止 CPU 睡眠。</string>
+
+    <string name="triggers_cat_gatt">GATT 连接</string>
+    <string name="triggers_gatt_conn_count">%d 个活跃 GATT 连接</string>
+    <string name="triggers_gatt_explanation">应用有活跃的 GATT 连接到外围设备。连接由系统维护并保持进程存活。</string>
+
+    <!-- ====================================================== -->
+    <!-- ContentObserver                                        -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_content_obs">ContentObserver</string>
+    <string name="triggers_content_obs_count">%d 个已注册的观察者</string>
+    <string name="triggers_content_obs_overflow">（还有 %d 个）</string>
+    <string name="triggers_content_obs_explanation">应用为内容 URI（联系人、媒体、设置等）注册了 ContentObserver。对这些 URI 的任何更改都会唤醒应用以传递回调。</string>
+
+    <!-- ====================================================== -->
+    <!-- FCM / Firebase                                         -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_fcm">推送通知（FCM）</string>
+    <string name="triggers_fcm_service_detail">已注册 FirebaseMessagingService</string>
+    <string name="triggers_fcm_receiver_detail">已注册 FCM Broadcast Receiver</string>
+    <string name="triggers_fcm_generic_detail">检测到 Firebase 依赖</string>
+    <string name="triggers_fcm_explanation">应用已注册 Firebase Cloud Messaging（FCM）。GMS 可以在推送消息到达时随时唤醒应用。</string>
+
+    <!-- ====================================================== -->
+    <!-- Multiple Processes                                     -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_multiproc">多进程</string>
+    <string name="triggers_multiproc_count">%d 个进程运行中</string>
+    <string name="triggers_multiproc_explanation">应用在多个 OS 进程中运行。子进程（如 :sync、:remote）可以独立存活，主进程被 Kill 时不一定被停止。</string>
+
+    <!-- ====================================================== -->
+    <!-- Accessibility / IME                                    -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_accessibility">无障碍服务</string>
+    <string name="triggers_a11y_detail_generic">活跃的无障碍服务</string>
+    <string name="triggers_a11y_explanation">应用注册为活跃的无障碍服务。系统在启用期间始终保持其运行，无论电池优化设置如何。</string>
+
+    <string name="triggers_cat_ime">输入法（IME）</string>
+    <string name="triggers_ime_detail_generic">活跃的输入法</string>
+    <string name="triggers_ime_explanation">应用是当前选中的输入法（键盘）。系统在选择期间始终保持活跃的 IME 存活。</string>
+
+    <!-- ====================================================== -->
+    <!-- Device Admin                                           -->
+    <!-- ====================================================== -->
+    <string name="triggers_cat_device_admin">设备管理员</string>
+    <string name="triggers_device_admin_owner_device">Device Owner</string>
+    <string name="triggers_device_admin_owner_profile">Profile Owner</string>
+    <string name="triggers_device_admin_active">活跃的设备管理员</string>
+    <string name="triggers_device_admin_owner_explanation">应用是 Device Owner 或 Profile Owner。无法通过正常方式强制停止或卸载，以提升的权限运行。</string>
+    <string name="triggers_device_admin_explanation">应用是活跃的设备管理员。具有提升的权限 — 受标准电池限制机制保护，无法被强制停止。</string>
+
+    <!-- AppOps -->
+    <string name="triggers_cat_appops">AppOps</string>
+    <string name="triggers_appops_last_used">%1$s 前</string>
+    <string name="triggers_appops_wakelock_explanation">应用通过 AppOps 获取了 WakeLock — CPU 代表其保持唤醒。</string>
+    <string name="triggers_appops_fg_explanation">应用最近启动了 Foreground Service — 被明确带入活跃状态。</string>
+    <string name="triggers_appops_run_bg_explanation">系统电池策略允许应用在后台运行。</string>
+    <string name="triggers_appops_run_any_bg_explanation">应用具有不受限制的后台执行权限 — 完全豁免电池优化。</string>
+    <string name="triggers_appops_exact_alarm_explanation">应用可以调度精确闹钟 — 在精确时间唤醒设备，不受 Doze 影响。</string>
+    <string name="triggers_appops_user_interaction_explanation">应用最近收到了用户交互信号 — 可能触发了后台启动。</string>
+    <string name="triggers_appops_activity_recognition_explanation">应用使用 Activity Recognition API — 在后台定期接收运动更新。</string>
+
+    <!-- UsageStats -->
+    <string name="triggers_cat_receivers_dynamic">动态 Receiver（%d）</string>
+    <string name="triggers_cat_usagestats">后台启动</string>
+    <string name="triggers_usagestats_last_used">%1$s 前使用</string>
+    <string name="triggers_usagestats_last_fg">上次前台 %1$s 前</string>
+    <string name="triggers_usagestats_total_fg">前台总计 %1$s</string>
+    <string name="triggers_usagestats_explanation">应用最近活跃但不在前台 — 表示由闹钟、作业、推送通知或链式启动触发的隐藏后台唤醒。</string>
+
+    <string name="triggers_proc_frozen_detail">进程已冻结（cgroup freezer）</string>
+    <string name="triggers_proc_frozen_explanation">进程被系统冻结（Android 11+）：执行暂停但未 Kill。访问时自动解冻。</string>
+    <string name="triggers_cat_fgs_timeout_exceeded">FGS 超时</string>
+    <string name="triggers_fgs_timeout_exceeded_explanation">Android 15：dataSync 或 mediaProcessing 类型的服务超过了 6 小时限制。系统应已触发 onTimeout() 并停止它。</string>
+    <string name="triggers_cat_fgs_near_timeout">FGS 即将超时</string>
+    <string name="triggers_fgs_near_timeout_explanation">Android 15：服务距离 6 小时限制（dataSync/mediaProcessing）不足 30 分钟。</string>
+    <string name="triggers_wakelock_wakeup_sources_explanation">来自 /sys/kernel/wakeup_sources 的唤醒源（Android 14+ 的回退，当 dumpsys power 不显示 WakeLock 时）。</string>
+    <string name="triggers_fgs_blocked_detail">从后台启动 FGS 时被阻止</string>
+    <string name="triggers_fgs_blocked_explanation">Android 12+：尝试从后台启动 FGS 但无允许的豁免。服务未启动。</string>
+    <string name="triggers_network_bg_blocked_detail">后台网络访问被阻止（Data Saver）</string>
+    <string name="triggers_network_bg_blocked_explanation">用户启用了 Data Saver 或限制了后台网络。应用无法在移动数据下使用后台网络。</string>
+    <string name="triggers_network_bg_allowed_detail">后台网络访问：明确允许（Data Saver 豁免）</string>
+    <string name="triggers_network_bg_allowed_explanation">应用在 Data Saver 设置中被加入白名单 — 具有不受限制的后台网络访问。</string>
+    <string name="triggers_bg_location_detail">已授予 ACCESS_BACKGROUND_LOCATION</string>
+    <string name="triggers_bg_location_explanation">Android 11+：应用有权随时从后台接收位置数据，即使未在使用中。需要单独的用户批准。</string>
+    <string name="triggers_bt_permissions_explanation">Android 12+：应用具有蓝牙扫描和/或连接权限。可以通过广播启动扫描。</string>
+    <string name="triggers_kernel_wakelock_explanation">应用持有内核级 WakeLock（/sys/power/wake_lock）。极其罕见 — 表示非标准驱动程序或系统组件。</string>
+    <string name="triggers_alarm_throttled_explanation">系统因 app_standby 或 battery_saver 取消了闹钟。应用尝试通过定时器启动但被系统阻止。</string>
+    <string name="triggers_bal_privilege_explanation">Android 14+：应用获得了后台启动令牌。通常授予高优先级 FCM、精确闹钟或来自可见应用的 PendingIntent。</string>
+    <string name="triggers_bal_blocked_detail_prefix">BAL 被系统阻止 · 调用者=</string>
+    <string name="triggers_bal_blocked_explanation">Android 14+：系统阻止了后台启动尝试。应用尝试在无权限的情况下启动 Activity 或 FGS。</string>
+    <string name="triggers_receiver_exported_detail">exported=true · Android 13 需要显式标志</string>
+    <string name="triggers_receiver_exported_explanation">Android 13+：动态注册的 Receiver 设置了 exported=true，其他应用可访问。可以从任何发送者接收广播。</string>
+    <string name="triggers_fgs_boot_blocked_detail">FGS 在启动时被阻止 · FGS_BOOT_COMPLETED_RESTRICTIONS</string>
+    <string name="triggers_fgs_boot_blocked_explanation">Android 14+：BOOT_COMPLETED Receiver 不能启动 MICROPHONE（API 34）或 PHONE_CALL（API 35）类型的 FGS。应用正在尝试绕过此限制。</string>
+    <string name="triggers_fgs_boot_exception_detail">启动时抛出 ForegroundServiceStartNotAllowedException</string>
+    <string name="triggers_fgs_boot_exception_explanation">Android 15：尝试从 BOOT_COMPLETED 启动 FGS 导致异常。服务类型（dataSync/mediaProcessing/phoneCall）被禁止在启动时启动。</string>
+    <string name="triggers_doze_battery_opt_detail">电池优化已禁用 · RUN_ANY_IN_BACKGROUND=allow</string>
+    <string name="triggers_doze_battery_opt_explanation">应用被用户或系统从电池优化中排除。可以在后台运行而不受 Doze/App Standby 限制。</string>
+    <string name="triggers_doze_battery_exempt_detail">电池豁免（dumpsys battery）</string>
+    <string name="triggers_doze_battery_exempt_explanation">应用在电池管理器豁免列表中。</string>
+    <string name="triggers_bucket_restricted_explanation">RESTRICTED 桶（Android 12+）：Job 和 Alarm 被完全阻止。在 Android 14 上，甚至 ALLOW_WHILE_IDLE 闹钟也被忽略。应用因过度后台消耗而被限制。</string>
+    <string name="triggers_bucket_never_explanation">NEVER 桶：系统完全禁用后台执行。</string>
+    <string name="triggers_restricted_confirmed_explanation">Android 12+：系统通过 appops 确认了 RESTRICTED 桶。Job 和 Alarm 被阻止。应用无法独立启动自身。</string>
+    <string name="triggers_doze_state_prefix">Android 11+：设备处于 Doze 模式（%1$s）。</string>
+    <string name="triggers_doze_state_suffix">WakeLock、网络、Job 和 Alarm（ALLOW_WHILE_IDLE 除外）被阻止。没有 Doze 豁免的应用无法在后台运行。</string>
+    <string name="triggers_appops_schedule_exact_alarm_explanation">调度精确闹钟触发器的权限。Android 14：新安装默认拒绝。如果允许 — 应用可以通过定时器精确唤醒设备。</string>
+    <string name="triggers_appops_full_screen_intent_explanation">在锁屏上显示通知的权限。Android 14+：仅允许闹钟/通话应用。第三方应用存在此权限可疑。</string>
+    <string name="triggers_appops_manage_media_explanation">管理其他应用的媒体会话。与 Android 15 上的 mediaProcessing FGS 类型关联。</string>
+    <string name="triggers_appops_user_initiated_jobs_explanation">运行用户启动的作业（长时间用户启动任务）的权限。Android 14：\u201clong jobs\u201d 的替代方案。可在锁屏时运行。</string>
+    <string name="triggers_appops_start_fgs_blocked_explanation">系统阻止了 Foreground Service 的启动。应用试图在后台运行但被限制。</string>
+    <string name="trigger_manage_media_label">MANAGE_MEDIA · allow</string>
+    <string name="trigger_manage_media_desc">Android 12+：应用可以管理其他应用的媒体会话。在 Android 15 上，与 mediaProcessing Foreground Service 类型关联。</string>
+    <string name="trigger_exact_alarm_label">%1$s 已授予（Android 12+）</string>
+    <string name="trigger_exact_alarm_desc_use">Android 12+：应用持有精确闹钟触发权限，不受 App Standby 桶影响。USE_EXACT_ALARM 仅授予系统/特权应用。</string>
+    <string name="trigger_exact_alarm_desc_schedule">Android 12+：应用持有精确闹钟触发权限，不受 App Standby 桶影响。SCHEDULE_EXACT_ALARM 需要明确的用户批准。</string>
+
+    <!-- App Status + Aggression Score -->
+    <string name="triggers_status_label_prefix">应用状态：</string>
+    <string name="triggers_status_active">活跃</string>
+    <string name="triggers_status_background">后台</string>
+    <string name="triggers_status_cached">已缓存</string>
+    <string name="app_status_hint_foreground">屏幕上</string>
+    <string name="app_status_hint_fgs">活跃服务</string>
+    <string name="app_status_hint_cached_service">持有服务</string>
+    <string name="app_status_hint_cached_recent">最近使用</string>
+    <string name="app_status_hint_cached_idle">不活跃</string>
+    <string name="app_status_hint_not_running">未运行</string>
+    <string name="triggers_aggression_label_prefix">攻击性得分：</string>
+    
+    <!-- ══════════════════════════════════════════════
+         UPDATE DIALOG
+         ══════════════════════════════════════════════ -->
+    <string name="update_dialog_title">有可用更新</string>
+    <string name="update_dialog_download">下载</string>
+    <string name="update_dialog_close">关闭</string>
+    <string name="update_up_to_date">已是最新版本（%s）</string>
+    <string name="update_check_failed">更新检查失败</string>
+    <string name="easter_egg_hunter">🐱 彩蛋猎人！</string>
+    
+    <!-- Scan System -->
+    <string name="scansystem_menu_title">扫描</string>
+    <string name="scansystem_dialog_title">当前负载</string>
+    <string name="scansystem_scanning">正在扫描…</string>
+    <string name="scansystem_no_load">没有活跃负载的应用</string>
+    <string name="scansystem_cat_wakelock">保持 CPU 唤醒</string>
+    <string name="scansystem_cat_network">保持网络连接</string>
+    <string name="scansystem_cat_fgs">Foreground Service</string>
+    <string name="scansystem_cat_alarm">唤醒设备</string>
+    <string name="scansystem_cat_sensor">保持传感器</string>
+    <string name="scansystem_cat_location">保持位置</string>
+    <string name="scansystem_wakelock_history">WakeLock 历史</string>
+    <string name="scan_button_label">扫描</string>
+
+    <!-- Background Restrictions Detail Log -->
+    <string name="settings_open_app_info">应用信息</string>
+    <string name="log_detail_action">操作</string>
+    <string name="log_detail_outcome">结果</string>
+    <string name="log_detail_appops">AppOps</string>
+    <string name="log_detail_force_stop">强制停止</string>
+    <string name="log_detail_ops_missing">偏移的 ops</string>
+    <string name="log_detail_ops_repaired">已修复</string>
+    <string name="log_detail_ops_failed">失败的 ops</string>
+    <string name="log_detail_bucket_was">Bucket 原为</string>
+    <string name="log_detail_bucket_set">Bucket 已设为</string>
+    <string name="log_detail_bucket_restored">Bucket 已恢复</string>
+
+    <!-- Auto-Kill Advanced -->
+    <string name="section_additional_scenarios">高级条件</string>
+    <string name="scenarios_summary_none">已禁用</string>
+    <string name="scenarios_hw_headset_short">耳机</string>
+    <string name="scenarios_hw_usb_short">USB</string>
+    <string name="scenarios_hw_charger_short">充电器</string>
+    <string name="scenarios_hw_wifi_short">WiFi/移动数据</string>
+    <string name="scenarios_hw_bluetooth_short">蓝牙</string>
+    <string name="scenarios_hw_gps_short">GPS</string>
+    <string name="scenarios_hw_hotspot_short">热点</string>
+    <string name="scenarios_app_launch_short">应用启动</string>
+
+    <!-- Hardware events -->
+    <string name="scenarios_hardware_events_title">硬件事件</string>
+    <string name="scenarios_hw_headset">耳机连接/断开</string>
+    <string name="scenarios_hw_usb">USB 连接/断开</string>
+    <string name="scenarios_hw_charger">充电器连接/断开</string>
+    <string name="scenarios_hw_wifi">WiFi 或移动网络 开/关</string>
+    <string name="scenarios_hw_bluetooth">蓝牙 开/关</string>
+    <string name="scenarios_hw_gps">GPS 开/关</string>
+    <string name="scenarios_hw_hotspot">热点 开/关</string>
+    <string name="scenarios_hw_delay_note">Auto-Kill 在事件发生后 10 秒运行，以允许后台应用启动</string>
+
+    <!-- App launch trigger -->
+    <string name="scenarios_app_launch_title">应用启动触发器</string>
+    <string name="scenarios_app_launch_enable">目标应用启动时运行 Auto-Kill</string>
+    <string name="scenarios_app_launch_clear_cache">启动时清除 RAM</string>
+    <string name="scenarios_app_launch_target_apps">目标应用</string>
+    <string name="scenarios_app_launch_add">添加应用</string>
+    <string name="scenarios_app_launch_add_title">选择目标应用</string>
+    <string name="scenarios_app_launch_empty">未选择应用</string>
+    <string name="scenarios_remove_target_app">移除</string>
+
+    <!-- Accessibility service -->
+    <string name="accessibility_service_description">检测目标应用启动以触发 Auto-Kill 并释放 RAM</string>
+    <string name="scenarios_accessibility_required_title">需要无障碍服务</string>
+    <string name="scenarios_accessibility_required_message">要使应用启动触发器生效，请在无障碍设置中启用 ReAppzuku。设置已保存，服务启用后将激活。</string>
+    <string name="scenarios_accessibility_open_settings">打开设置</string>
+
+    <!-- Auto-Kill Presets-->
+    <string name="settings_presets_title">Auto-Kill 预设</string>
+    <string name="settings_presets_subtitle">按时间安排最多 2 组规则</string>
+    <string name="preset_title">预设 %d</string>
+    <string name="preset_section_title">Auto-Kill 预设</string>
+    <string name="preset_enabled_title">启用预设</string>
+    <string name="preset_enabled_subtitle">预设按计划自动激活</string>
+    <string name="preset_name_title">预设名称</string>
+    <string name="preset_name_dialog_title">预设名称</string>
+    <string name="preset_time_range_title">活跃时间</string>
+    <string name="preset_time_range_dialog_title">活跃时间</string>
+    <string name="preset_time_from_label">从</string>
+    <string name="preset_time_to_label">到</string>
+    <string name="preset_time_range_error_same">开始和结束时间必须不同</string>
+    <string name="preset_app_list_mode_title">应用列表来源</string>
+    <string name="preset_app_list_mode_dialog_title">应用列表来源</string>
+    <string name="preset_app_list_mode_current">使用当前白名单/黑名单</string>
+    <string name="preset_app_list_mode_own">使用预设自己的列表</string>
+    <string name="preset_app_list_mode_switch_hint">切换到\u201c自有列表\u201d以编辑</string>
+    <string name="preset_list_count_current">%d 个应用（来自当前设置）</string>
+    <string name="preset_list_count_own">已选择 %d 个应用</string>
+    <string name="preset_save_button">保存预设</string>
+    <string name="preset_saved">预设 %d 已保存</string>
+    <string name="preset_export_json_button">导出为 JSON</string>
+    <string name="preset_export_success">预设导出成功</string>
+    <string name="preset_badge_active">活跃</string>
+    <string name="preset_overlap_title">时间重叠</string>
+    <string name="preset_overlap_message">此范围与另一个预设（%1$d:%2$02d – %3$d:%4$02d）重叠。请调整时间使预设不重叠。</string>
+    <string name="preset_import_json_button">从 JSON 导入</string>
+    <string name="preset_import_success">预设导入成功</string>
+    <string name="preset_import_failed">导入预设失败</string>
+    <string name="preset_reset_button">重置预设</string>
+    <string name="preset_reset_dialog_title">重置预设设置？</string>
+    <string name="preset_reset_dialog_message">预设 %d 的所有设置将重置为默认值。更改仅在您点击保存后生效。</string>
+    <string name="preset_reset_success">预设 %d 设置已重置 — 点击保存以应用</string>
+    <string name="antichange_settings">预设活跃时无法更改主 Auto-Kill 设置</string>
+</resources>

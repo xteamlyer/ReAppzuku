@@ -1,0 +1,1115 @@
+# 📖 ReAppzuku — 常见问题
+
+> 完整配置与使用 ReAppzuku 指南
+
+---
+
+## 目录
+
+- [什么是 ReAppzuku？](#what-is-reappzuku)
+- [系统要求](#requirements)
+- [后台存活设置](#background-survival-setup)
+- [快速开始](#quick-start)
+- [手动控制](#manual-control)
+- [主界面](#main)
+  - [工具栏](#toolbar)
+  - [应用触发器](#app-triggers)
+- [设置](#settings)
+  - [信息](#-information)
+  - [外观](#-appearance)
+  - [应用稳定性](#️-app-stability)
+  - [Auto-Kill 设置](#-auto-kill-settings)
+  - [高级工具](#-advanced-tools)
+    - [后台限制](#background-restrictions)
+    - [限制调度器](#restriction-scheduler)
+    - [休眠模式](#sleep-mode)
+  - [关于](#ℹ️-about)
+- [统计与日志](#-statistics--logs)
+- [受保护应用](#protected-apps)
+- [常见问题](#faq)
+
+---
+
+## 什么是 ReAppzuku？
+
+**ReAppzuku** 是一款后台进程诊断与管理工具。它提供了丰富的限制场景，适用于每个应用。
+
+`为什么现代 Android 本身就能很好地管理应用，还需要 ReAppzuku？`——确实，它做得不错，但并不完美。系统开发者不断改进和现代化进程管理机制。然而，大量漏洞仍允许应用在后台保持活跃。这些漏洞从无害的接收器到激进的 Alarms、Wakelocks 及其他保活机制，不一而足。最终，它们阻止设备进入深度待机状态，使 CPU/RAM 过载，并肆意消耗电池电量。
+
+---
+
+## 系统要求
+🔙[目录](#table-of-contents)
+
+| 要求 | 说明 |
+|---|---|
+| **Android** | 6.0 或更高版本。后台限制功能仅适用于 Android 11+ |
+| **Root** 或 **Shizuku** | 二者任选其一 |
+
+### Root 与 Shizuku
+
+- **Root** — 首选模式，如果可用则自动使用
+- **Shizuku** — 免 Root 替代方案。从 Play Store 安装，需要通过 ADB 或 MIUI/HyperOS 开发者模式进行初始设置
+
+> [!NOTE]
+> 当前运行模式始终显示在 **设置 → 信息 → 运行模式** 中
+
+---
+
+## 后台存活设置
+🔙[目录](#table-of-contents)
+
+为了让 ReAppzuku 可靠运行而不被系统 Kill，请正确配置权限。具体步骤取决于您的固件。
+
+---
+
+### 电池优化（所有固件）
+
+最重要的一步。如果不禁用，系统会定期 Kill ReAppzuku。
+
+**设置 → 应用 → ReAppzuku → 电池 → 无限制**
+
+或通过系统对话框：
+
+**设置 → 电池 → 电池优化 → 全部应用 → ReAppzuku → 不优化**
+
+---
+
+### 在最近任务中锁定（所有固件）
+
+打开最近应用（方形按钮或从底部向上滑动），找到 ReAppzuku，点击 **锁定图标** 🔒。这可以防止它在清除最近任务时被卸载。
+
+---
+
+### MIUI / HyperOS（小米、Redmi、POCO）
+
+<details>
+<summary>展开说明</summary>
+
+**自启动：**
+
+设置 → 应用 → 应用管理 → ReAppzuku → 自启动 → 开启
+
+**后台活动：**
+
+设置 → 应用 → 应用管理 → ReAppzuku → 省电策略 → 无限制
+
+**在最近任务中锁定：**
+
+最近任务 → 长按 ReAppzuku 卡片 → 点击锁定图标
+
+**附加设置（MIUI 12+）：**
+
+设置 → 应用 → 应用管理 → ReAppzuku → 其他权限 → 后台运行 → 允许
+
+</details>
+
+---
+
+### One UI（三星）
+
+<details>
+<summary>展开说明</summary>
+
+**允许后台活动：**
+
+设置 → 设备维护 → 电池 → 后台使用限制 → 休眠应用 → 确保 ReAppzuku 不在列表中
+
+**禁用自适应电池：**
+
+设置 → 设备维护 → 电池 → 更多电池设置 → 自适应电池 → 关闭（可选，如果问题持续存在）
+
+**自启动：**
+
+设置 → 应用 → ReAppzuku → 电池 → 无限制
+
+</details>
+
+---
+
+### ColorOS / OxygenOS（OPPO、OnePlus、Realme）
+
+<details>
+<summary>展开说明</summary>
+
+**自启动：**
+
+设置 → 应用管理 → ReAppzuku → 自启动 → 开启
+
+**后台活动：**
+
+设置 → 应用管理 → ReAppzuku → 省电策略 → 不限制
+
+**附加设置：**
+
+设置 → 电池 → 电池优化 → ReAppzuku → 不优化
+
+</details>
+
+---
+
+### Flyme（魅族）
+
+<details>
+<summary>展开说明</summary>
+
+**自启动：**
+
+设置 → 权限 → 自启动 → ReAppzuku → 开启
+
+**后台活动：**
+
+设置 → 权限 → 后台运行 → ReAppzuku → 开启
+
+**应用安全：**
+
+安全中心 → 权限管理 → ReAppzuku → 启用所有权限
+
+</details>
+
+---
+
+### OriginOS / Funtouch OS（Vivo）
+
+<details>
+<summary>展开说明</summary>
+
+**自启动：**
+
+设置 → 应用 → 应用管理 → ReAppzuku → 权限 → 自启动 → 开启
+
+**后台活动：**
+
+设置 → 应用 → 应用管理 → ReAppzuku → 耗电管理 → 高后台性能
+
+</details>
+
+---
+
+### MagicOS（荣耀）
+
+<details>
+<summary>展开说明</summary>
+
+**自启动：**
+
+设置 → 应用 → 应用启动 → ReAppzuku → 手动 → 自启动、后台活动
+
+**电池：**
+
+设置 → 电池 → 应用启动 → ReAppzuku → 不限制
+
+</details>
+
+---
+
+### 如何验证一切设置正确
+
+设置完成后：
+1. 在 ReAppzuku 设置中启用 **后台服务**
+2. 锁屏 10–15 分钟
+3. 解锁并打开 ReAppzuku——服务应仍处于活跃状态
+4. 如果服务停止——请针对您的固件重复上述步骤
+
+> [!TIP]
+> 各设备专用说明：[dontkillmyapp.com](https://dontkillmyapp.com)
+
+---
+
+## 快速开始
+🔙[目录](#table-of-contents)
+
+1. 安装并打开 ReAppzuku
+2. 授予 Root 权限或设置 Shizuku
+3. 主界面显示活跃的后台应用
+4. 选择应用并点击 **Kill**——或设置自动化
+
+---
+
+## 手动控制
+🔙[目录](#table-of-contents)
+
+**快捷磁贴**\
+添加到通知栏中：
+
+| 磁贴 | 操作 |
+|---|---|
+| **Kill 应用** | Kill 当前前台应用 |
+| **Kill 后台应用** | 根据您的白名单/黑名单设置运行 Auto-Kill |
+
+**小部件**\
+主屏幕小部件——显示最近 12 小时的 Auto-Kill 统计数据和当前 RAM 负载。
+
+**快捷方式**\
+通过长按应用图标使用静态快捷方式——Kill 当前前台应用。
+
+---
+
+## 主界面
+🔙[目录](#table-of-contents)
+
+主界面显示所有活跃的后台应用，并实时展示 RAM 和 CPU 使用情况。顶部区域显示总体统计：活跃应用数量和当前 RAM 负载。
+
+### 工具栏
+🔙[目录](#table-of-contents)
+
+工具栏中有三个按钮：
+
+- 🔍 **搜索**——按应用名称或包名过滤列表
+- 🔽 **排序**——配置显示顺序
+- ☑️ **全选**——一键选择所有应用以执行 Kill
+
+**排序**
+
+列表可按以下方式排序：
+- **默认**——用户应用优先，其次为系统应用
+- **RAM 使用：高 → 低 / 低 → 高**
+- **CPU 负载：高 → 低 / 低 → 高**
+- **名称 A → Z** / **名称 Z → A**——按字母顺序
+
+您还可以切换显示系统应用和持久应用。
+
+**扫描**
+对列表中所有活跃应用对系统的当前负载进行扫描。负载类别：
+- CPU 占用
+- 网络占用
+- Foreground Service 占用
+- 唤醒设备（阻止休眠模式）
+- 传感器占用
+- GPS 占用
+
+> [!NOTE]
+> 扫描不适用于持久应用和受保护应用，即使它们出现在活跃应用列表中。
+
+> [!TIP]
+> 请注意，显示的活跃应用越多（例如启用了系统应用显示），扫描所需时间越长。
+
+### 应用操作
+
+在列表中点击应用可打开快捷操作菜单：
+
+- **应用信息**——打开标准系统应用信息
+- **应用触发器**——详细分析后台活动原因（见下文）
+- **卸载**——从设备中移除应用（系统应用不可用）
+- **添加到…**——快速添加到以下列表之一：
+  - 白名单
+  - 黑名单
+  - 隐藏
+  - 后台限制（Soft）
+
+### 应用触发器
+🔙[目录](#table-of-contents)
+
+触发器是一个深度诊断工具，可在系统层面分析应用后台活动的 **真实原因**。无需猜测——提供精确的技术事实：是什么让应用驻留在内存中、它多久唤醒一次、以及当前是否有活跃的网络连接。
+
+通过系统命令实时分析 **62 个独立因素（42 个主要因素和 20 个取决于 Android 版本的附加因素）**。
+
+---
+
+**应用状态（活跃 / 后台 / 缓存）**\
+由 Linux 内核中的进程优先级结合活跃服务检测确定。这与 Android 在内存不足时决定终止哪些进程所使用的值相同。
+
+- **活跃**——应用在前台或持有系统资源（服务、Alarm 等）
+- **后台 • 活跃服务**——在后台运行，并持有活跃的 Foreground Service。
+- **后台**——静默运行，但系统认为其有必要。
+- **缓存 • 持有服务**——进程在缓存中，但保持活跃服务运行。
+- **缓存 • 最近使用**——进程在缓存中，最近被使用过。
+- **缓存 • 非活跃**——进程仍存活，但 Android 随时准备终止它。
+
+---
+
+**攻击性评分**\
+基于触发器，以百分制评估。
+- 活跃触发器：每个 + **6 分**。
+- 可随时唤醒应用：每个 + **5 分**。
+- 其他触发器：**0–4 分**，取决于重要性。有些仅作信息性展示，不影响评分。
+
+> [!TIP]
+> 根据攻击性评分可以采取的措施：
+> - 0–40——系统可以自行处理。无需紧急限制。
+> - 41–65——中等水平。Auto-Kill 或 Soft 类型的后台限制可能已足够。
+> - 66+——Auto-Kill、Hard 或 Manual 类型的后台限制，或休眠模式的理想候选。
+
+> [!CAUTION]
+> 此说明仅供参考，不应视为建议。是否对应用施加限制，请基于以下因素判断：
+> - 应用的行为。
+> - 其触发器和攻击性评分。
+> - 系统分配的当前状态。
+> - 设备资源使用情况（电池、RAM、CPU）。
+
+---
+
+#### 触发器类型：
+
+**实际触发**
+
+应用 **正在此刻** 消耗资源。
+
+- **Foreground Service**。
+应用启动了一个带有持久通知的后台服务。这是避免被 Kill 的最可靠方式——只要通知可见，Android 就不会触碰此类进程。显示服务类型：媒体播放、位置、通话、已连接设备等。
+
+- **FG 通知渠道**。
+补充 Foreground Service 信息：显示通知渠道的重要性。URGENT 或 HIGH 重要性以弹出横幅形式显示——系统极难抑制，使 force-stop 几乎不可能。
+
+- **Sticky Service**。
+服务声明了 `START_STICKY`——Android 在 Kill 后会自动重启它。不禁用该应用就无法永久停止。
+
+- **被绑定持有**。
+一个或多个进程持有对此应用服务的活跃绑定。只要绑定存在，Android 就无法 Kill 进程。Google Play Services (GMS) 是常见的罪魁祸首——持有推送连接和账户同步绑定。
+
+- **WakeLock**。
+应用明确要求系统"保持唤醒"。`PARTIAL_WAKE_LOCK`——屏幕关闭时 CPU 仍在运行；`FULL_WAKE_LOCK`——屏幕也保持亮起。显示锁定标签、类型和持有时间。持有时会直接消耗电池。
+
+- **网络活动**。
+应用有活跃的后台网络活动。打开的 TCP 连接表示正在进行的数据交换——典型于即时通讯、推送客户端和实时同步应用。仅统计超过 10 KB 的流量以及 `ESTABLISHED` 连接。
+
+- **传感器**。
+应用正在主动轮询硬件传感器：加速度计、陀螺仪、气压计、GPS、心率监测器等。持续使用传感器即使在屏幕关闭时也会消耗电池。显示传感器名称和轮询频率（如可用）。
+
+- **位置**。
+应用正在请求位置数据。显示精度级别（HIGH_ACCURACY、BALANCED、LOW_POWER）、是否为后台或前台，以及最小更新间隔。后台高精度是最消耗资源的。
+
+- **音频焦点**。
+应用持有音频焦点——独占（GAIN）或临时（duck/transient）。在焦点释放之前，进程保持活跃。显示音频流类型：MUSIC、VOICE_CALL、ALARM 等。
+
+- **Media Session**。
+应用有活跃的 `MediaSession`。显示播放状态（PLAYING、PAUSED、BUFFERING 等）和会话标签。未关闭的暂停会话是媒体应用驻留在内存中的常见原因。
+
+- **BLE 扫描**。
+应用正在进行蓝牙低功耗扫描。BLE 扫描内部会获取 WakeLock，并在后台保持进程运行。`LOW_LATENCY` 模式最耗电。
+
+- **GATT 连接**。
+应用有活跃的蓝牙 GATT 连接到外围设备。连接由系统维护，并在其持续期间保持进程存活。
+
+- **AppOps**。
+AppOps 操作表明最近的应用活动：
+  - **WAKE_LOCK**——应用通过 AppOps 获取了 WakeLock——CPU 代表其保持唤醒。
+  - **ACTIVITY_RECOGNITION**——应用正在使用 Activity Recognition API，并定期在后台接收运动更新（步行、跑步、乘车等）。
+
+<details>
+<summary>Android 15+ 触发器</summary>
+
+- **FGS 超时超限**。
+Android 15：类型为 `dataSync` 或 `mediaProcessing` 的服务超过了 6 小时限制。系统应该已触发 `onTimeout()` 并停止了它。
+
+- **FGS 临近超时**。
+Android 15：服务距离 6 小时限制（`dataSync` / `mediaProcessing`）不足 30 分钟。
+
+</details>
+
+<details>
+<summary>Android 13 及以下触发器</summary>
+
+- **WakeLock（WorkSource 归属）**。
+Android 10–13：WakeLock 由系统进程持有，但通过 WorkSource 归属于此应用。应用是唤醒的实际发起者，即使锁在形式上由系统持有。
+
+- **内核 Wakelock**。
+应用持有内核级 wakelock（`/sys/power/wake_lock`）。极为罕见——表示非标准驱动程序或系统组件。
+
+- **ACCESS_BACKGROUND_LOCATION**。
+Android 11–13：应用有权随时从后台接收位置数据，即使未被主动使用。需要单独的用户批准。
+
+</details>
+
+---
+
+**可随时唤醒**\
+系统 **可能在没有任何用户操作的情况下启动或恢复** 应用。
+
+- **Alarms**。
+分析活跃的 `AlarmManager` 闹钟。唤醒型闹钟（`RTC_WAKEUP`）即使在屏幕关闭时也会将设备从休眠中拉出。间隔低于 2 分钟为高严重性。`AllowWhileIdle` 闹钟即使在 Doze 模式下也会触发。显示闹钟标签、间隔和距离下次触发的时间。
+
+- **Jobs / WorkManager**。
+应用在 `JobScheduler` 中注册了作业。WorkManager 任务、同步作业和定期操作在此注册，并按计划唤醒应用。显示作业约束条件（网络类型、需要充电、空闲模式）和近期历史中的停止原因。
+
+- **PendingIntent**。
+应用持有已注册的 `PendingIntent`。系统或其他应用可随时激活它们——通过通知、AlarmManager 或系统事件——启动进程。显示按类型分类：Activity、Service、Broadcast。
+
+- **过度唤醒**。
+自上次充电以来，此应用导致的设备唤醒总次数。高数字表示激进的后台活动，阻止 CPU 深度休眠。按 Alarms、Jobs、GCM/FCM 和 Broadcasts 分类。
+
+- **Content Observers**。
+应用为内容 URI（联系人、媒体、设置、日历等）注册了 `ContentObserver`。对这些 URI 的任何更改都会唤醒应用以传递回调。
+
+- **推送通知（FCM）**。
+应用已注册 Firebase Cloud Messaging (FCM)。Google Play Services 可以在推送到达时随时唤醒它，无论电池优化设置如何。
+
+- **动态接收器**。
+应用在运行时动态注册了 `BroadcastReceiver`。与静态清单接收器不同，它们在进程存活期间活跃，并实时响应系统事件。
+
+- **AppOps**。
+授予后台执行权限的 AppOps 操作：
+  - **RUN_IN_BACKGROUND**——系统电池策略明确允许此应用在后台运行。屏幕关闭时不会被挂起。
+  - **RUN_ANY_IN_BACKGROUND**——应用完全排除在电池优化之外——无限制的后台执行，无系统限制。
+  - **USE_FULL_SCREEN_INTENT**——在锁屏上显示通知的权限。Android 14+：仅允许闹钟/通话应用使用。第三方应用中存在此权限属于异常。
+  - **RUN_USER_INITIATED_JOBS**——运行长时间用户发起任务的权限。可在屏幕锁定时执行。
+  - **USER_INTERACTION**——应用最近收到了明确的用户交互信号，这可能触发了后台启动。
+
+<details>
+<summary>Android 14+ 触发器</summary>
+
+- **Jobs（sysfs 回退）**。
+Android 14+：当主要方法（`dumpsys jobscheduler`）不可用时，通过 `cmd jobscheduler get-job-state` 检索作业状态。显示状态：running、pending 或 stopped。
+
+</details>
+
+<details>
+<summary>Android 13 及以下触发器</summary>
+
+- **SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM**。
+Android 12–13：应用拥有精确闹钟权限，可在指定时间触发，无需考虑 Doze 模式和电池节省。`USE_EXACT_ALARM` 是更广泛的权限，仅授予闹钟和日历应用。
+
+</details>
+
+---
+
+**其他触发器**\
+影响后台行为但不直接指示当前活动的被动因素。
+
+- **链式启动**。
+识别谁启动了这个进程以及如何启动。直接调用——另一个应用通过服务或 Activity 明确启动它。广播——由第三方应用的 Broadcast 启动。显示发送方名称和触发操作。
+
+- **Broadcast Receivers**。
+列出应用在清单中订阅的所有系统事件：网络变化、充电器连接、时区变化、屏幕开/关等。`BOOT` 和 `CONNECTIVITY` 订阅被标记为潜在激进。
+
+- **开机自启动**。
+应用已注册系统启动事件。`BOOT_COMPLETED`——在存储解锁后启动。`LOCKED_BOOT_COMPLETED`——在锁屏出现之前（PIN/密码输入之前）启动——尤为激进的自启动。
+
+- **App Standby Bucket**。
+应用在系统中的优先级排名：`ACTIVE` → `WORKING_SET` → `FREQUENT` → `RARE` → `RESTRICTED` → `NEVER`。状态越高 = 后台限制越少。`RESTRICTED` 和 `NEVER` 表示系统已经限制了应用。显示桶历史记录（如可用）。
+
+- **Doze 豁免**。
+应用在 Doze 白名单中。此类应用不会随设备休眠，并随时保留无限制的网络和闹钟访问权限。制造商条目无法由用户撤销。
+
+- **电池使用历史**。
+自上次电池重置以来的统计数据：Wakelock 持有、Alarm 唤醒、Job 和同步启动。用长期数据补充当前快照。
+
+- **广播效率**。
+显示有多少广播被传递给应用，以及有多少需要冷启动。高百分比 = 系统定期 Kill 并重启它。
+
+- **多进程**。
+应用在多个系统进程中运行。子进程（`:sync`、`:remote`、`:push` 等）可以独立存活，并且可能不会在主进程停止时终止。
+
+- **Accessibility Service**。
+应用注册为活跃的 Accessibility Service。启用后，系统会始终让其运行，无论电池优化设置如何。
+
+- **输入法（IME）**。
+应用是当前选中的输入法（键盘）。系统会保持活跃的 IME 存活，只要它被选中。
+
+- **Device Administrator**。
+应用是活跃的 Device Administrator、Device Owner 或 Profile Owner。拥有提升的权限——系统保护其免受标准电池限制机制的 force-stop。
+
+- **Sync Adapter**。
+应用已在系统中注册 Sync Adapter。Android 会定期启动它以同步账户数据，即使应用未运行。
+
+- **后台启动**。
+应用最近活跃但不在前台——表明由 Alarm、Job、推送或链式启动触发的隐藏后台唤醒。通过比较 `dumpsys usagestats` 的 `lastTimeUsed` 和 `lastTimeForeground` 检测。
+
+- **AppOps**
+  - **START_FOREGROUND（已阻止）**——系统已阻止启动 Foreground Service 的权限。应用试图在后台运行但被限制。
+  - **MANAGE_MEDIA**——管理其他应用的媒体会话。与 Android 15 上的 `mediaProcessing` FGS 类型相关联。
+
+- **Wakelocks 历史**。
+显示应用持有的最后 5 个 **WAKELOCK** 的历史记录。如果应用持有 Wakelock 时间过长，这是一个不好的信号。
+
+<details>
+<summary>Android 14+ 触发器</summary>
+
+- **链式启动（BAL 特权）**。
+Android 14+：应用收到了 `BackgroundStartPrivilege` 令牌以从后台启动。通常由系统授予，用于高优先级 FCM、精确 Alarm 或来自可见应用的 PendingIntent。
+
+- **开机自启动（FGS 限制）**。
+Android 14+：`BOOT_COMPLETED` 接收器无法启动类型为 MICROPHONE 或 PHONE_CALL 的 FGS。应用试图在启动时绕过此限制。
+
+- **Doze 豁免（回退）**。
+Android 14+：通过 `cmd appops get RUN_ANY_IN_BACKGROUND=allow` 检测到电池优化豁免。应用可以在后台运行，不受 Doze/App Standby 限制。
+
+- **StandbyBucket Restricted 效果**。
+Android 14+：系统通过 appops 确认了 RESTRICTED 桶。Jobs 和 Alarms 被阻止——应用无法独立启动自身。
+
+</details>
+
+<details>
+<summary>Android 13 及以下触发器</summary>
+
+- **链式启动（BAL 已阻止）**。
+Android 13 及以下：系统阻止了在没有有效豁免的情况下从后台启动 Activity 或 FGS 的尝试。应用尝试启动但被拒绝。
+
+- **进程冻结**。
+Android 11–13：进程被系统通过 cgroup freezer 冻结——执行暂停，但未被 Kill。在访问时自动解冻。
+
+- **FGS 启动被阻止**。
+Android 12–13：在没有允许的豁免情况下从后台启动 Foreground Service 的尝试。服务未启动。
+
+- **网络被阻止（Data Saver）**。
+Android 10–13：用户启用了 Data Saver 或限制了后台网络访问。应用无法在后台使用移动数据网络。
+
+- **后台网络已允许（Data Saver）**。
+Android 10–13：应用在 Data Saver 设置中被列入白名单——后台无限制网络访问。
+
+- **蓝牙权限（BLUETOOTH_SCAN / BLUETOOTH_CONNECT）**。
+Android 12–13：应用拥有蓝牙扫描和/或连接的权限。可以在收到广播时发起扫描。
+
+- **动态接收器（exported=true）**。
+Android 13：动态注册的接收器，`exported=true`，可被其他应用访问，并可接收来自任何发送方的广播。
+
+- **Doze 状态回退**。
+Android 11–13：设备处于 Deep Doze 或 Light Doze。Wakelocks、网络、Jobs 和 Alarms（ALLOW_WHILE_IDLE 除外）对没有 Doze 豁免的应用被阻止。
+
+</details>
+
+> [!TIP]
+> 对于 Root 用户：[Blocker](https://github.com/lihenggui/blocker) 与 ReAppzuku 配合使用效果极佳。二者结合，为您带来全新的应用控制体验。
+
+---
+
+## 设置
+
+### 🔵 信息
+🔙[目录](#table-of-contents)
+
+**ReAppzuku 访问模式**\
+显示当前访问模式：**Root**、**Shizuku** 或 **无访问权限**。只读。
+
+**帮助**\
+链接到此常见问题文档。
+
+---
+
+### 🎨 外观
+🔙[目录](#table-of-contents)
+
+**应用主题**\
+选择主题：系统默认、浅色、深色或 AMOLED。
+
+**强调色**\
+选择强调色：靛蓝、深红、森林绿、琥珀色等色调。
+
+**通知**\
+配置通知行为。关键通知涵盖后台服务状态和权限错误。
+
+---
+
+### ⚙️ 应用稳定性
+🔙[目录](#table-of-contents)
+
+**后台服务**\
+主自动化开关。启动持久的 ReAppzuku 后台进程。大多数应用功能（包括收集统计数据）需要此服务运行。
+
+---
+
+### 🎯 Auto-Kill 设置
+🔙[目录](#table-of-contents)
+
+**定期 Auto-Kill**\
+在后台服务运行时，按设定间隔自动 Kill 应用。
+
+**Auto-Kill 间隔：**
+
+| 间隔 | 说明 |
+|---|---|
+| 10 秒 | 最大激进清理 |
+| **18 秒** | 默认 |
+| 30 秒 | 中等清理 |
+| 1 分钟 | 轻度清理 |
+| 5 分钟 | 最小干预 |
+
+**锁屏时 Kill**\
+在屏幕锁定的瞬间运行 Kill。适合每次放下手机时进行清理。
+
+**RAM 负载时 Kill**\
+附加条件——Kill 仅在 RAM 超过选定阈值 **时** 触发。适用于定期 Kill 和锁屏 Kill。
+
+| 阈值 | 说明 |
+|---|---|
+| 75% | 提前清理 |
+| **80%** | 默认 |
+| 85–95% | 仅在内存确实不足时清理 |
+| 100% | 仅紧急情况 |
+
+**Auto-Kill 类型**\
+仅当 ReAppzuku 与您的固件冲突时相关。如果发现其他应用出现异常行为，尝试切换到 `am kill`。
+
+**Auto-Kill 模式**\
+决定 Auto-Kill **针对哪些** 应用。
+
+- **🛡️ 白名单**——Kill 所有后台应用，**白名单中的除外**。用于最大化清理。
+
+- **🎯 黑名单（默认）**——**仅** Kill 黑名单中的应用。用于停止特定应用而不影响其他应用。
+
+**白名单 / 黑名单**\
+适用于所选模式的应用列表。根据模式显示两个列表之一。
+
+**高级条件**\
+使用额外触发器扩展 Auto-Kill——适用于常规计划不够用的情况。
+
+- **硬件事件**。
+Auto-Kill 在选定事件发生时自动启动：耳机或 USB 连接/断开、充电状态变化、WiFi、移动网络、蓝牙、GPS 或热点。事件发生后，保持 10 秒暂停——以便寄生应用有时间启动并被清理。
+
+- **应用启动**。
+Auto-Kill 在选定的目标应用被打开时立即触发——在预算设备上，有助于在启动大型游戏或程序之前释放 RAM 和 CPU。目标应用本身不会被 Kill。  
+  - **清除缓存**。额外清除所有应用的缓存，受保护应用、持久应用和其他目标应用除外。
+> [!IMPORTANT]
+> **应用启动** 功能需要在"无障碍"设置中授予特殊权限。此功能也可能略微增加 ReAppzuku 自身的电池使用量。
+
+**Auto-Kill 预设**\
+保存您自己的 Auto-Kill 设置集，在一天中的特定时间自动激活，并在其活跃窗口期间替换当前设置。窗口结束后，原始设置会自动恢复。
+提供 **2 个预设**。每个可独立配置：自己的名称、自己的活跃时间范围、自己的 Auto-Kill 规则、自己的应用列表以及自己的附加场景。
+> [!WARNING]
+> 活跃时，预设会忽略限制调度器授予应用的豁免权。这样做是为了避免设置混乱。
+
+- **启用预设**。
+总开关。如果禁用，预设 **将不会** 按计划激活，即使其时间窗口开始。如果预设当前活跃且此开关关闭，它会立即停用，原始设置将恢复。
+
+- **预设名称**。
+自定义名称，最多 30 个字符。显示在主设置中的预设选择器对话框中。如果预设当前活跃，其名称旁边会出现 **"活跃"** 徽章。
+
+- **活跃时间**。
+"从 — 到"范围，使用设备的时间格式显示（12/24 小时制）。支持跨午夜的范围（例如 22:00 – 06:00）。
+> [!WARNING]
+> 两个预设的活跃时间不能重叠。如果尝试保存时间范围重叠的预设，会显示警告，提示冲突预设的时间范围——调整其中一个预设的时间以解决冲突。
+
+- **应用列表来源**
+  选择以下之一：
+  - **使用当前白名单 / 黑名单**——预设始终在激活时使用主设置中的实时白名单/黑名单
+  - **使用预设自有列表**——预设拥有自己独立的白名单/黑名单，单独编辑，不受主设置更改的影响
+
+- **Auto-Kill 管理和高级条件**。
+标准的 Auto-Kill 设置块，与常规应用设置中相同。所有这些设置在 [Auto-Kill 设置](#-auto-kill-settings) 中有详细描述。
+
+- **保存预设**。
+应用所有更改：保存设置，重新安排激活/停用闹钟，并在需要时立即激活或停用预设（如果更改影响当前时间窗口）。
+
+- **导入/导出 JSON 文件**。
+将预设保存到 JSON 文件或从备份文件恢复。要应用更改，请点击"保存"按钮。
+
+- **重置预设**。
+将屏幕上所有当前设置重置为默认值（取自应用的主设置）。**更改不会应用**，直到按下"保存"——您可以不保存直接离开屏幕，重置不会影响已保存的预设。
+
+**RAM Kill 快捷方式**\
+添加一个 1x1 桌面快捷方式，显示实时 RAM 使用百分比和 GB 数值。\
+点击快捷方式会根据当前设置触发即时 Auto-Kill 并清除 RAM。
+
+> [!TIP]
+> 无论 Auto-Kill 期间是否关闭了应用，RAM 都会被清除。使用 am send-trim-memory 命令清除 RAM。仅白名单和应用持久进程不受影响。
+
+---
+
+### 🔧 高级工具
+
+#### 后台限制
+🔙[目录](#table-of-contents)
+
+> [!WARNING]
+> 仅适用于 **Android 11+**
+
+使用 Android 的 `appops` 在系统层面 **阻止应用在后台运行**。比常规 Kill 更深入。
+
+| | 常规 Kill | 后台限制 |
+|---|---|---|
+| 工作原理 | Force-stop 进程 | 阻止 Android 在后台启动进程 |
+| 可以重启 | ✅ 是 | ❌ 否 |
+| 重启后持久 | ❌ 否 | ✅ 是 |
+| 需要 Android 11+ | ❌ 否 | ✅ 是 |
+
+**限制类型：**
+- **Soft**（RUN_ANY_IN_BACKGROUND ignore）\
+以比标准活动设置更严格的级别阻止自启动。\
+**工作原理**：如果您打开应用并切换离开——它会继续运行（在最近任务中时）。但它自己（过夜或在后台）不会唤醒，直到您打开它。
+
+- **Medium**\
+限制部分后台活动。\
+**工作原理：**\
+阻止服务启动、Job Scheduler 和 Alarms。应用打开时正常工作，但一旦离开（最小化）就进入待机状态。\
+**使用的命令：**\
+`RUN_ANY_IN_BACKGROUND ignore`\
+`RUN_IN_BACKGROUND ignore`\
+`ALARM_WAKEUP ignore`\
+`START_FOREGROUND_SERVICES_FROM_BACKGROUND ignore`\
+`Standby Bucket: Rare`
+
+- **Hard**\
+阻止任何后台活动。\
+**工作原理：**\
+一旦应用被最小化或切换离开——系统立即 Kill 它。应用无法在没有直接用户交互的情况下保持在内存中（即使可见于最近任务中）。谨慎使用 Hard 限制，因为它可能完全剥夺应用的后台操作（文件下载、媒体播放、长时间运行的内部任务）。\
+**使用的命令：**\
+`RUN_ANY_IN_BACKGROUND ignore`\
+`RUN_IN_BACKGROUND ignore`\
+`START_FOREGROUND ignore`\
+`START_FOREGROUND_SERVICES_FROM_BACKGROUND ignore`\
+`WAKE_LOCK ignore`\
+`ALARM_WAKEUP ignore`\
+`RECEIVE_BOOT_COMPLETED ignore`\
+`INTERACT_ACROSS_PROFILES ignore`\
+`电池优化白名单移除`\
+`Standby Bucket: Restricted`
+
+- **Manual**\
+您选择要应用哪些限制。\
+**工作原理**：ReAppzuku 仅应用您选择的限制。
+
+> [!IMPORTANT]
+> App Standby Bucket 会在用户与目标应用交互时重置。系统并不总是将其恢复。ReAppzuku 将在下一个限制完整性检查周期自动恢复应用桶。
+
+**可用限制：**
+- **RUN_ANY_IN_BACKGROUND**\
+阻止应用在无明确用户交互的情况下启动后台进程或服务。主要且最广泛的限制——用于 **Soft** 模式。\
+**阻止：** 后台服务启动、同步、延迟任务（JobScheduler、WorkManager）。\
+**不阻止：** Foreground Service（带通知）、已在运行的进程。
+
+- **RUN_IN_BACKGROUND**\
+更有针对性的后台执行限制。当应用在后台时，阻止通过 `startService()` 启动服务。\
+**阻止：** 应用自身在无用户参与的情况下启动的后台服务。\
+**不阻止：** Foreground Service、Alarm 触发的任务、Broadcast Receiver。
+
+- **START_FOREGROUND**\
+阻止应用将服务提升到前台（持久通知）。没有此权限，应用无法显示"在后台运行"通知或保持进程存活。\
+**阻止：** 对 `startForeground()` 的调用——应用无法创建粘性通知或保持服务存活。\
+**不阻止：** 常规应用通知、通过 JobScheduler 的后台任务。
+
+- **START_FOREGROUND_SERVICES_FROM_BACKGROUND**\
+阻止应用在后台时启动 Foreground Service。在 Android 12 中添加到 `START_FOREGROUND` 之上。\
+**阻止：** 应用在屏幕上不可见时启动 Foreground Service 的尝试。\
+**不阻止：** 应用在前台时启动的 Foreground Service。
+
+- **WAKE_LOCK**\
+阻止应用在屏幕关闭时保持 CPU 活跃。没有 WakeLock，系统可以让 CPU 休眠并停止后台操作。\
+**阻止：** 通过 `PowerManager.WakeLock` 持有 CPU——应用无法阻止手机休眠。\
+**不阻止：** 屏幕亮起时应用运行。
+
+- **ALARM_WAKEUP**\
+阻止应用通过精确定时器（`AlarmManager.setExactAndAllowWhileIdle` 及等效方法）唤醒设备。没有此权限，闹钟无法将手机从深度休眠中唤醒。\
+**阻止：** 唤醒设备的精确闹钟任务——应用无法通过定时器安排强制唤醒。\
+**不阻止：** 非精确定时器、JobScheduler 任务。
+
+- **RECEIVE_BOOT_COMPLETED**\
+阻止应用在重启后接收 `BOOT_COMPLETED`——这是大多数应用用于将自己添加到自启动的机制。\
+**阻止：** 系统启动时的自启动。\
+**不阻止：** 重启后手动启动应用。
+
+- **INTERACT_ACROSS_PROFILES**\
+阻止应用与其他工作配置文件交互。主要与企业设备相关。\
+**阻止：** 主配置文件与工作配置文件之间的跨配置文件调用和数据传输。\
+**不阻止：** 应用在单个配置文件内运行。
+
+- **Standby Bucket: Rare**\
+被系统标记为很少使用。在系统层面阻止应用：
+  - 后台网络。网络仅在稀有的系统维护窗口期间可用。
+  - JobScheduler。常规作业和 Expedited Jobs 限制为每天 10 分钟。
+  - AlarmManager。非精确闹钟被延迟。限制——每小时触发 1 次。
+  - 推送（FCM）。高优先级推送配额减少。超出配额的推送被延迟。
+
+- **Standby Bucket: Restricted**\
+被系统标记为长期未使用或消耗过多 CPU 和电池的异常应用。包含所有 Rare 限制，但执行更严格。在系统层面额外限制：
+  - 充电豁免移除。当设备插入充电时，所有桶（包括 Rare）的限制完全解除。但对于 Restricted，JobScheduler 启动限制即使在充电时仍然有效。
+  - 作业频率硬性上限。严格限制调度粒度——应用每天只允许启动后台作业 1 次。
+  - 启动行为。从 Android 13 开始，如果应用在 Restricted 桶中，系统完全阻止 `BOOT_COMPLETED` 和 `LOCKED_BOOT_COMPLETED` 广播的传递。应用无法在系统启动时启动，直到用户手动打开它。
+  - 活跃服务的强制终止。如果运行中的应用在后台时被系统移入 Restricted 桶（例如由于检测到异常功耗），系统会自动移除并终止其所有活跃的 Foreground Service。
+  - 维护窗口期间的网络访问。在 Doze Mode 期间，系统定期打开维护窗口。Restricted 桶的应用即使在这些系统窗口期间也被拒绝网络访问。
+  - Expedited Jobs 限制减半。Expedited Jobs 的限制减半——降至每天 5 分钟。
+
+**限制类型对比**
+
+| 限制 | Soft | Medium | Hard | Manual |
+|---|:---:|:---:|:---:|:---:|
+| RUN_ANY_IN_BACKGROUND | ✓ | ✓ | ✓ | 可选 |
+| RUN_IN_BACKGROUND | — | ✓ | ✓ | 可选 |
+| START_FOREGROUND | — | — | ✓ | 可选 |
+| START_FOREGROUND_SERVICES_FROM_BACKGROUND | — | ✓ | ✓ | 可选 |
+| WAKE_LOCK | — | — | ✓ | 可选 |
+| ALARM_WAKEUP | — | ✓ | ✓ | 可选 |
+| RECEIVE_BOOT_COMPLETED | — | — | ✓ | 可选 |
+| INTERACT_ACROSS_PROFILES | — | — | ✓ | 可选 |
+| Standby Bucket | — | Rare | Restricted | 可选 |
+
+**列表状态**：
+- **已在 ReAppzuku 中保存**——已保存，但系统状态未知（权限不足）
+- **已在 ReAppzuku 中保存，但未应用**——已保存，但 Android 未应用限制
+- **已限制，非 ReAppzuku 所为**——由 Android 或其他应用限制
+
+**后台限制看门狗**\
+ReAppzuku 的自动化功能，定期检查后台限制的完整性。如果系统重置了任何限制，WatchDog 会自动恢复它们。\
+对于 **Soft 和 Medium**（以及 Manual，如果所选限制与 Soft/Medium 等效）——限制仅在应用不在屏幕上活跃且不持有 `IMPORTANCE_FOREGROUND_SERVICE` 时恢复。\
+在所有其他情况下，限制仅在应用当前不在屏幕上活跃（未被使用）时恢复。
+
+**重新应用后台限制**\
+手动重新应用所有已保存的限制。重启后，当后台服务启动时，此操作会 **自动** 进行。
+
+---
+
+#### 限制调度器
+🔙[目录](#table-of-contents)
+
+安排特定应用的限制何时应被解除和恢复。
+> [!IMPORTANT]
+> 只有具有活跃 **后台限制**（Soft / Medium / Hard / Manual）的应用才会出现在此处。
+> 有日程安排的应用显示 🕐 图标及计划时间。
+
+点击应用以打开调度器配置：
+
+**保护免受**\
+选择应用将暂时豁免哪些限制。
+
+**时间窗口**\
+设置开始时间（限制解除）和结束时间（限制恢复）。
+应用在限制恢复前被 force-stop。
+
+**设置 Bucket: Active**
+当您移除应用的限制时，其 App Standby Bucket 会被强制设为 Active。这使应用能够自行启动其服务。
+
+**激活时**\
+解除限制时执行的操作：
+- **无**——不执行额外操作。
+- **启动组件**——打开应用的组件选择器（Activity、Service、Receiver 等）。
+
+> [!NOTE]
+> 日程条目限制为 15 个应用，以保护 ReAppzuku 自身。
+
+> [!IMPORTANT]
+> 调度器仅保护应用免受 **临时** 冻结类型的影响。
+
+---
+
+#### 休眠模式
+🔙[目录](#table-of-contents)
+
+当设备空闲时，完全 **冻结** 选定的应用。与后台限制不同——应用根本无法启动，它被系统完全禁用。
+也可以直接在应用列表对话框中 **永久** 冻结应用。
+
+对于每个应用（临时或永久），您可以选择冻结命令：
+- **pm disable**——应用被系统完全禁用，图标可能从主屏幕消失/移动。最可靠的冻结方式，应用将无法启动。
+- **pm suspend**——应用被隐藏并阻止，但不被禁用，图标保持在原位。可靠性稍低的冻结方式，应用被挂起，但仍可能有一些后台活动。
+
+> [!IMPORTANT]
+> 对于系统应用，仅 **pm suspend** 命令可用
+
+> [!CAUTION]为系统应用设置休眠模式时请小心。\
+> ReAppzuku 保护大多数关键系统应用（如 com.android.systemui）免受篡改，但不保证 100% 安全。\
+> 请注意，不加思考地冻结系统应用可能导致 bootloop。
+
+**临时** 冻结的工作原理：\
+1. 屏幕关闭 → 计时器启动
+2. 计时器到期 → 选定应用被使用所选命令冻结
+3. 屏幕打开并解锁 → 应用自动解冻
+
+> [!IMPORTANT]
+> 启用休眠模式会重启 ReAppzuku——这是正确初始化所需的。
+
+> [!NOTE]
+> 如果目标应用在主屏幕上，使用 pm disable 命令后其图标可能消失/移动。这是 Android 自身的行为。使用 pm suspend 时图标保持在原位。
+
+**休眠模式应用列表**\
+选择在休眠模式下冻结的应用，并为每个应用选择冻结命令（pm suspend/pm disable）。
+
+**冻结计时器**\
+触发冻结的空闲时间段：从 **5 到 60 分钟**（默认 60 分钟）。
+
+**休眠模式看门狗**\
+ReAppzuku 的自动化功能，定期检查休眠模式冻结的完整性，如果系统解冻了某个应用——则会使用为其选择的命令重新冻结。\
+仅适用于"永久"冻结类型。
+
+---
+
+**清除所有应用缓存**\
+运行 `pm trim-caches`——一次性清除所有应用的缓存。
+
+**隐藏应用**\
+此处的应用不会出现在主屏幕上，也永远不会被 Auto-Kill 触及。适用于您不需要查看的服务进程。
+
+**备份与恢复**\
+将所有设置导出为 JSON 并导入。涵盖白名单、黑名单、隐藏应用、后台限制、休眠模式和所有自动化设置。
+
+---
+
+### ℹ️ 关于
+🔙[目录](#table-of-contents)
+
+**源代码**\
+链接到 GitHub 仓库。
+
+**检查更新**\
+手动检查 GitHub 是否有新版本，如有则显示。
+自动更新检查每天运行一次。
+
+**Telegram**\
+您可以通过 Telegram 联系 ReAppzuku 开发者。
+
+**特别鸣谢**\
+为 ReAppzuku 开发做出贡献的用户的荣誉列表。
+
+---
+
+### 📊 统计与日志
+🔙[目录](#table-of-contents)
+
+**ReAppzuku 消耗**\
+屏幕顶部显示 **ReAppzuku 自身的资源使用情况**——RAM、CPU 和电池——以便您评估其对设备的影响。
+
+**资源使用图表**\
+跨已跟踪应用的 RAM、CPU 和电池使用情况的交互式图表。使用 **箭头** 切换图表类型。
+
+| 时间段 | 说明 |
+|---|---|
+| 2 小时 | 最近 2 小时 |
+| 6 小时 | 最近 6 小时 |
+| 12 小时 | 最近 12 小时 |
+| 24 小时 | 最近 24 小时 |
+
+> [!TIP]
+> 点击 **图表图例中的应用** 以打开其 **个人活动图**
+
+**Auto-Kill 日志**\
+显示最近 **12 小时** 的活动：Auto-Kill 次数、重启次数、释放的 RAM 以及每个应用的最后事件时间。
+
+> [!TIP]
+> 重启超过 3 次的应用是后台限制的良好候选。
+
+**Top Offenders**\
+按综合评分（Kill 次数 + 重启次数 + RAM 使用量）对应用进行排名。筛选条件：12 小时 / 24 小时 / 7 天 / 全部时间。
+
+> [!NOTE]
+> 评分显示应用对后台管理的干扰程度。\
+>
+> `评分 = Kill 次数 × 1 + 重启次数 × 2 + 释放的 RAM × 0.01`
+>
+> • Kill (+1)——应用被 force-stop。\
+> • 重启 (+2)——应用在被停止后重新启动；加倍计算，因为这是主动抵抗。\
+> • RAM——每释放 100 MB 内存增加 +1 分；通常贡献较小。
+
+> [!IMPORTANT]
+> 释放的 RAM 仅在下次 Auto-Kill 周期中发现应用未运行时才被计入。如果它重启了，它会重新占用相同的 RAM——净收益为 0%。
+
+**后台限制日志**\
+后台限制操作的详细日志。存储在缓存中，最多 200 条记录。
+
+| 状态 | 含义 |
+|---|---|
+| `Sent` | 命令成功执行（可能尚未被系统应用） |
+| `Applied` | 限制已由系统确认（100% 结果） |
+| `NOT APPLIED` | 命令已执行，但系统未应用更改 |
+| `ERROR` | 命令执行失败并出现错误 |
+| `Skipped` | 操作未执行（无权限、Android < 11 等） |
+| `Verification unavailable` | 无法从系统查询实际状态 |
+| `Removed from whitelist` | 应用已从电池优化例外中移除 |
+| `Restored to whitelist` | 应用已恢复到电池优化例外中 |
+
+> [!TIP]
+> 点击后台限制日志中的条目可打开日志详情。在那里您可以查看哪些 AppOps 未应用或被重置。还可以检查应用 Standby Bucket 是否发生了变化。
+
+**休眠模式日志**\
+记录目标应用冻结/解冻的日期和时间。
+
+**调度器日志**\
+包含限制调度器活动的记录。每条记录显示：
+- 限制被解除/恢复的日期和时间。
+- 限制恢复的成功程度（OK / PARTIAL / FAILED）。
+- 应用的强制停止类型（基于 Auto-Kill 设置）。
+- 限制解除时运行的应用组件。
+
+---
+
+## 受保护应用
+🔙[目录](#table-of-contents)
+
+这些应用 **永远不会受到** Auto-Kill 或其他限制的影响，无论设置如何：
+
+**Android 核心与 Google**
+- Google Play Services 和 Google Services Framework
+- System UI
+- Android 设置
+- 电话/拨号器、联系人、短信服务、电话服务器
+- 蓝牙
+- 外部存储和媒体模块
+- Package Installer 和 Permission Controller（AOSP 和 Google 变体）
+- Gboard（Google 键盘）
+- ADB/Shell 服务
+- Android Keychain（TLS/VPN/Wi-Fi）
+- 设置、电话和短信/彩信提供程序
+- NFC
+- 网络堆栈、热点堆栈、DNS 解析器、VPN 对话框
+
+**Shizuku**
+- Shizuku（两种变体：`rikka.shizuku.common` 和 `moe.shizuku.privileged.api`）
+
+**Root 管理器**
+- Magisk
+- KernelSU
+- KernelSU Next
+- APatch
+- SukiSU / SukiSU Ultra
+
+**制造商系统应用**
+| 制造商 | 受保护应用 |
+|---|---|
+| **小米 / MIUI / HyperOS** | 安全中心、主屏幕启动器、壁纸、相机、系统保护、核心服务、PowerKeeper |
+| **三星（One UI）** | Device Care、设备保护、One UI Home、电话界面、电话服务器 |
+| **Oppo / Realme / OnePlus（ColorOS）** | 手机管家、系统启动器、智能助手 |
+| **Vivo / iQOO（Funtouch / OriginOS）** | iManager、Vivo 启动器 |
+| **华为 / 荣耀（EMUI / MagicOS）** | 系统优化器、华为桌面、荣耀系统管理器 |
+
+**动态确定**
+- 当前键盘（运行时自动检测）
+- 当前启动器（运行时自动检测）
+
+---
+
+## 常见问题
+🔙[目录](#table-of-contents)
+
+**❓ 应用在 Kill 后立即重启——我该怎么办？**
+
+将其添加到 **后台限制**——在系统层面阻止 Android 在后台重启它。
+
+---
+
+**❓ 重启后后台限制丢失**
+
+启用 **后台服务**——它会在重启后自动恢复所有已保存的限制。
+
+---
+
+**❓ 我应该选择哪种模式——白名单还是黑名单？**
+
+白名单——停止一切，除了重要的。黑名单——仅停止特定应用，其他一切照旧。
+
+---
+
+**❓ 手动 Kill 需要后台服务吗？**
+
+不需要。主屏幕上的手动 Kill、快捷磁贴、小部件和快捷方式均可在没有后台服务的情况下工作。
+
+---
+
+**❓ 停止系统应用安全吗？**
+
+不安全。停止或限制系统应用可能导致不稳定、冻结、通知丢失和 bootloop。ReAppzuku 在影响系统应用之前会警告您。
+
+---
+
+**❓ 休眠模式与后台限制——有什么区别？**
+
+后台限制阻止应用在后台 **启动**，但它仍保持安装且可见。休眠模式在系统层面完全 **冻结** 它——如同被禁用——直到屏幕解锁。
+
+---
+
+**❓ Shizuku 在重启后停止工作**
+
+Shizuku 在每次重启后需要重新激活（除非使用无线 ADB 模式）。打开 Shizuku 并重启服务。
+
+---
+
+**❓ 某个应用根本无法被 Kill——我该怎么办？**
+
+打开应用菜单并选择 **触发器**。它会准确显示是什么让进程保持存活：Foreground Service、WakeLock、Sticky Service 或来自另一个应用的绑定。根据触发器——应用 **后台限制**（Soft、Hard 或 Manual）。
+
+---
+
+**❓ 休眠模式与 Hard 限制——有什么区别？**
+
+两者都激进地限制后台活动，但方式不同。休眠模式在屏幕关闭时 **冻结** 应用，解锁时解冻——遵循屏幕时间表。Hard 限制是 **始终开启**：应用即使在屏幕亮起且您切换离开后也无法在后台存活。用于过夜冻结——休眠模式。用于长期激进的应用——Hard 限制。
+
+---
+
+**❓ 为什么将 Kill 类型从 force-stop 改为 am kill？**
+
+`am force-stop` 是硬性停止——Kill 所有进程并清除应用状态。`am kill` 更温和——仅终止后台进程而不触及前台。仅当您发现其他应用出现问题或固件冲突时才切换——在某些设备上 `force-stop` 过于激进。
