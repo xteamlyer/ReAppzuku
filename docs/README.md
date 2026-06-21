@@ -74,8 +74,8 @@ ReAppzuku automatically protects critical system processes — Google Play Servi
 
 Translations are welcome!\
 To help localize app:
-* Submit a **Pull Request** with changes to `/values/strings.xml`.
-* Open an **Issue** and attach your `/values/strings.xml` (pack into `.zip` first), or paste XML directly into a comment.
+* Submit a **Pull Request** with changes to `/values/strings.xml`, `README.md`, `HELP.md`.
+* Open an **Issue** and attach your `/values/strings.xml`, `README.md`, `HELP.md` (pack into `.zip` first).
 
 ## 🖼️ Screenshots
 
