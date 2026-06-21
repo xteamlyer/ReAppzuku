@@ -939,7 +939,8 @@ Enable/disable debug logs.\
 To save logs use:
 - aShell (for Shizuku)
 - Qute Terminal Emulator (for Root)
-Or you can use any other terminal emulators that are convenient for you. <br>
+
+Or you can use any other terminal emulators that are convenient for you.\
 To output logs to console use: `logcat -s ReAppzukuDebug`
 
 **Debug menu**\
