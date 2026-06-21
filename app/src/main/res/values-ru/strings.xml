@@ -323,7 +323,6 @@
     <string name="settings_sleep_mode_delay_title">Таймер до заморозки</string>
     <string name="settings_sleep_mode_delay_subtitle">Продолжительность периода бездействия до заморозки</string>
     <string name="settings_sleep_mode_delay_fallback">После %1$d минут</string>
-    <string name="settings_sleep_mode_restart_message">Для корректной работы данной функции, ReAppzuku необходимо перезапустить. Сейчас приложение будет принудительно закрыто.</string>
     <string name="settings_clear_cache_title">Очистить кэш приложений</string>
     <string name="settings_clear_cache_subtitle">Очистить ОЗУ от кэша всех приложений</string>
     <string name="settings_hidden_apps_title">Скрытые приложения</string>

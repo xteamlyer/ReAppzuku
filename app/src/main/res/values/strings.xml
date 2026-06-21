@@ -328,7 +328,6 @@
     <string name="settings_sleep_mode_delay_title">Time until freeze</string>
     <string name="settings_sleep_mode_delay_subtitle">Idle time before apps are frozen</string>
     <string name="settings_sleep_mode_delay_fallback">After %1$d minutes</string>
-    <string name="settings_sleep_mode_restart_message">ReAppzuku needs to restart for this to work. App will be force-closed now.</string>
     <string name="settings_clear_cache_title">Clear app caches</string>
     <string name="settings_clear_cache_subtitle">Free RAM by clearing app caches</string>
     <string name="settings_hidden_apps_title">Hidden apps</string>
