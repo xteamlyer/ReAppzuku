@@ -55,7 +55,7 @@ public class ScanSystem {
     }
 
     public List<AppLoad> scan(List<AppModel> apps) {
-        AppDebugManager.d(AppDebugManager.AppDebugManager.Category.SCAN, "ScanSystem: scan() started, apps=" + apps.size());
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scan() started, apps=" + apps.size());
         Map<String, AppLoad> map = new LinkedHashMap<>();
         Map<String, String>  uidMap = new LinkedHashMap<>();
 
