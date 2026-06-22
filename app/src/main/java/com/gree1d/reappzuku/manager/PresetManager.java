@@ -7,7 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.manager.AdditionalScenariosManager;
 import com.gree1d.reappzuku.service.AutoKillWorker;
 
@@ -114,7 +115,7 @@ public class PresetManager {
         e.putInt(P_END_HOUR, model.endHour);
         e.putInt(P_END_MINUTE, model.endMinute);
         e.apply();
-        Log.d(TAG, "savePreset #" + model.presetNumber + " name=" + model.name
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: savePreset #" + model.presetNumber + " name=" + model.name
                 + " enabled=" + model.enabled
                 + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                 + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute));
@@ -123,7 +124,7 @@ public class PresetManager {
     public PresetModel loadPreset(int presetNumber) {
         SharedPreferences p = presetPrefs(presetNumber);
         if (!p.contains(P_NAME)) {
-            Log.d(TAG, "loadPreset #" + presetNumber + " — not found");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: loadPreset #" + presetNumber + " — not found");
             return null;
         }
         PresetModel model = new PresetModel(presetNumber);
@@ -153,7 +154,7 @@ public class PresetManager {
         model.startMinute = p.getInt(P_START_MINUTE, 0);
         model.endHour = p.getInt(P_END_HOUR, 20);
         model.endMinute = p.getInt(P_END_MINUTE, 0);
-        Log.d(TAG, "loadPreset #" + presetNumber + " OK | name=" + model.name
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: loadPreset #" + presetNumber + " OK | name=" + model.name
                 + " enabled=" + model.enabled
                 + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                 + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute)
@@ -163,7 +164,7 @@ public class PresetManager {
     }
 
     public void deletePreset(int presetNumber) {
-        Log.d(TAG, "deletePreset #" + presetNumber + " wasActive=" + (getActivePresetNumber() == presetNumber));
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: deletePreset #" + presetNumber + " wasActive=" + (getActivePresetNumber() == presetNumber));
         presetPrefs(presetNumber).edit().clear().apply();
         cancelAlarms(presetNumber);
         if (getActivePresetNumber() == presetNumber) {
@@ -193,57 +194,57 @@ public class PresetManager {
     }
 
     public void activatePreset(int presetNumber) {
-        Log.d(TAG, "activatePreset #" + presetNumber + " | currentActive=" + getActivePresetNumber());
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: activatePreset #" + presetNumber + " | currentActive=" + getActivePresetNumber());
         PresetModel model = loadPreset(presetNumber);
         if (model == null) {
-            Log.w(TAG, "activatePreset #" + presetNumber + " ABORTED — not found");
+            AppDebugManager.w(Category.AUTO_KILL_PRESETS, "PresetManager: activatePreset #" + presetNumber + " ABORTED — not found");
             return;
         }
         if (!model.enabled) {
-            Log.d(TAG, "activatePreset #" + presetNumber + " SKIPPED — preset is disabled");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: activatePreset #" + presetNumber + " SKIPPED — preset is disabled");
             return;
         }
 
         int currentActive = getActivePresetNumber();
         if (currentActive == 0) {
-            Log.d(TAG, "activatePreset: no preset active — saving backup of current settings");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: activatePreset: no preset active — saving backup of current settings");
             saveBackup();
         } else if (currentActive != presetNumber) {
-            Log.d(TAG, "activatePreset: switching from preset #" + currentActive + " — original backup preserved");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: activatePreset: switching from preset #" + currentActive + " — original backup preserved");
         }
 
         applyPreset(model);
         setActivePresetNumber(presetNumber);
-        Log.d(TAG, "activatePreset #" + presetNumber + " DONE");
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: activatePreset #" + presetNumber + " DONE");
     }
 
     public void deactivatePreset(int presetNumber) {
         int currentActive = getActivePresetNumber();
-        Log.d(TAG, "deactivatePreset #" + presetNumber + " | currentActive=" + currentActive);
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: deactivatePreset #" + presetNumber + " | currentActive=" + currentActive);
         if (currentActive != presetNumber) {
-            Log.w(TAG, "deactivatePreset #" + presetNumber + " SKIPPED — not the active preset");
+            AppDebugManager.w(Category.AUTO_KILL_PRESETS, "PresetManager: deactivatePreset #" + presetNumber + " SKIPPED — not the active preset");
             return;
         }
         PresetModel model = loadPreset(presetNumber);
         if (model != null && isCurrentlyActive(model)) {
-            Log.w(TAG, "deactivatePreset #" + presetNumber + " SKIPPED — still inside time window (alarm drift)");
+            AppDebugManager.w(Category.AUTO_KILL_PRESETS, "PresetManager: deactivatePreset #" + presetNumber + " SKIPPED — still inside time window (alarm drift)");
             return;
         }
         restoreBackup();
         clearActivePreset();
-        Log.d(TAG, "deactivatePreset #" + presetNumber + " DONE");
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: deactivatePreset #" + presetNumber + " DONE");
     }
 
     public void forceDeactivateIfActive(int presetNumber) {
         if (getActivePresetNumber() == presetNumber) {
             restoreBackup();
             clearActivePreset();
-            Log.d(TAG, "forceDeactivateIfActive #" + presetNumber + " DONE");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: forceDeactivateIfActive #" + presetNumber + " DONE");
         }
     }
 
     private void applyPreset(PresetModel model) {
-        Log.d(TAG, "applyPreset #" + model.presetNumber
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: applyPreset #" + model.presetNumber
                 + " | autoKill=" + model.autoKillEnabled
                 + " periodic=" + model.periodicKillEnabled
                 + " interval=" + model.killInterval
@@ -280,7 +281,7 @@ public class PresetManager {
         editor.putStringSet(KEY_BLACKLISTED_APPS, new HashSet<>(model.blacklistedApps));
         editor.apply();
 
-        Log.d(TAG, "applyPreset #" + model.presetNumber + " prefs written — rescheduling worker");
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: applyPreset #" + model.presetNumber + " prefs written — rescheduling worker");
         notifyServiceUpdateHwReceivers();
         rescheduleWorker();
     }
@@ -311,12 +312,12 @@ public class PresetManager {
         Set<String> blacklist = mainPrefs.getStringSet(KEY_BLACKLISTED_APPS, new HashSet<>());
         e.putStringSet(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS, new HashSet<>(blacklist));
         e.apply();
-        Log.d(TAG, "saveBackup DONE");
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: saveBackup DONE");
     }
 
     private void restoreBackup() {
         boolean hasBackup = mainPrefs.contains(KEY_BACKUP_PREFIX + KEY_AUTO_KILL_ENABLED);
-        Log.d(TAG, "restoreBackup | hasBackup=" + hasBackup);
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: restoreBackup | hasBackup=" + hasBackup);
         if (!hasBackup) return;
 
         SharedPreferences.Editor e = mainPrefs.edit();
@@ -366,7 +367,7 @@ public class PresetManager {
         e.remove(KEY_BACKUP_PREFIX + KEY_BLACKLISTED_APPS);
         e.apply();
 
-        Log.d(TAG, "restoreBackup DONE — rescheduling worker");
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: restoreBackup DONE — rescheduling worker");
         notifyServiceUpdateHwReceivers();
         rescheduleWorker();
     }
@@ -383,7 +384,7 @@ public class PresetManager {
         boolean autoKillEnabled = mainPrefs.getBoolean(KEY_AUTO_KILL_ENABLED, false);
         boolean periodicEnabled = mainPrefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false);
         int interval = mainPrefs.getInt(KEY_KILL_INTERVAL, 15);
-        Log.d(TAG, "rescheduleWorker | autoKill=" + autoKillEnabled
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: rescheduleWorker | autoKill=" + autoKillEnabled
                 + " periodic=" + periodicEnabled + " interval=" + interval);
         boolean presetActive = mainPrefs.getInt(KEY_ACTIVE_PRESET, 0) != 0;
         AutoKillWorker.cancel(context);
@@ -397,28 +398,28 @@ public class PresetManager {
                 source = "Periodic Kill";
             }
             AutoKillWorker.schedule(context, source);
-            Log.d(TAG, "rescheduleWorker — scheduled with interval=" + interval + " source=" + source);
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: rescheduleWorker — scheduled with interval=" + interval + " source=" + source);
         } else {
-            Log.d(TAG, "rescheduleWorker — worker cancelled");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: rescheduleWorker — worker cancelled");
         }
     }
 
     public void exportPresetToJson(PresetModel model, Uri uri) {
-        Log.d(TAG, "exportPresetToJson #" + model.presetNumber + " uri=" + uri);
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: exportPresetToJson #" + model.presetNumber + " uri=" + uri);
         try {
             JSONObject json = model.toJson();
             try (OutputStream os = context.getContentResolver().openOutputStream(uri)) {
                 if (os == null) throw new IOException("OutputStream is null for uri: " + uri);
                 os.write(json.toString(2).getBytes("UTF-8"));
-                Log.d(TAG, "exportPresetToJson #" + model.presetNumber + " OK");
+                AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: exportPresetToJson #" + model.presetNumber + " OK");
             }
         } catch (IOException | JSONException e) {
-            Log.e(TAG, "exportPresetToJson #" + model.presetNumber + " FAILED", e);
+            AppDebugManager.e(Category.AUTO_KILL_PRESETS, "PresetManager: exportPresetToJson #" + model.presetNumber + " FAILED", e);
         }
     }
 
     public PresetModel importPresetFromJson(int presetNumber, Uri uri) {
-        Log.d(TAG, "importPresetFromJson #" + presetNumber + " uri=" + uri);
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: importPresetFromJson #" + presetNumber + " uri=" + uri);
         try (InputStream is = context.getContentResolver().openInputStream(uri)) {
             if (is == null) throw new IOException("InputStream is null for uri: " + uri);
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -429,7 +430,7 @@ public class PresetManager {
             }
             JSONObject json = new JSONObject(buffer.toString("UTF-8"));
             PresetModel model = PresetModel.fromJson(presetNumber, json);
-            Log.d(TAG, "importPresetFromJson #" + presetNumber + " OK | name=" + model.name
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: importPresetFromJson #" + presetNumber + " OK | name=" + model.name
                     + " enabled=" + model.enabled
                     + " start=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                     + " end=" + model.endHour + ":" + String.format("%02d", model.endMinute)
@@ -437,7 +438,7 @@ public class PresetManager {
                     + " blacklist=" + model.blacklistedApps.size());
             return model;
         } catch (IOException | JSONException e) {
-            Log.e(TAG, "importPresetFromJson #" + presetNumber + " FAILED", e);
+            AppDebugManager.e(Category.AUTO_KILL_PRESETS, "PresetManager: importPresetFromJson #" + presetNumber + " FAILED", e);
             return null;
         }
     }
@@ -447,7 +448,7 @@ public class PresetManager {
         cancelAlarms(model.presetNumber);
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
-            Log.e(TAG, "scheduleAlarms #" + model.presetNumber + " — AlarmManager is null");
+            AppDebugManager.e(Category.AUTO_KILL_PRESETS, "PresetManager: scheduleAlarms #" + model.presetNumber + " — AlarmManager is null");
             return;
         }
         long activateTime = nextAlarmTime(model.startHour, model.startMinute);
@@ -456,7 +457,7 @@ public class PresetManager {
                 buildPendingIntent(model.presetNumber, ACTION_PRESET_ACTIVATE));
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, deactivateTime,
                 buildPendingIntent(model.presetNumber, ACTION_PRESET_DEACTIVATE));
-        Log.d(TAG, "scheduleAlarms #" + model.presetNumber
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: scheduleAlarms #" + model.presetNumber
                 + " | activateAt=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                 + " (ms=" + activateTime + ")"
                 + " deactivateAt=" + model.endHour + ":" + String.format("%02d", model.endMinute)
@@ -479,7 +480,7 @@ public class PresetManager {
         next.add(Calendar.DAY_OF_YEAR, 1);
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.getTimeInMillis(),
                 buildPendingIntent(presetNumber, action));
-        Log.d(TAG, "rescheduleNextAlarm #" + presetNumber + " action=" + action
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: rescheduleNextAlarm #" + presetNumber + " action=" + action
                 + " nextAt=" + hour + ":" + String.format("%02d", minute)
                 + " tomorrow ms=" + next.getTimeInMillis());
     }
@@ -487,12 +488,12 @@ public class PresetManager {
     public void cancelAlarms(int presetNumber) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
-            Log.e(TAG, "cancelAlarms #" + presetNumber + " — AlarmManager is null");
+            AppDebugManager.e(Category.AUTO_KILL_PRESETS, "PresetManager: cancelAlarms #" + presetNumber + " — AlarmManager is null");
             return;
         }
         alarmManager.cancel(buildPendingIntent(presetNumber, ACTION_PRESET_ACTIVATE));
         alarmManager.cancel(buildPendingIntent(presetNumber, ACTION_PRESET_DEACTIVATE));
-        Log.d(TAG, "cancelAlarms #" + presetNumber + " DONE");
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: cancelAlarms #" + presetNumber + " DONE");
     }
 
     private PendingIntent buildPendingIntent(int presetNumber, String action) {
@@ -532,7 +533,7 @@ public class PresetManager {
         } else {
             active = nowMinutes >= startMinutes && nowMinutes < endMinutes;
         }
-        Log.d(TAG, "isCurrentlyActive #" + model.presetNumber
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: isCurrentlyActive #" + model.presetNumber
                 + " | now=" + now.get(Calendar.HOUR_OF_DAY) + ":" + String.format("%02d", now.get(Calendar.MINUTE))
                 + " range=" + model.startHour + ":" + String.format("%02d", model.startMinute)
                 + "–" + model.endHour + ":" + String.format("%02d", model.endMinute)
@@ -542,19 +543,19 @@ public class PresetManager {
     }
 
     public void checkAndApplyCurrentPreset() {
-        Log.d(TAG, "checkAndApplyCurrentPreset | currentActive=" + getActivePresetNumber());
+        AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: checkAndApplyCurrentPreset | currentActive=" + getActivePresetNumber());
         for (int number : new int[]{PresetModel.PRESET_1, PresetModel.PRESET_2}) {
             PresetModel model = loadPreset(number);
             if (model == null) {
-                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " not found, skipping");
+                AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: checkAndApplyCurrentPreset | preset #" + number + " not found, skipping");
                 continue;
             }
             if (!model.enabled) {
-                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " disabled, skipping");
+                AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: checkAndApplyCurrentPreset | preset #" + number + " disabled, skipping");
                 continue;
             }
             if (isCurrentlyActive(model)) {
-                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + number + " in window — activating");
+                AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: checkAndApplyCurrentPreset | preset #" + number + " in window — activating");
                 activatePreset(number);
                 return;
             }
@@ -563,11 +564,11 @@ public class PresetManager {
         if (currentActive != 0) {
             PresetModel active = loadPreset(currentActive);
             if (active == null || !active.enabled || !isCurrentlyActive(active)) {
-                Log.d(TAG, "checkAndApplyCurrentPreset | preset #" + currentActive + " outside window — deactivating");
+                AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: checkAndApplyCurrentPreset | preset #" + currentActive + " outside window — deactivating");
                 deactivatePreset(currentActive);
             }
         } else {
-            Log.d(TAG, "checkAndApplyCurrentPreset | no preset active and none in window");
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: checkAndApplyCurrentPreset | no preset active and none in window");
         }
     }
 
@@ -575,13 +576,13 @@ public class PresetManager {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent == null || intent.getAction() == null) {
-                Log.w(TAG, "PresetReceiver: null intent or action");
+                AppDebugManager.w(Category.AUTO_KILL_PRESETS, "PresetManager: PresetReceiver: null intent or action");
                 return;
             }
             int presetNumber = intent.getIntExtra(EXTRA_PRESET_NUMBER, 0);
-            Log.d(TAG, "PresetReceiver | action=" + intent.getAction() + " preset=" + presetNumber);
+            AppDebugManager.d(Category.AUTO_KILL_PRESETS, "PresetManager: PresetReceiver | action=" + intent.getAction() + " preset=" + presetNumber);
             if (presetNumber == 0) {
-                Log.w(TAG, "PresetReceiver: missing preset_number extra");
+                AppDebugManager.w(Category.AUTO_KILL_PRESETS, "PresetManager: PresetReceiver: missing preset_number extra");
                 return;
             }
             PresetManager manager = new PresetManager(context);

@@ -1,7 +1,6 @@
 package com.gree1d.reappzuku.manager;
 
 import android.os.Handler;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.core.ShellManager;
 import com.gree1d.reappzuku.utils.AppModel;
 
 public class CpuMonitor {
 
-    private static final String TAG = "CpuMonitor";
+    private static final String FILE_NAME = "CpuMonitor";
     private static final long POLL_INTERVAL_MS = 1500;
 
     private final Handler handler;
@@ -79,12 +80,12 @@ public class CpuMonitor {
     public void startMonitoring() {
         if (running) return;
         running = true;
-        Log.d(TAG, "startMonitoring: appsList.size=" + appsList.size());
+        AppDebugManager.d(Category.UTILS, FILE_NAME + ": startMonitoring: appsList.size=" + appsList.size());
         handler.post(pollRunnable);
     }
 
     public void stopMonitoring() {
-        Log.d(TAG, "stopMonitoring");
+        AppDebugManager.d(Category.UTILS, FILE_NAME + ": stopMonitoring");
         running = false;
         handler.removeCallbacks(pollRunnable);
     }
@@ -96,7 +97,7 @@ public class CpuMonitor {
             snapshot = new ArrayList<>(appsList);
         }
 
-        Log.d(TAG, "pollCpu: apps=" + snapshot.size() + " prevTotalCpu=" + prevTotalCpu);
+        AppDebugManager.d(Category.UTILS, FILE_NAME + ": pollCpu: apps=" + snapshot.size() + " prevTotalCpu=" + prevTotalCpu);
 
         StringBuilder cmd = new StringBuilder("cat /proc/stat");
         for (AppModel app : snapshot) {
@@ -110,7 +111,7 @@ public class CpuMonitor {
 
         String output = shellManager.runCommandAndGetOutput(cmd.toString());
         if (output == null || output.isEmpty()) {
-            Log.w(TAG, "Shell command returned null");
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": Shell command returned null");
             return;
         }
 
@@ -118,7 +119,7 @@ public class CpuMonitor {
 
         long totalCpu = parseTotalCpuTicks(sections[0]);
         if (totalCpu < 0) {
-            Log.w(TAG, "Failed to parse /proc/stat");
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": Failed to parse /proc/stat");
             return;
         }
 
@@ -142,6 +143,7 @@ public class CpuMonitor {
             }
 
             if (procTime < 0) {
+                AppDebugManager.v(Category.UTILS, FILE_NAME + ": pollCpu: failed to parse /proc/" + app.getPid() + "/stat for " + pkg);
                 app.setCpuUsage("", -1f);
                 prevProcTimes.remove(pkg);
                 continue;

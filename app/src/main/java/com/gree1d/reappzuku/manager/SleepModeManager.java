@@ -5,7 +5,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,13 +17,15 @@ import java.util.function.Consumer;
 
 import com.gree1d.reappzuku.core.ShellManager;
 import com.gree1d.reappzuku.utils.AppModel;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import com.gree1d.reappzuku.utils.SleepModeLogManager;
 import com.gree1d.reappzuku.core.ProtectedApps;
 
 public class SleepModeManager {
-    private static final String TAG = "SleepModeManager";
+    private static final String FILE_NAME = "SleepModeManager";
 
     public enum FreezeType {
         TIMER,
@@ -87,7 +88,11 @@ public class SleepModeManager {
     }
 
     public void setFreezeMethod(String packageName, FreezeMethod method) {
-        if (isSystemPackage(packageName) || systemPackages.contains(packageName)) return;
+        if (isSystemPackage(packageName) || systemPackages.contains(packageName)) {
+            AppDebugManager.w(Category.SLEEP_MODE, FILE_NAME + ": setFreezeMethod: ignored for system package=" + packageName + " (forced SUSPEND)");
+            return;
+        }
+        AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": setFreezeMethod: package=" + packageName + ", method=" + method);
         Set<String> suspendApps = getSuspendMethodApps();
         applyMethodToSet(suspendApps, packageName, method);
         sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_SUSPEND_METHOD, suspendApps).apply();
@@ -123,6 +128,7 @@ public class SleepModeManager {
     }
 
     public boolean reapplyPermanentFreeze(String packageName) {
+        AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": reapplyPermanentFreeze: re-applying permanent freeze, package=" + packageName);
         return freezeApp(packageName);
     }
 
@@ -135,21 +141,36 @@ public class SleepModeManager {
     }
 
     private boolean freezeAppWithMethod(String packageName, FreezeMethod method) {
-        if (method == FreezeMethod.SUSPEND) {
-            return shellManager.runShellCommandBlocking("pm suspend --user 0 " + packageName);
+        String command = method == FreezeMethod.SUSPEND
+                ? "pm suspend --user 0 " + packageName
+                : "pm disable-user --user 0 " + packageName;
+        boolean ok = shellManager.runShellCommandBlocking(command);
+        if (ok) {
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": freeze ok, package=" + packageName + ", method=" + method);
+        } else {
+            AppDebugManager.e(Category.SLEEP_MODE, FILE_NAME + ": freeze FAILED, package=" + packageName + ", method=" + method + ", command=" + command);
         }
-        return shellManager.runShellCommandBlocking("pm disable-user --user 0 " + packageName);
+        return ok;
     }
 
     private boolean unfreezeAppWithMethod(String packageName, FreezeMethod method) {
-        if (method == FreezeMethod.SUSPEND) {
-            return shellManager.runShellCommandBlocking("pm unsuspend --user 0 " + packageName);
+        String command = method == FreezeMethod.SUSPEND
+                ? "pm unsuspend --user 0 " + packageName
+                : "pm enable " + packageName;
+        boolean ok = shellManager.runShellCommandBlocking(command);
+        if (ok) {
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": unfreeze ok, package=" + packageName + ", method=" + method);
+        } else {
+            AppDebugManager.e(Category.SLEEP_MODE, FILE_NAME + ": unfreeze FAILED, package=" + packageName + ", method=" + method + ", command=" + command);
         }
-        return shellManager.runShellCommandBlocking("pm enable " + packageName);
+        return ok;
     }
 
     public void saveSleepModeApps(Set<String> timerPackages, Set<String> permanentPackages,
             Map<String, FreezeMethod> newMethods, Runnable onComplete) {
+        AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": saveSleepModeApps: timer=" + timerPackages.size()
+                + ", permanent=" + permanentPackages.size()
+                + ", methodOverrides=" + (newMethods != null ? newMethods.size() : 0));
         Set<String> previousPermanent = getPermanentFreezeApps();
         Set<String> previousTimer = getSleepModeApps();
         Set<String> previousFrozenTimer = getFrozenTimerApps();
@@ -183,10 +204,13 @@ public class SleepModeManager {
             Set<String> frozen = getFrozenTimerApps();
             frozen.removeAll(removedFromTimer);
             sharedpreferences.edit().putStringSet(KEY_SLEEP_MODE_APPS_FROZEN, frozen).apply();
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": saveSleepModeApps: cleared frozen-flag for " + removedFromTimer.size() + " package(s) removed from timer set");
         }
 
         Map<String, FreezeMethod> finalOldMethods = oldMethods;
         executor.execute(() -> {
+            int unfreezeCount = 0;
+            int freezeCount = 0;
             for (String packageName : allTouched) {
                 FreezeType oldType = previousPermanent.contains(packageName) ? FreezeType.PERMANENT
                         : previousTimer.contains(packageName) ? FreezeType.TIMER : null;
@@ -209,12 +233,15 @@ public class SleepModeManager {
                     boolean ok = unfreezeAppWithMethod(packageName, oldMethod);
                     SleepModeLogManager.logUnfreeze(context, packageName, ok, oldMethod, oldType);
                     if (oldType == FreezeType.TIMER) markUnfrozen(packageName);
+                    unfreezeCount++;
                 }
                 if (needsFreeze) {
                     boolean ok = freezeAppWithMethod(packageName, newMethod);
                     SleepModeLogManager.logFreeze(context, packageName, ok, newMethod, newType);
+                    freezeCount++;
                 }
             }
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": saveSleepModeApps: applied " + freezeCount + " freeze(s), " + unfreezeCount + " unfreeze(s)");
             if (onComplete != null) handler.post(onComplete);
         });
     }
@@ -233,6 +260,7 @@ public class SleepModeManager {
     }
 
     public void setSleepModeEnabled(boolean enabled) {
+        AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": setSleepModeEnabled: " + enabled);
         sharedpreferences.edit().putBoolean(KEY_SLEEP_MODE_ENABLED, enabled).apply();
     }
 
@@ -278,19 +306,39 @@ public class SleepModeManager {
     public void freezeBackgroundRestrictedApps(Runnable onComplete) {
         Set<String> packages = getSleepModeApps();
         if (packages.isEmpty()) {
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": freezeBackgroundRestrictedApps: timer set is empty, nothing to freeze");
             if (onComplete != null) handler.post(onComplete);
             return;
         }
+        AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": freezeBackgroundRestrictedApps: starting, candidates=" + packages.size());
         executor.execute(() -> {
             Set<String> alreadyFrozen = getFrozenTimerApps();
+            int frozenNow = 0;
+            int skippedAlreadyFrozen = 0;
+            int skippedProtected = 0;
+            int failed = 0;
             for (String packageName : packages) {
-                if (alreadyFrozen.contains(packageName)) continue;
-                if (scheduler != null && scheduler.isProtected(packageName, RestrictionsScheduler.PROTECT_SLEEP_MODE)) continue;
+                if (alreadyFrozen.contains(packageName)) {
+                    skippedAlreadyFrozen++;
+                    continue;
+                }
+                if (scheduler != null && scheduler.isProtected(packageName, RestrictionsScheduler.PROTECT_SLEEP_MODE)) {
+                    AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": freezeBackgroundRestrictedApps: skipping protected package=" + packageName);
+                    skippedProtected++;
+                    continue;
+                }
                 FreezeMethod method = getFreezeMethod(packageName);
                 boolean ok = freezeApp(packageName);
-                if (ok) markFrozen(packageName);
+                if (ok) {
+                    markFrozen(packageName);
+                    frozenNow++;
+                } else {
+                    failed++;
+                }
                 SleepModeLogManager.logFreeze(context, packageName, ok, method, FreezeType.TIMER);
             }
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": freezeBackgroundRestrictedApps: finished, frozen=" + frozenNow
+                    + ", alreadyFrozen=" + skippedAlreadyFrozen + ", protected=" + skippedProtected + ", failed=" + failed);
             if (onComplete != null) handler.post(onComplete);
         });
     }
@@ -298,16 +346,26 @@ public class SleepModeManager {
     public void unfreezeBackgroundRestrictedApps(Runnable onComplete) {
         Set<String> packages = getSleepModeApps();
         if (packages.isEmpty()) {
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": unfreezeBackgroundRestrictedApps: timer set is empty, nothing to unfreeze");
             if (onComplete != null) handler.post(onComplete);
             return;
         }
+        AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": unfreezeBackgroundRestrictedApps: starting, candidates=" + packages.size());
         executor.execute(() -> {
+            int unfrozenNow = 0;
+            int failed = 0;
             for (String packageName : packages) {
                 FreezeMethod method = getFreezeMethod(packageName);
                 boolean ok = unfreezeApp(packageName);
-                if (ok) markUnfrozen(packageName);
+                if (ok) {
+                    markUnfrozen(packageName);
+                    unfrozenNow++;
+                } else {
+                    failed++;
+                }
                 SleepModeLogManager.logUnfreeze(context, packageName, ok, method, FreezeType.TIMER);
             }
+            AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": unfreezeBackgroundRestrictedApps: finished, unfrozen=" + unfrozenNow + ", failed=" + failed);
             if (onComplete != null) handler.post(onComplete);
         });
     }
