@@ -28,7 +28,7 @@ public final class AppDebugManager {
         // Features
         FOREGROUND_SERVICE         ("Foreground Service"),
         TRIGGERS                        ("Triggers"),
-        ADVANCED_CONDITIONS        ("Advanced Conditions")
+        ADVANCED_CONDITIONS        ("Advanced Conditions"),
         SCAN                            ("Scan"),
         AUTO_KILL_BASE                 ("Auto-Kill Base"),
         AUTO_KILL_PRESETS             ("Auto-Kill Presets"),
@@ -36,7 +36,7 @@ public final class AppDebugManager {
         BACKGROUND_RESTRICTIONS   ("Background Restrictions"),
         RESTRICTIONS_SCHEDULER     ("Restrictions Scheduler"),
         SLEEP_MODE                    ("SleepMode"),
-        BACKUP_RESTORE              ("Backup & Restore");
+        BACKUP_RESTORE              ("Backup & Restore"),
         UTILS                           ("Other utils");
 
         public final String displayName;
