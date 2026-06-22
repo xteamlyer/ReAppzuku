@@ -15,8 +15,12 @@ import java.util.concurrent.Executors;
 
 import com.gree1d.reappzuku.manager.SleepModeManager;
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
 public final class SleepModeLogManager {
+
+    private static final String FILE_NAME = "SleepModeLogManager";
 
     private static final int MAX_ENTRIES    = 200;
     private static final int MAX_DETAIL_LEN = 180;
@@ -55,7 +59,10 @@ public final class SleepModeLogManager {
                                 String action, String outcome,
                                 SleepModeManager.FreezeMethod method,
                                 SleepModeManager.FreezeType freezeType) {
-        if (context == null) return;
+        if (context == null) {
+            AppDebugManager.w(Category.SLEEP_MODE, FILE_NAME + ": append: context is null, log entry discarded (action=" + action + ", package=" + packageName + ")");
+            return;
+        }
 
         SleepModeLog entry = new SleepModeLog();
         entry.timestamp   = System.currentTimeMillis();
@@ -66,12 +73,16 @@ public final class SleepModeLogManager {
         entry.freezeType  = freezeType != null ? freezeType.name().toLowerCase(Locale.US) : null;
 
         DB_EXECUTOR.execute(() -> {
-            SleepModeLog.Dao dao = AppDatabase.getInstance(context).sleepModeLogDao();
-            dao.insert(entry);
+            try {
+                SleepModeLog.Dao dao = AppDatabase.getInstance(context).sleepModeLogDao();
+                dao.insert(entry);
 
-            int count = dao.getCount();
-            if (count > MAX_ENTRIES) {
-                dao.deleteOldest(count - MAX_ENTRIES);
+                int count = dao.getCount();
+                if (count > MAX_ENTRIES) {
+                    dao.deleteOldest(count - MAX_ENTRIES);
+                }
+            } catch (Exception e) {
+                AppDebugManager.e(Category.SLEEP_MODE, FILE_NAME + ": append: failed to write log entry (action=" + action + ", package=" + entry.packageName + ")", e);
             }
         });
     }
@@ -90,8 +101,13 @@ public final class SleepModeLogManager {
     }
 
     public static List<LogEntry> readEntries(Context context) {
-        List<SleepModeLog> rows =
-                AppDatabase.getInstance(context).sleepModeLogDao().getRecent(MAX_ENTRIES);
+        List<SleepModeLog> rows;
+        try {
+            rows = AppDatabase.getInstance(context).sleepModeLogDao().getRecent(MAX_ENTRIES);
+        } catch (Exception e) {
+            AppDebugManager.e(Category.SLEEP_MODE, FILE_NAME + ": readEntries: failed to read log entries", e);
+            return new ArrayList<>();
+        }
         List<LogEntry> result = new ArrayList<>(rows.size());
         for (SleepModeLog row : rows) {
             result.add(new LogEntry(
@@ -107,9 +123,18 @@ public final class SleepModeLogManager {
     }
 
     public static void clear(Context context) {
-        if (context == null) return;
-        DB_EXECUTOR.execute(() ->
-                AppDatabase.getInstance(context).sleepModeLogDao().clearAll());
+        if (context == null) {
+            AppDebugManager.w(Category.SLEEP_MODE, FILE_NAME + ": clear: context is null, skipped");
+            return;
+        }
+        DB_EXECUTOR.execute(() -> {
+            try {
+                AppDatabase.getInstance(context).sleepModeLogDao().clearAll();
+                AppDebugManager.d(Category.SLEEP_MODE, FILE_NAME + ": clear: log cleared");
+            } catch (Exception e) {
+                AppDebugManager.e(Category.SLEEP_MODE, FILE_NAME + ": clear: failed to clear log", e);
+            }
+        });
     }
 
     private static String formatTimestamp(long millis) {

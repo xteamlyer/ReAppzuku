@@ -6,6 +6,8 @@ import com.gree1d.reappzuku.db.AppDatabase;
 import com.gree1d.reappzuku.db.BgRestrictionLog;
 
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.concurrent.Executors;
 
 public final class BackgroundRestrictionLog {
 
+    private static final String FILE_NAME = "BackgroundRestrictionLog";
     private static final int MAX_ENTRIES    = 200;
     private static final int MAX_DETAIL_LEN = 180;
 
@@ -36,12 +39,18 @@ public final class BackgroundRestrictionLog {
         entry.detail      = sanitize(detail);
 
         DB_EXECUTOR.execute(() -> {
-            BgRestrictionLog.Dao dao = AppDatabase.getInstance(context).bgRestrictionLogDao();
-            dao.insert(entry);
+            try {
+                BgRestrictionLog.Dao dao = AppDatabase.getInstance(context).bgRestrictionLogDao();
+                dao.insert(entry);
 
-            int count = dao.getCount();
-            if (count > MAX_ENTRIES) {
-                dao.deleteOldest(count - MAX_ENTRIES);
+                int count = dao.getCount();
+                if (count > MAX_ENTRIES) {
+                    dao.deleteOldest(count - MAX_ENTRIES);
+                }
+            } catch (Exception e) {
+                AppDebugManager.e(Category.BACKGROUND_RESTRICTIONS,
+                        FILE_NAME + ": failed to write log entry pkg=" + entry.packageName
+                                + " action=" + entry.action, e);
             }
         });
     }
@@ -60,8 +69,13 @@ public final class BackgroundRestrictionLog {
     }
 
     public static List<LogEntry> readEntries(Context context) {
-        List<BgRestrictionLog> rows =
-                AppDatabase.getInstance(context).bgRestrictionLogDao().getRecent(MAX_ENTRIES);
+        List<BgRestrictionLog> rows;
+        try {
+            rows = AppDatabase.getInstance(context).bgRestrictionLogDao().getRecent(MAX_ENTRIES);
+        } catch (Exception e) {
+            AppDebugManager.e(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": readEntries failed to query log entries", e);
+            return new ArrayList<>();
+        }
         List<LogEntry> result = new ArrayList<>(rows.size());
         for (BgRestrictionLog row : rows) {
             result.add(new LogEntry(
@@ -77,8 +91,13 @@ public final class BackgroundRestrictionLog {
 
     public static void clear(Context context) {
         if (context == null) return;
-        DB_EXECUTOR.execute(() ->
-                AppDatabase.getInstance(context).bgRestrictionLogDao().clearAll());
+        DB_EXECUTOR.execute(() -> {
+            try {
+                AppDatabase.getInstance(context).bgRestrictionLogDao().clearAll();
+            } catch (Exception e) {
+                AppDebugManager.e(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": clear failed to clear log entries", e);
+            }
+        });
     }
 
     private static String formatTimestamp(long millis) {
