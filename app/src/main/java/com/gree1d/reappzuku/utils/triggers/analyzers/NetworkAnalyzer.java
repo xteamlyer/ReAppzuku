@@ -2,7 +2,6 @@ package com.gree1d.reappzuku.utils.triggers.analyzers;
 
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +10,14 @@ import java.util.regex.Pattern;
 
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer.TriggerInfo;
 
 public class NetworkAnalyzer {
 
-    private static final String TAG = "NetworkAnalyzer";
+    private static final String FILE_NAME = "NetworkAnalyzer";
 
     private final AppTriggersAnalyzer analyzer;
 
@@ -36,13 +37,13 @@ public class NetworkAnalyzer {
             netstats = analyzer.getShellManager().runShellCommandAndGetFullOutput(
                     "dumpsys netstats detail | grep -A5 uid=" + uid);
             if (netstats == null || netstats.trim().isEmpty()) {
-                Log.d(TAG, "NetworkActivity/netstats detail - empty, trying fallback");
+                AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": NetworkActivity/netstats detail - empty, trying fallback");
                 netstats = analyzer.getShellManager().runShellCommandAndGetFullOutput(
                         "dumpsys netstats | grep " + packageName);
             } else {
-                Log.d(TAG, "NetworkActivity/netstats detail - OK");
+                AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": NetworkActivity/netstats detail - OK");
             }
-        } catch (Exception e) { Log.w(TAG, "NetworkActivity/netstats - ERROR: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": NetworkActivity/netstats failed", e); }
         if (netstats != null) {
             // New format (Android 14+): rb= tb= rp= tp= st= op=
             // Old format:               rxBytes= txBytes=
@@ -69,7 +70,7 @@ public class NetworkAnalyzer {
                     }
                 }
             }
-        } catch (Exception e) { Log.w(TAG, "NetworkActivity/connectivity - ERROR: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": NetworkActivity/connectivity failed", e); }
 
         long total = rxBytes + txBytes;
         if (total == 0 && established.isEmpty() && analyzer.apiLevel >= AppTriggersAnalyzer.API_BAL_PRIVILEGES) {
@@ -78,6 +79,7 @@ public class NetworkAnalyzer {
             txBytes = procBytes[1];
             total = rxBytes + txBytes;
         }
+        AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeNetworkActivity: uid=" + uid + " rx=" + rxBytes + " tx=" + txBytes + " established=" + established.size());
         if (total < 10 * 1024 && established.isEmpty()) return list;
 
         StringBuilder detail = new StringBuilder();
@@ -137,7 +139,7 @@ public class NetworkAnalyzer {
                 } catch (NumberFormatException ignored) {}
             }
         } catch (Exception e) {
-            Log.w(TAG, "network /proc fallback failed: " + e.getMessage());
+            AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": network /proc fallback failed", e);
         }
         return new long[]{rx, tx};
     }
@@ -165,19 +167,21 @@ public class NetworkAnalyzer {
             }
 
             if (rejected) {
+                AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeNetworkPolicy: background REJECTED for uid=" + analyzer.getCachedUid());
                 list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                         analyzer.getContext().getString(R.string.triggers_cat_network),
                         analyzer.getContext().getString(R.string.triggers_network_bg_blocked_detail),
                         analyzer.getContext().getString(R.string.triggers_network_bg_blocked_explanation),
                         TriggerInfo.Severity.INFO));
             } else if (allowed) {
+                AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeNetworkPolicy: background ALLOWED for uid=" + analyzer.getCachedUid());
                 list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                         analyzer.getContext().getString(R.string.triggers_cat_network),
                         analyzer.getContext().getString(R.string.triggers_network_bg_allowed_detail),                       
                         analyzer.getContext().getString(R.string.triggers_network_bg_allowed_explanation),                       
                         TriggerInfo.Severity.MEDIUM));
             }
-        } catch (Exception e) { Log.w(TAG, "netpolicy check failed: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": netpolicy check failed", e); }
         return list;
     }
 

@@ -2,7 +2,6 @@ package com.gree1d.reappzuku.utils.triggers.analyzers;
 
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +10,14 @@ import java.util.regex.Pattern;
 
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer.TriggerInfo;
 
 public class ProcessAnalyzer {
 
-    private static final String TAG = "ProcessAnalyzer";
+    private static final String FILE_NAME = "ProcessAnalyzer";
 
     private final AppTriggersAnalyzer analyzer;
 
@@ -92,6 +93,7 @@ public class ProcessAnalyzer {
         if (procState == null && adj == Integer.MAX_VALUE) return list;
 
         String label = mapProcState(procState, adj);
+        AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeProcessState: pkg=" + packageName + " procState=" + procState + " adj=" + adj + " label=" + label + " persistent=" + persistent);
 
         TriggerInfo.Severity severity;
         TriggerInfo.Group    group;
@@ -127,8 +129,9 @@ public class ProcessAnalyzer {
                         }
                     }
                 }
-            } catch (Exception e) { Log.w(TAG, "frozen pid lookup failed: " + e.getMessage()); }
+            } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": frozen pid lookup failed", e); }
             if (isProcessFrozen(packageName, pid)) {
+                AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeProcessState: process is FROZEN pkg=" + packageName + " pid=" + pid);
                 list.add(new TriggerInfo(TriggerInfo.Group.OTHER,
                         analyzer.getContext().getString(R.string.triggers_cat_proc_state),
                         analyzer.getContext().getString(R.string.triggers_proc_frozen_detail),
@@ -320,6 +323,7 @@ public class ProcessAnalyzer {
         }
 
         if (!binders.isEmpty()) {
+            AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeServicesAndBindings: found " + binders.size() + " binder(s): " + binders);
             StringBuilder detail = new StringBuilder();
             StringBuilder expl   = new StringBuilder(
                     analyzer.getContext().getString(R.string.triggers_bindings_explanation_base));
@@ -355,6 +359,7 @@ public class ProcessAnalyzer {
             boolean killable, boolean isForeground, boolean isSticky, boolean isBfslPush,
             String fgsAllowStartReason) {
         if (isForeground) {
+            AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": emitServiceTriggers: FGS detected svc=" + currentSvc + " fgType=" + fgType + " killable=" + killable + " isBfslPush=" + isBfslPush);
             String svcName = currentSvc != null ? currentSvc : packageName;
             StringBuilder detail = new StringBuilder(svcName);
             if (fgType       != null) detail.append(" [").append(fgType).append("]");
@@ -472,7 +477,7 @@ public class ProcessAnalyzer {
                             : R.string.triggers_fg_notification_explanation),
                     isHighPriority ? TriggerInfo.Severity.HIGH : TriggerInfo.Severity.MEDIUM));
         } catch (Exception e) {
-            Log.w(TAG, "analyzeFgNotification failed: " + e.getMessage());
+            AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": analyzeFgNotification failed", e);
         }
         return list;
     }
@@ -492,7 +497,7 @@ public class ProcessAnalyzer {
                         analyzer.getContext().getString(R.string.triggers_fgs_blocked_explanation),
                         TriggerInfo.Severity.MEDIUM));
             }
-        } catch (Exception e) { Log.w(TAG, "fgs blocked logcat failed: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": fgs blocked logcat failed", e); }
         return list;
     }
 
@@ -502,14 +507,14 @@ public class ProcessAnalyzer {
             String out = analyzer.getShellManager().runShellCommandAndGetFullOutput(
                     "dumpsys activity | grep -A3 'Apps frozen'");
             if (out != null && pid != null && out.contains(pid)) return true;
-        } catch (Exception e) { Log.w(TAG, "frozen check dumpsys failed: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": frozen check dumpsys failed", e); }
 
         if (analyzer.getCachedUid() != null && pid != null) {
             try {
                 String freeze = analyzer.getShellManager().runShellCommandAndGetFullOutput(
                         "cat /sys/fs/cgroup/uid_" + analyzer.getCachedUid() + "/pid_" + pid + "/cgroup.freeze");
                 if ("1".equals(freeze != null ? freeze.trim() : "")) return true;
-            } catch (Exception e) { Log.w(TAG, "frozen check cgroup failed: " + e.getMessage()); }
+            } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": frozen check cgroup failed", e); }
         }
         return false;
     }
