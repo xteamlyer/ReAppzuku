@@ -21,6 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AlertDialog;
 
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.databinding.ActivitySettingsBinding;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.core.BackupManager;
@@ -109,10 +110,6 @@ public class SettingsActivity extends SettingsActivityDialogs
             new ActivityResultContracts.OpenDocument(),
             uri -> { if (uri != null) importBackup(uri); });
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Abstract accessors (SettingsActivityDialogs contract)
-    // ──────────────────────────────────────────────────────────────────────────
-
     @Override protected ActivitySettingsBinding getBinding()                        { return binding; }
     @Override protected BackgroundAppManager getAppManager()                        { return appManager; }
     @Override protected AutoKillManager getAutoKillManager()                        { return autoKillManager; }
@@ -125,10 +122,6 @@ public class SettingsActivity extends SettingsActivityDialogs
     @Override public    SharedPreferences getSharedPreferences()                    { return sharedPreferences; }
     @Override protected ActivityResultLauncher<String>   getCreateBackupLauncher()  { return createBackupLauncher; }
     @Override protected ActivityResultLauncher<String[]> getRestoreBackupLauncher() { return restoreBackupLauncher; }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Lifecycle
-    // ──────────────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -244,10 +237,6 @@ public class SettingsActivity extends SettingsActivityDialogs
                 break;
         }
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Setup
-    // ──────────────────────────────────────────────────────────────────────────
 
     private void setupToolbar() {
         setSupportActionBar(binding.toolbar);
@@ -511,10 +500,6 @@ public class SettingsActivity extends SettingsActivityDialogs
         setupAdditionalScenariosListeners();
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // UI state helpers
-    // ──────────────────────────────────────────────────────────────────────────
-
     @Override
     protected void updateKillModeVisibility() {
         int mode = autoKillManager.getKillMode();
@@ -648,10 +633,6 @@ public class SettingsActivity extends SettingsActivityDialogs
                 : android.text.TextUtils.join(", ", active));
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // State application
-    // ──────────────────────────────────────────────────────────────────────────
-
     private void applyServiceDependentState(boolean serviceEnabled) {
         float alpha = serviceEnabled ? 1.0f : 0.5f;
 
@@ -715,10 +696,6 @@ public class SettingsActivity extends SettingsActivityDialogs
             showAdditionalScenariosDialog();
         });
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Service / shell / preferences helpers
-    // ──────────────────────────────────────────────────────────────────────────
 
     private boolean hasPrivilege() {
         return shellManager.hasShizukuPermission() || shellManager.resolveAnyShellPermission();
@@ -850,10 +827,6 @@ public class SettingsActivity extends SettingsActivityDialogs
             Toast.makeText(this, R.string.url_open_failed, Toast.LENGTH_SHORT).show();
         }
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Additional scenarios
-    // ──────────────────────────────────────────────────────────────────────────
 
     private void loadAdditionalScenariosSettings() {
         updateAdditionalScenariosSummary();

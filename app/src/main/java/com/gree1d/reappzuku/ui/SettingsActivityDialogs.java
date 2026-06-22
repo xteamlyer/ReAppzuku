@@ -37,6 +37,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.databinding.ActivitySettingsBinding;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.core.BackupManager;
@@ -105,20 +106,12 @@ abstract class SettingsActivityDialogs extends BaseActivity {
     protected abstract void loadSettings();
     protected abstract int darkenColor(int color, float factor);
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Preset / service guard dialogs
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showPresetActiveDialog() {
         new MaterialAlertDialogBuilder(this)
                 .setMessage(R.string.antichange_settings)
                 .setPositiveButton(R.string.dialog_close, null)
                 .show();
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Auto-kill type
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showAutoKillTypeDialog() {
         String[] types = {
@@ -179,10 +172,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         resetDialogButtonColors(dialog);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Kill mode
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showKillModeDialog() {
         String[] modes = {
                 getString(R.string.settings_mode_whitelist),
@@ -206,11 +195,7 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                     }
                 });
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // App list dialogs (blacklist / whitelist / hidden / bg restriction / sleep)
-    // ──────────────────────────────────────────────────────────────────────────
-
+    
     protected void showBlacklistDialog() {
         LayoutInflater inflater = this.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_filter, null);
@@ -545,10 +530,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         if (messageView != null) messageView.setText(sb);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Sleep mode
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showSleepModeDelayDialog() {
         long current = getSharedPreferences().getLong(KEY_SLEEP_MODE_DELAY, DEFAULT_SLEEP_MODE_DELAY_MS);
         int selected = SLEEP_MODE_DELAYS_MS.length - 1;
@@ -625,10 +606,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Thresholds / intervals
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showRamThresholdDialog() {
         int current = getAutoKillIntPref(KEY_RAM_THRESHOLD, DEFAULT_RAM_THRESHOLD_PERCENT);
         int selected = 1;
@@ -656,10 +633,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                 });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Notification mode
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showNotificationModeDialog() {
         int current = getSharedPreferences().getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
         String[] options = {
@@ -672,10 +645,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                     updateNotificationModeText(which);
                 });
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Theme / accent
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showThemeDialog() {
         int currentTheme = getSharedPreferences().getInt(KEY_THEME,
@@ -820,10 +789,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                     recreate();
                 });
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Restrictions scheduler
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showRestrictionsSchedulerDialog() {
         Set<String> bgApps    = getAppManager().getBackgroundRestrictedApps();
@@ -1139,10 +1104,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Scheduler helpers
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected static final class SchedulerAppItem {
         final String packageName;
         final String appName;
@@ -1202,10 +1163,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                 + " – "
                 + formatTime(entry.endHour, entry.endMinute, use24h);
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Backup / restore
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showBackupRestoreDialog() {
         String[] options = {
@@ -1293,10 +1250,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         });
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Special thanks / Easter egg
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showSpecialThanksDialog() {
         String[] names = getResources().getStringArray(R.array.special_thanks_list);
         StringBuilder sb = new StringBuilder();
@@ -1363,10 +1316,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                 .setPositiveButton(getString(R.string.dialog_ok), null)
                 .show());
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Presets
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showPresetPickerDialog() {
         PresetManager presetManager = new PresetManager(this);
@@ -1473,10 +1422,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         }
         return bg;
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Additional scenarios
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showAdditionalScenariosDialog() {
         int dp4 = (int) (getResources().getDisplayMetrics().density * 4);
@@ -1766,10 +1711,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                 .show());
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // Debug menu
-    // ──────────────────────────────────────────────────────────────────────────
-
     protected void showDebugMenuDialog() {
         AppDebugManager.Category[] categories = AppDebugManager.Category.values();
         int dp8  = (int) (getResources().getDisplayMetrics().density * 8);
@@ -1858,10 +1799,6 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(buttonTextColor);
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(buttonTextColor);
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Shared dialog utilities
-    // ──────────────────────────────────────────────────────────────────────────
 
     protected void showSingleChoiceDialog(String title, String[] options, int selected,
                                           java.util.function.IntConsumer onPick) {
