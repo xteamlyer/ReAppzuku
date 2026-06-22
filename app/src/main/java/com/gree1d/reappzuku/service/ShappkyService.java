@@ -447,10 +447,19 @@ public class ShappkyService extends Service {
             public void run() {
                 if (!isRunning) return;
                 collectStatsManager.takeSnapshotAsync(null);
-                handler.postDelayed(this, SNAPSHOT_INTERVAL_MS);
+
+                long now      = System.currentTimeMillis();
+                long nextSlot = CollectStatsManager.slotStartFor(now) + SNAPSHOT_INTERVAL_MS;
+                long delay    = nextSlot - now;
+                if (delay <= 0) delay += SNAPSHOT_INTERVAL_MS;
+                handler.postDelayed(this, delay);
             }
         };
-        handler.postDelayed(snapshotRunnable, 2_000L);
+
+        long now      = System.currentTimeMillis();
+        long nextSlot = CollectStatsManager.slotStartFor(now) + SNAPSHOT_INTERVAL_MS;
+        long firstDelay = Math.max(2_000L, nextSlot - now);
+        handler.postDelayed(snapshotRunnable, firstDelay);
     }
 
     private void schedulePeriodicUpdateCheck() {
