@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.material.color.MaterialColors;
 
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
@@ -30,6 +32,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         boolean isAmoled = sharedPreferences.getBoolean(KEY_AMOLED, false);
         int theme = sharedPreferences.getInt(KEY_THEME, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         boolean isSystemTheme = (theme == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+
+        AppDebugManager.d(Category.CORE, "BaseActivity: onCreate: accent=" + accent + ", amoled=" + isAmoled + ", theme=" + theme + ", systemTheme=" + isSystemTheme);
 
         if (isAmoled) {
             switch (accent) {
@@ -82,16 +86,15 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         if (isAmoled) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            AppDebugManager.d(Category.CORE, "BaseActivity: onCreate: forced MODE_NIGHT_YES for AMOLED");
         } else {
             AppCompatDelegate.setDefaultNightMode(theme);
+            AppDebugManager.d(Category.CORE, "BaseActivity: onCreate: applied night mode=" + theme);
         }
 
         super.onCreate(savedInstanceState);
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        // AMOLED + системный акцент: DynamicColors из App.java успел наложить
-        // системный colorPrimary поверх AppTheme_Amoled. Принудительно восстанавливаем
-        // цвета Amoled-темы поверх Dynamic Color overlay.
         if (isAmoled && accent == ACCENT_SYSTEM) {
             getTheme().applyStyle(R.style.AppTheme_Amoled, true);
         }
@@ -106,6 +109,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     private void applyCustomAccentOverlay() {
         int color = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
         int darkColor = darkenColor(color, 0.75f);
+        AppDebugManager.d(Category.CORE, "BaseActivity: applyCustomAccentOverlay: color=#" + Integer.toHexString(color) + ", darkColor=#" + Integer.toHexString(darkColor));
         getTheme().applyStyle(R.style.AppTheme_AccentCustomOverride, true);
     }
 
@@ -140,7 +144,10 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     private void applyStatusBarAppearance(boolean isAmoled, int theme) {
-        if (getWindow() == null) return;
+        if (getWindow() == null) {
+            AppDebugManager.w(Category.CORE, "BaseActivity: applyStatusBarAppearance: window is null, skipping");
+            return;
+        }
 
         boolean isCurrentlyLight;
         if (isAmoled) {
@@ -161,10 +168,14 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
         decorView.setSystemUiVisibility(flags);
 
+        AppDebugManager.d(Category.CORE, "BaseActivity: applyStatusBarAppearance: isCurrentlyLight=" + isCurrentlyLight);
+
         androidx.core.view.WindowInsetsControllerCompat insetsController =
             androidx.core.view.WindowCompat.getInsetsController(getWindow(), decorView);
         if (insetsController != null) {
             insetsController.setAppearanceLightNavigationBars(isCurrentlyLight);
+        } else {
+            AppDebugManager.w(Category.CORE, "BaseActivity: applyStatusBarAppearance: insetsController is null");
         }
     }
 

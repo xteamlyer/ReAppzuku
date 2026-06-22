@@ -5,7 +5,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -20,7 +21,6 @@ import rikka.shizuku.ShizukuRemoteProcess;
 
 
 public class ShellManager {
-    private static final String TAG = "ShellManager";
 
     private final Context context;
     private final Handler handler;
@@ -51,7 +51,7 @@ public class ShellManager {
             executor.execute(() -> {
                 try {
                     hasRoot = checkRootAccessBlocking();
-                    Log.d(TAG, "Root access check complete: " + hasRoot);
+                    AppDebugManager.d(Category.CORE, "ShellManager: Root access check complete: " + hasRoot);
                 } finally {
                     rootCheckInProgress.set(false);
                     Runnable cb = onRootCheckComplete;
@@ -91,7 +91,7 @@ public class ShellManager {
 
             return "0".equals(output != null ? output.trim() : "");
         } catch (IOException | InterruptedException e) {
-            Log.d(TAG, "Root not available: " + e.getMessage());
+            AppDebugManager.d(Category.CORE, "ShellManager: Root not available: " + e.getMessage());
             return false;
         } finally {
             try {
@@ -125,12 +125,10 @@ public class ShellManager {
 
     public boolean hasRootAccess() {
         if (hasRoot == null) {
-
-
             if (Looper.myLooper() != Looper.getMainLooper()) {
                 hasRoot = checkRootAccessBlocking();
             } else {
-
+                AppDebugManager.w(Category.CORE, "ShellManager: hasRootAccess: called on main thread before root check completed, returning false");
                 return false;
             }
         }
@@ -142,7 +140,7 @@ public class ShellManager {
         try {
             return Shizuku.pingBinder() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED;
         } catch (Exception e) {
-            Log.w(TAG, "Error checking Shizuku permission", e);
+            AppDebugManager.w(Category.CORE, "ShellManager: Error checking Shizuku permission", e);
             return false;
         }
     }
@@ -150,7 +148,7 @@ public class ShellManager {
 
     public void checkShellPermissions() {
         if (hasRoot != null && hasRoot) {
-            Log.d(TAG, "Root access available, skipping Shizuku permission request");
+            AppDebugManager.d(Category.CORE, "ShellManager: Root access available, skipping Shizuku permission request");
             return;
         }
         try {
@@ -160,26 +158,30 @@ public class ShellManager {
                 }
             }
         } catch (Exception e) {
-            Log.w(TAG, "Error checking shell permissions", e);
+            AppDebugManager.w(Category.CORE, "ShellManager: Error checking shell permissions", e);
         }
     }
 
 
     public boolean hasAnyShellPermission() {
-
         if (hasShizukuPermission()) {
+            AppDebugManager.d(Category.CORE, "ShellManager: hasAnyShellPermission: true (Shizuku)");
             return true;
         }
-
-        return hasRoot != null && hasRoot;
+        boolean result = hasRoot != null && hasRoot;
+        AppDebugManager.d(Category.CORE, "ShellManager: hasAnyShellPermission: " + result + " (root)");
+        return result;
     }
 
 
     public boolean resolveAnyShellPermission() {
         if (hasShizukuPermission()) {
+            AppDebugManager.d(Category.CORE, "ShellManager: resolveAnyShellPermission: true (Shizuku)");
             return true;
         }
-        return hasRootAccess();
+        boolean result = hasRootAccess();
+        AppDebugManager.d(Category.CORE, "ShellManager: resolveAnyShellPermission: " + result + " (root)");
+        return result;
     }
 
 
@@ -221,7 +223,11 @@ public class ShellManager {
                 return shizukuResult;
             }
         }
-        return rootResult != null ? rootResult : new ShellResult(false, -1, "No Root or Shizuku permission available");
+        if (rootResult != null) {
+            return rootResult;
+        }
+        AppDebugManager.w(Category.CORE, "ShellManager: runShellCommandForResult: no Root or Shizuku permission available, command=" + command);
+        return new ShellResult(false, -1, "No Root or Shizuku permission available");
     }
 
 
@@ -244,6 +250,7 @@ public class ShellManager {
         } else if (hasShizukuPermission()) {
             return executeShizukuCommandAndGetFullOutput(command);
         }
+        AppDebugManager.w(Category.CORE, "ShellManager: runShellCommandAndGetFullOutput: no Root or Shizuku permission available, command=" + command);
         return null;
     }
 
@@ -256,6 +263,7 @@ public class ShellManager {
         } else if (hasShizukuPermission()) {
             return executeShizukuCommandAndGetFullOutput(command);
         }
+        AppDebugManager.w(Category.CORE, "ShellManager: runCommandAndGetOutput: no Root or Shizuku permission available, command=" + command);
         return null;
     }
     
@@ -286,14 +294,14 @@ public class ShellManager {
             }
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                Log.w(TAG, "Root command exited with code " + exitCode + ": " + command);
+                AppDebugManager.w(Category.CORE, "ShellManager: Root command exited with code " + exitCode + ": " + command);
             }
             return exitCode == 0;
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Root command failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Root command failed", e);
             return false;
         } finally {
             try {
@@ -318,14 +326,14 @@ public class ShellManager {
 
             int exitCode = remote.waitFor();
             if (exitCode != 0) {
-                Log.w(TAG, "Shizuku command exited with code " + exitCode + ": " + command);
+                AppDebugManager.w(Category.CORE, "ShellManager: Shizuku command exited with code " + exitCode + ": " + command);
             }
             return exitCode == 0;
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Shizuku command failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Shizuku command failed", e);
             return false;
         } finally {
             if (remote != null) {
@@ -358,14 +366,14 @@ public class ShellManager {
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                Log.w(TAG, "Root command exited with code " + exitCode + ": " + command);
+                AppDebugManager.w(Category.CORE, "ShellManager: Root command exited with code " + exitCode + ": " + command);
             }
             return new ShellResult(exitCode == 0, exitCode, output.toString());
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Root command failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Root command failed", e);
             return new ShellResult(false, -1, e.getMessage());
         } finally {
             try {
@@ -396,14 +404,14 @@ public class ShellManager {
             }
             int exitCode = remote.waitFor();
             if (exitCode != 0) {
-                Log.w(TAG, "Shizuku command with output exited with code " + exitCode + ": " + command);
+                AppDebugManager.w(Category.CORE, "ShellManager: Shizuku command with output exited with code " + exitCode + ": " + command);
             }
             return exitCode == 0;
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Shizuku command with output failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Shizuku command with output failed", e);
             return false;
         } finally {
             if (remote != null) {
@@ -439,7 +447,7 @@ public class ShellManager {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Root command get output failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Root command get output failed", e);
             return null;
         } finally {
             try {
@@ -473,7 +481,7 @@ public class ShellManager {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Shizuku command get output failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Shizuku command get output failed", e);
             return null;
         } finally {
             if (remote != null) {
@@ -499,14 +507,14 @@ public class ShellManager {
             }
             int exitCode = remote.waitFor();
             if (exitCode != 0) {
-                Log.w(TAG, "Shizuku command exited with code " + exitCode + ": " + command);
+                AppDebugManager.w(Category.CORE, "ShellManager: Shizuku command exited with code " + exitCode + ": " + command);
             }
             return new ShellResult(exitCode == 0, exitCode, output.toString());
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            Log.e(TAG, "Shizuku command failed", e);
+            AppDebugManager.e(Category.CORE, "ShellManager: Shizuku command failed", e);
             return new ShellResult(false, -1, e.getMessage());
         } finally {
             if (remote != null) {
