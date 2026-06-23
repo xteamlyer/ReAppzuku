@@ -260,9 +260,12 @@ public class ShappkyService extends Service {
                 additionalScenariosManager.updateHardwareReceiverState();
                 break;
 
-            case "RESCHEDULE_SNAPSHOT":
-                AppDebugManager.d(Category.UTILS, FILE_NAME + ": RESCHEDULE_SNAPSHOT received, rescheduling snapshot alarm");
-                scheduleSnapshotAlarm();
+            case "TAKE_SNAPSHOT":
+                AppDebugManager.d(Category.UTILS, FILE_NAME + ": TAKE_SNAPSHOT received, running snapshot then rescheduling");
+                collectStatsManager.takeSnapshotAsync(() -> {
+                    releaseSnapshotWakeLock();
+                    scheduleSnapshotAlarm();
+                });
                 break;
         }
 
@@ -442,7 +445,7 @@ public class ShappkyService extends Service {
                     + ": scheduleSnapshotAlarm: AlarmManager is null, cannot schedule");
             return;
         }
-        
+        // Align to wall-clock 15-minute grid (xx:00, xx:15, xx:30, xx:45)
         long now       = System.currentTimeMillis();
         long triggerAt = ((now / SNAPSHOT_INTERVAL_MS) + 1) * SNAPSHOT_INTERVAL_MS;
         PendingIntent pi = getSnapshotAlarmIntent();
@@ -454,6 +457,18 @@ public class ShappkyService extends Service {
         AppDebugManager.d(Category.UTILS, FILE_NAME
                 + ": scheduleSnapshotAlarm: armed, triggerAt=" + triggerAt
                 + " (in " + ((triggerAt - now) / 60_000) + " min)");
+    }
+
+    private void releaseSnapshotWakeLock() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm == null) return;
+        PowerManager.WakeLock wl = pm.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK, CollectStatsReceiver.WAKELOCK_TAG);
+        wl.setReferenceCounted(false);
+        if (wl.isHeld()) {
+            wl.release();
+            AppDebugManager.d(Category.UTILS, FILE_NAME + ": releaseSnapshotWakeLock: released");
+        }
     }
 
     private void cancelSnapshotAlarm() {
