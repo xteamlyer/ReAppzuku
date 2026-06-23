@@ -261,7 +261,7 @@ public class ShappkyService extends Service {
                 break;
 
             case "RESCHEDULE_SNAPSHOT":
-                AppDebugManager.d(Category.STATS, FILE_NAME + ": RESCHEDULE_SNAPSHOT received, rescheduling snapshot alarm");
+                AppDebugManager.d(Category.UTILS, FILE_NAME + ": RESCHEDULE_SNAPSHOT received, rescheduling snapshot alarm");
                 scheduleSnapshotAlarm();
                 break;
         }
@@ -438,7 +438,7 @@ public class ShappkyService extends Service {
     private void scheduleSnapshotAlarm() {
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (am == null) {
-            AppDebugManager.e(Category.STATS, FILE_NAME
+            AppDebugManager.e(Category.UTILS, FILE_NAME
                     + ": scheduleSnapshotAlarm: AlarmManager is null, cannot schedule");
             return;
         }
@@ -451,7 +451,7 @@ public class ShappkyService extends Service {
         } else {
             am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi);
         }
-        AppDebugManager.d(Category.STATS, FILE_NAME
+        AppDebugManager.d(Category.UTILS, FILE_NAME
                 + ": scheduleSnapshotAlarm: armed, triggerAt=" + triggerAt
                 + " (in " + ((triggerAt - now) / 60_000) + " min)");
     }
@@ -460,7 +460,7 @@ public class ShappkyService extends Service {
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         am.cancel(getSnapshotAlarmIntent());
-        AppDebugManager.d(Category.STATS, FILE_NAME + ": cancelSnapshotAlarm: cancelled");
+        AppDebugManager.d(Category.UTILS, FILE_NAME + ": cancelSnapshotAlarm: cancelled");
     }
 
     private PendingIntent getSnapshotAlarmIntent() {
