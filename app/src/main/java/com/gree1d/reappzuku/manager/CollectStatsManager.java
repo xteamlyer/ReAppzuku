@@ -34,9 +34,10 @@ public class CollectStatsManager {
     private static final String FILE_NAME = "CollectStatsManager";
 
     private static final long SLOT_MS         = 15 * 60 * 1000L;
-    private static final long PROCSTATS_INTERVAL_MS = 60 * 60 * 1000L;
+    private static final long PROCSTATS_INTERVAL_MS = 60 * 60 * 1000L; 
 
-    private static final String STATS_PREFS_NAME     = "collect_stats_prefs";
+    private static final String STATS_PREFS_NAME      = "collect_stats_prefs";
+    private static final String KEY_LAST_SNAPSHOT_MS  = "last_snapshot_ms";
     private static final String KEY_LAST_PROCSTATS_MS = "last_procstats_ms";
 
     public static final float OTHERS_THRESHOLD_PCT = 5.0f;
@@ -85,6 +86,44 @@ public class CollectStatsManager {
             dao = AppDatabase.getInstance(context).resourceSnapshotDao();
         }
         return dao;
+    }
+
+    private long getLastSnapshotMs() {
+        return getStatsPrefs().getLong(KEY_LAST_SNAPSHOT_MS, 0L);
+    }
+
+    private void saveLastSnapshotMs(long timestampMs) {
+        getStatsPrefs().edit().putLong(KEY_LAST_SNAPSHOT_MS, timestampMs).apply();
+        AppDebugManager.d(Category.UTILS,
+                FILE_NAME + ": saveLastSnapshotMs: saved " + formatSlot(timestampMs));
+    }
+
+    public long checkSnapshotDue(long nowMs) {
+        long last = getLastSnapshotMs();
+        if (last == 0L) {
+            AppDebugManager.d(Category.UTILS,
+                    FILE_NAME + ": checkSnapshotDue: no previous timestamp → take now");
+            return 0L;
+        }
+        if (nowMs < last) {
+            AppDebugManager.w(Category.UTILS,
+                    FILE_NAME + ": checkSnapshotDue: clock jumped backwards"
+                    + " (now=" + nowMs + " < last=" + last + ") → take now");
+            return 0L;
+        }
+        long elapsed = nowMs - last;
+        if (elapsed >= SLOT_MS) {
+            AppDebugManager.d(Category.UTILS,
+                    FILE_NAME + ": checkSnapshotDue: elapsed=" + (elapsed / 60_000)
+                    + "min ≥ 15min → take now");
+            return 0L;
+        }
+        long nextDue = last + SLOT_MS;
+        AppDebugManager.d(Category.UTILS,
+                FILE_NAME + ": checkSnapshotDue: elapsed=" + (elapsed / 60_000)
+                + "min < 15min → reschedule at " + formatSlot(nextDue)
+                + " (in " + ((nextDue - nowMs) / 60_000) + "min)");
+        return nextDue;
     }
 
     private long getLastProcstatsMs() {
@@ -248,14 +287,6 @@ public class CollectStatsManager {
         long now = System.currentTimeMillis();
 
         try {
-            ResourceSnapshot recentSnap = getDao().getAnySnapshotAfter(now - SLOT_MS);
-            if (recentSnap != null) {
-                AppDebugManager.d(Category.UTILS, FILE_NAME
-                        + ": Snapshot skipped — recent snapshot exists at "
-                        + formatSlot(recentSnap.timestamp));
-                return;
-            }
-
             AppDebugManager.d(Category.UTILS, FILE_NAME + ": Starting snapshot at "
                     + formatSlot(now));
 
@@ -296,6 +327,8 @@ public class CollectStatsManager {
                 snap.totalRawPwiBatch  = totalRawPwiBatch;
                 getDao().insert(snap);
             }
+
+            saveLastSnapshotMs(now);
 
             if (shouldRunProcstats(now)) {
                 long cycleEnd   = now;
