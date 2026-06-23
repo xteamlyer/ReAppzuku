@@ -269,7 +269,6 @@ public class ShappkyService extends Service {
                         scheduleSnapshotAlarm();
                     });
                 } else {
-                    // Alarm fired early (Doze shift) — reschedule to the exact due time
                     AppDebugManager.d(Category.UTILS, FILE_NAME
                             + ": TAKE_SNAPSHOT: too early, rescheduling to exact time");
                     releaseSnapshotWakeLock();
@@ -454,7 +453,7 @@ public class ShappkyService extends Service {
                     + ": scheduleSnapshotAlarm: AlarmManager is null, cannot schedule");
             return;
         }
-        // Align to wall-clock 15-minute grid (xx:00, xx:15, xx:30, xx:45)
+
         long now       = System.currentTimeMillis();
         long triggerAt = ((now / SNAPSHOT_INTERVAL_MS) + 1) * SNAPSHOT_INTERVAL_MS;
         PendingIntent pi = getSnapshotAlarmIntent();
@@ -469,15 +468,7 @@ public class ShappkyService extends Service {
     }
 
     private void releaseSnapshotWakeLock() {
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (pm == null) return;
-        PowerManager.WakeLock wl = pm.newWakeLock(
-                PowerManager.PARTIAL_WAKE_LOCK, CollectStatsReceiver.WAKELOCK_TAG);
-        wl.setReferenceCounted(false);
-        if (wl.isHeld()) {
-            wl.release();
-            AppDebugManager.d(Category.UTILS, FILE_NAME + ": releaseSnapshotWakeLock: released");
-        }
+        CollectStatsReceiver.releaseSnapshotWakeLock();
     }
 
     private void scheduleSnapshotAlarmAt(long triggerAt) {
@@ -603,9 +594,6 @@ public class ShappkyService extends Service {
         }
         return defaultSource;
     }
-
-
-
 
     @Override
     public void onDestroy() {

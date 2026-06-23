@@ -19,7 +19,35 @@ public class CollectStatsReceiver extends BroadcastReceiver {
 
     static final String WAKELOCK_TAG = "reappzuku:CollectStatsSnapshot";
 
-    private static final long WAKELOCK_TIMEOUT_MS = 5_000L;
+    private static final long WAKELOCK_TIMEOUT_MS = 30_000L;
+
+    static volatile PowerManager.WakeLock snapshotWakeLock;
+
+    static void acquireSnapshotWakeLock(Context context) {
+        releaseSnapshotWakeLock();
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (pm == null) {
+            AppDebugManager.w(Category.UTILS,
+                    FILE_NAME + ": acquireSnapshotWakeLock: PowerManager is null, WakeLock skipped");
+            return;
+        }
+        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG);
+        wl.setReferenceCounted(false);
+        wl.acquire(WAKELOCK_TIMEOUT_MS);
+        snapshotWakeLock = wl;
+        AppDebugManager.d(Category.UTILS,
+                FILE_NAME + ": acquireSnapshotWakeLock: WakeLock acquired (timeout 30s)");
+    }
+
+    public static void releaseSnapshotWakeLock() {
+        PowerManager.WakeLock wl = snapshotWakeLock;
+        if (wl != null && wl.isHeld()) {
+            wl.release();
+            AppDebugManager.d(Category.UTILS,
+                    FILE_NAME + ": releaseSnapshotWakeLock: WakeLock released");
+        }
+        snapshotWakeLock = null;
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -32,16 +60,7 @@ public class CollectStatsReceiver extends BroadcastReceiver {
         AppDebugManager.d(Category.UTILS,
                 FILE_NAME + ": onReceive: snapshot alarm fired, acquiring WakeLock");
 
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        if (pm != null) {
-            PowerManager.WakeLock wl = pm.newWakeLock(
-                    PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG);
-            wl.setReferenceCounted(false);
-            wl.acquire(WAKELOCK_TIMEOUT_MS);
-        } else {
-            AppDebugManager.w(Category.UTILS,
-                    FILE_NAME + ": onReceive: PowerManager is null, WakeLock skipped");
-        }
+        acquireSnapshotWakeLock(context);
 
         Intent serviceIntent = new Intent(context, ShappkyService.class);
         serviceIntent.setAction("TAKE_SNAPSHOT");
