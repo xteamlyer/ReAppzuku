@@ -16,7 +16,7 @@ import androidx.annotation.NonNull;
         SchedulerLog.class,
         SleepModeLog.class
     },
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -123,6 +123,59 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    /**
+     * Миграция 11 → 12: пересоздаём таблицу app_stats.
+     *
+     * Изменения схемы:
+     *  - PK: packageName TEXT → id INTEGER AUTOINCREMENT
+     *  - packageName становится обычным NOT NULL столбцом
+     *  - Удалён столбец killCount (теперь считается через COUNT(*) в DAO)
+     *  - Добавлены индексы: packageName, (packageName, lastKillTime), lastKillTime
+     *
+     * Перенос данных:
+     *  Каждая существующая строка (агрегат по пакету) превращается
+     *  в одну kill-запись с relaunchCount и totalRecoveredKb «как есть».
+     */
+    static final Migration MIGRATION_11_12 = new Migration(11, 12) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // 1. Создаём новую таблицу с autoincrement PK
+            db.execSQL("CREATE TABLE IF NOT EXISTS `app_stats_new` (" +
+                       "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                       "`packageName` TEXT NOT NULL, " +
+                       "`appName` TEXT, " +
+                       "`relaunchCount` INTEGER NOT NULL DEFAULT 0, " +
+                       "`totalRecoveredKb` INTEGER NOT NULL DEFAULT 0, " +
+                       "`lastKillTime` INTEGER NOT NULL DEFAULT 0, " +
+                       "`lastRelaunchTime` INTEGER NOT NULL DEFAULT 0, " +
+                       "`lastKillSource` TEXT)");
+
+            // 2. Переносим существующие данные.
+            //    killCount в старой схеме отсутствует как отдельная запись —
+            //    каждая строка становится одной kill-записью.
+            db.execSQL("INSERT INTO `app_stats_new` " +
+                       "(`packageName`, `appName`, `relaunchCount`, `totalRecoveredKb`, " +
+                       "`lastKillTime`, `lastRelaunchTime`, `lastKillSource`) " +
+                       "SELECT `packageName`, `appName`, `relaunchCount`, `totalRecoveredKb`, " +
+                       "`lastKillTime`, `lastRelaunchTime`, `lastKillSource` " +
+                       "FROM `app_stats`");
+
+            // 3. Удаляем старую таблицу
+            db.execSQL("DROP TABLE `app_stats`");
+
+            // 4. Переименовываем новую
+            db.execSQL("ALTER TABLE `app_stats_new` RENAME TO `app_stats`");
+
+            // 5. Создаём индексы для быстрого поиска по пакету и времени
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_stats_packageName` " +
+                       "ON `app_stats` (`packageName`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_stats_packageName_lastKillTime` " +
+                       "ON `app_stats` (`packageName`, `lastKillTime`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_stats_lastKillTime` " +
+                       "ON `app_stats` (`lastKillTime`)");
+        }
+    };
+
     public abstract AppStatsDao appStatsDao();
     public abstract ResourceSnapshotDao resourceSnapshotDao();
     public abstract BgRestrictionLog.Dao bgRestrictionLogDao();
@@ -143,7 +196,8 @@ public abstract class AppDatabase extends RoomDatabase {
                         MIGRATION_7_8,
                         MIGRATION_8_9,
                         MIGRATION_9_10,
-                        MIGRATION_10_11
+                        MIGRATION_10_11,
+                        MIGRATION_11_12
                     )
                     .fallbackToDestructiveMigration()
                     .build();

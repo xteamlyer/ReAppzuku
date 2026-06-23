@@ -4,51 +4,129 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import androidx.room.Update;
 
 import java.util.List;
 
 @Dao
 public interface AppStatsDao {
-    @Query("SELECT * FROM app_stats WHERE packageName = :packageName")
-    AppStats getStats(String packageName);
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    // -------------------------------------------------------------------------
+    // Вставка
+    // -------------------------------------------------------------------------
+
+    /** Вставляет новую kill-запись. Возвращает присвоенный id. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(AppStats stats);
 
-    @Update
-    void update(AppStats stats);
+    // -------------------------------------------------------------------------
+    // Одиночные записи
+    // -------------------------------------------------------------------------
 
-    @Query("SELECT * FROM app_stats ORDER BY relaunchCount DESC")
-    List<AppStats> getAllStats();
+    /**
+     * Последняя kill-запись конкретного пакета.
+     * Используется в recordSuccessfulKills() для проверки наличия appName.
+     */
+    @Query("SELECT * FROM app_stats WHERE packageName = :packageName ORDER BY lastKillTime DESC LIMIT 1")
+    AppStats getLatestByPackage(String packageName);
 
-    @Query("SELECT * FROM app_stats WHERE lastRelaunchTime > :sinceTime ORDER BY relaunchCount DESC")
-    List<AppStats> getStatsSince(long sinceTime);
+    // -------------------------------------------------------------------------
+    // Агрегатные запросы для UI-статистики
+    // -------------------------------------------------------------------------
 
-    @Query("SELECT * FROM app_stats WHERE lastKillTime > :sinceTime OR lastRelaunchTime > :sinceTime ORDER BY killCount DESC")
-    List<AppStats> getAllStatsSince(long sinceTime);
+    /**
+     * Все пакеты с агрегированными данными за указанный период.
+     * killCount  = COUNT(*) kill-записей пакета за период.
+     * relaunchCount = SUM(relaunchCount) по всем записям пакета за период.
+     * totalRecoveredKb = SUM суммарно освобождённой RAM за период.
+     * lastKillTime / lastRelaunchTime / lastKillSource — последние значения.
+     *
+     * Используется для экранов "12 ч / 24 ч / 7 дней" и Top Offenders.
+     * Возвращает AppStatsAggregate, а не AppStats.
+     */
+    @Query("SELECT packageName, appName, " +
+           "COUNT(*) AS killCount, " +
+           "SUM(relaunchCount) AS relaunchCount, " +
+           "SUM(totalRecoveredKb) AS totalRecoveredKb, " +
+           "MAX(lastKillTime) AS lastKillTime, " +
+           "MAX(lastRelaunchTime) AS lastRelaunchTime, " +
+           "MAX(lastKillSource) AS lastKillSource " +
+           "FROM app_stats " +
+           "WHERE lastKillTime > :sinceTime " +
+           "GROUP BY packageName " +
+           "ORDER BY killCount DESC")
+    List<AppStatsAggregate> getAllStatsSince(long sinceTime);
 
-    @Query("UPDATE app_stats SET relaunchCount = relaunchCount + 1, lastRelaunchTime = :time WHERE packageName = :packageName")
+    /**
+     * Все пакеты с агрегированными данными за всё время.
+     * Используется для Top Offenders без фильтра по времени.
+     * Возвращает AppStatsAggregate, а не AppStats.
+     */
+    @Query("SELECT packageName, appName, " +
+           "COUNT(*) AS killCount, " +
+           "SUM(relaunchCount) AS relaunchCount, " +
+           "SUM(totalRecoveredKb) AS totalRecoveredKb, " +
+           "MAX(lastKillTime) AS lastKillTime, " +
+           "MAX(lastRelaunchTime) AS lastRelaunchTime, " +
+           "MAX(lastKillSource) AS lastKillSource " +
+           "FROM app_stats " +
+           "GROUP BY packageName " +
+           "ORDER BY killCount DESC")
+    List<AppStatsAggregate> getAllStats();
+
+    // -------------------------------------------------------------------------
+    // Обновление полей (только последняя запись пакета)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Инкрементирует relaunchCount и обновляет lastRelaunchTime
+     * только у самой свежей kill-записи пакета.
+     */
+    @Query("UPDATE app_stats SET " +
+           "relaunchCount = relaunchCount + 1, " +
+           "lastRelaunchTime = :time " +
+           "WHERE id = (" +
+               "SELECT id FROM app_stats " +
+               "WHERE packageName = :packageName " +
+               "ORDER BY lastKillTime DESC LIMIT 1" +
+           ")")
     void incrementRelaunch(String packageName, long time);
 
-    @Query("UPDATE app_stats SET killCount = killCount + 1, lastKillTime = :time, lastKillSource = :source WHERE packageName = :packageName")
-    void incrementKill(String packageName, long time, String source);
-
-    @Query("UPDATE app_stats SET totalRecoveredKb = totalRecoveredKb + :recoveredKb WHERE packageName = :packageName")
+    /**
+     * Добавляет освобождённую RAM (KB) к последней kill-записи пакета.
+     * Вызывается при подтверждении deferred RSS из pendingRss.
+     */
+    @Query("UPDATE app_stats SET totalRecoveredKb = totalRecoveredKb + :recoveredKb " +
+           "WHERE id = (" +
+               "SELECT id FROM app_stats " +
+               "WHERE packageName = :packageName " +
+               "ORDER BY lastKillTime DESC LIMIT 1" +
+           ")")
     void addRecoveredKb(String packageName, long recoveredKb);
 
-    @Query("UPDATE app_stats SET appName = :appName WHERE packageName = :packageName")
+    /**
+     * Обновляет appName у всех записей пакета, где имя пустое.
+     */
+    @Query("UPDATE app_stats SET appName = :appName " +
+           "WHERE packageName = :packageName AND (appName IS NULL OR appName = '')")
     void updateAppName(String packageName, String appName);
 
+    // -------------------------------------------------------------------------
+    // Счётчики и очистка
+    // -------------------------------------------------------------------------
+
+    /** Общее количество kill-записей в таблице. */
     @Query("SELECT COUNT(*) FROM app_stats")
     int getCount();
 
-    @Query("DELETE FROM app_stats WHERE packageName IN (" +
-           "SELECT packageName FROM app_stats " +
-           "ORDER BY (CASE WHEN lastKillTime > lastRelaunchTime THEN lastKillTime ELSE lastRelaunchTime END) ASC " +
-           "LIMIT :deleteCount)")
+    /**
+     * Удаляет :deleteCount самых старых записей по lastKillTime.
+     * Вызывается перед INSERT при достижении лимита STATS_LIMIT.
+     */
+    @Query("DELETE FROM app_stats WHERE id IN (" +
+           "SELECT id FROM app_stats ORDER BY lastKillTime ASC LIMIT :deleteCount)")
     void deleteOldestStats(int deleteCount);
 
+    /** Полная очистка таблицы. */
     @Query("DELETE FROM app_stats")
     void deleteAll();
 }
