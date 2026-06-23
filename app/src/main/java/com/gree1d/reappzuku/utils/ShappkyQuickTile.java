@@ -16,11 +16,14 @@ import java.util.concurrent.Executors;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.manager.AutoKillManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
 import com.gree1d.reappzuku.R;
 
 public class ShappkyQuickTile extends TileService {
 
     private ShellManager shellManager;
+    private AutoKillManager autoKillManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -65,6 +68,11 @@ public class ShappkyQuickTile extends TileService {
         if (shellManager == null) {
             shellManager = new ShellManager(this, handler, executor);
             AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick ShellManager initialized");
+        }
+        if (autoKillManager == null) {
+            BackgroundAppManager appManager = new BackgroundAppManager(this, handler, executor, shellManager);
+            autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
+            AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick AutoKillManager initialized");
         }
 
         executor.execute(() -> {
@@ -119,7 +127,7 @@ public class ShappkyQuickTile extends TileService {
                 String cmd = "am force-stop " + killedPackage;
                 shellManager.runShellCommand(cmd, () -> {
                     AppDebugManager.i(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick kill success pkg=" + killedPackage);
-                    logKilledPackage(killedPackage);
+                    executor.execute(() -> autoKillManager.recordQuickTileKill(killedPackage));
                     handler.post(() -> {
                         Toast.makeText(this, "Killed: " + killedPackage, Toast.LENGTH_SHORT).show();
                         updateTileState();
@@ -172,47 +180,6 @@ public class ShappkyQuickTile extends TileService {
             if (potentialPkg.contains(".") && Character.isLetter(potentialPkg.charAt(0))) {
                 return potentialPkg;
             }
-        }
-        return null;
-    }
-
-    private void logKilledPackage(String packageName) {
-        executor.execute(() -> {
-            try {
-                com.gree1d.reappzuku.db.AppStatsDao appStatsDao =
-                        com.gree1d.reappzuku.db.AppDatabase.getInstance(getApplicationContext()).appStatsDao();
-                com.gree1d.reappzuku.db.AppStats stats = appStatsDao.getStats(packageName);
-                String appName = resolveInstalledAppName(packageName);
-
-                if (stats == null) {
-                    stats = new com.gree1d.reappzuku.db.AppStats(packageName);
-                    stats.appName = appName;
-                    appStatsDao.insert(stats);
-                    AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: logKilledPackage inserted new stats entry for pkg=" + packageName);
-                } else if ((stats.appName == null || stats.appName.trim().isEmpty())
-                        && appName != null && !appName.trim().isEmpty()) {
-                    appStatsDao.updateAppName(packageName, appName);
-                    AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: logKilledPackage updated appName for pkg=" + packageName + " name=" + appName);
-                }
-
-                appStatsDao.incrementKill(packageName, System.currentTimeMillis(), "Quick Tile");
-                AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: logKilledPackage kill incremented for pkg=" + packageName);
-            } catch (Exception e) {
-                AppDebugManager.e(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: logKilledPackage failed for pkg=" + packageName, e);
-            }
-        });
-    }
-
-    private String resolveInstalledAppName(String packageName) {
-        try {
-            PackageManager pm = getPackageManager();
-            ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-            CharSequence label = pm.getApplicationLabel(appInfo);
-            if (label != null) {
-                return label.toString();
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            AppDebugManager.w(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: resolveInstalledAppName package not found pkg=" + packageName);
         }
         return null;
     }
