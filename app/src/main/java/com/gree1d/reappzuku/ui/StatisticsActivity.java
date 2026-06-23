@@ -647,7 +647,7 @@ public class StatisticsActivity extends BaseActivity {
             long twelveHoursAgo = System.currentTimeMillis() - STATS_HISTORY_DURATION_MS;
             com.gree1d.reappzuku.db.AppStatsDao appStatsDao = com.gree1d.reappzuku.db.AppDatabase
                     .getInstance(this).appStatsDao();
-            java.util.List<com.gree1d.reappzuku.db.AppStats> statsList = appStatsDao.getAllStatsSince(twelveHoursAgo);
+            java.util.List<com.gree1d.reappzuku.db.AppStatsAggregate> statsList = appStatsDao.getAllStatsSince(twelveHoursAgo);
             AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showStatsDialog loaded " + statsList.size()
                     + " stats rows since 12h ago");
 
@@ -657,7 +657,7 @@ public class StatisticsActivity extends BaseActivity {
             long totalRecoveredKb = 0;
             java.text.DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(this);
 
-            for (com.gree1d.reappzuku.db.AppStats stats : statsList) {
+            for (com.gree1d.reappzuku.db.AppStatsAggregate stats : statsList) {
                 if (stats == null || stats.packageName == null) continue;
                 if (stats.killCount <= 0 && stats.relaunchCount <= 0) continue;
 
@@ -681,7 +681,7 @@ public class StatisticsActivity extends BaseActivity {
                 long lastEventTime = Math.max(stats.lastKillTime, stats.lastRelaunchTime);
                 String badge = lastEventTime > 0 ? timeFormat.format(new java.util.Date(lastEventTime)) : "";
                 historyEntries.add(new KillHistoryEntry(
-                        resolveStatsAppName(stats, appStatsDao),
+                        resolveAggregateAppName(stats, appStatsDao),
                         stats.packageName,
                         String.join(" | ", detailParts),
                         badge,
@@ -793,7 +793,7 @@ public class StatisticsActivity extends BaseActivity {
             long windowMs = TOP_OFFENDER_FILTER_WINDOWS_MS[selectedFilterIndex];
             com.gree1d.reappzuku.db.AppStatsDao appStatsDao =
                     com.gree1d.reappzuku.db.AppDatabase.getInstance(this).appStatsDao();
-            List<com.gree1d.reappzuku.db.AppStats> stats;
+            List<com.gree1d.reappzuku.db.AppStatsAggregate> stats;
             if (windowMs > 0) {
                 long since = System.currentTimeMillis() - windowMs;
                 stats = appStatsDao.getAllStatsSince(since);
@@ -830,14 +830,14 @@ public class StatisticsActivity extends BaseActivity {
         });
     }
 
-    private List<TopOffender> buildTopOffenders(List<com.gree1d.reappzuku.db.AppStats> statsList,
+    private List<TopOffender> buildTopOffenders(List<com.gree1d.reappzuku.db.AppStatsAggregate> statsList,
                                                  com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
         List<TopOffender> offenders = new ArrayList<>();
-        for (com.gree1d.reappzuku.db.AppStats stats : statsList) {
+        for (com.gree1d.reappzuku.db.AppStatsAggregate stats : statsList) {
             if (stats == null || stats.packageName == null) continue;
             if (stats.killCount <= 0 && stats.relaunchCount <= 0 && stats.totalRecoveredKb <= 0) continue;
 
-            String appName = resolveStatsAppName(stats, appStatsDao);
+            String appName = resolveAggregateAppName(stats, appStatsDao);
             double score = (stats.killCount * 1.0) + (stats.relaunchCount * 2.0) + (stats.totalRecoveredKb / 102400.0);
             offenders.add(new TopOffender(appName, stats.packageName, stats.killCount,
                     stats.relaunchCount, stats.totalRecoveredKb, score));
@@ -1450,20 +1450,21 @@ public class StatisticsActivity extends BaseActivity {
         return rows;
     }
 
-    private String resolveStatsAppName(com.gree1d.reappzuku.db.AppStats stats,
-                                       com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
+    private String resolveAggregateAppName(com.gree1d.reappzuku.db.AppStatsAggregate stats,
+                                            com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
         if (stats.appName != null && !stats.appName.trim().isEmpty()) return stats.appName;
         try {
             android.content.pm.ApplicationInfo appInfo = getPackageManager().getApplicationInfo(stats.packageName, 0);
             CharSequence label = getPackageManager().getApplicationLabel(appInfo);
             if (label != null) {
                 String name = label.toString();
+                // Обновляем appName во всех записях пакета в БД (где оно пустое)
+                executor.execute(() -> appStatsDao.updateAppName(stats.packageName, name));
                 stats.appName = name;
-                appStatsDao.updateAppName(stats.packageName, name);
                 return name;
             }
         } catch (android.content.pm.PackageManager.NameNotFoundException e) {
-            AppDebugManager.w(Category.STATISTICS_PAGE, FILE + ": resolveStatsAppName package not found: "
+            AppDebugManager.w(Category.STATISTICS_PAGE, FILE + ": resolveAggregateAppName package not found: "
                     + stats.packageName, e);
         }
         return stats.packageName;

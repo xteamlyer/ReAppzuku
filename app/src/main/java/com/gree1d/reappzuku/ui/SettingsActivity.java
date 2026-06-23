@@ -164,6 +164,7 @@ public class SettingsActivity extends SettingsActivityDialogs
         applyServiceDependentState(autoKill);
         applyPresetActiveState(isPresetActive());
         updateRamThresholdLimitVisibility(ramEnabled && autoKill);
+        updateShellModeText();
     }
 
     @Override
@@ -386,6 +387,7 @@ public class SettingsActivity extends SettingsActivityDialogs
         }
 
         loadAdditionalScenariosSettings();
+        updateShellModeText();
     }
 
     private void setupListeners() {
