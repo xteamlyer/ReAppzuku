@@ -140,8 +140,10 @@ public class StatisticsActivity extends BaseActivity {
 
         batteryCapacityMah = collectStatsManager.getBatteryCapacityMah();
         AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": battery capacity mAh=" + batteryCapacityMah);
-        collectStatsManager.takeSnapshotAsync(() -> loadCharts(CHART_PERIODS_HOURS[selectedPeriodIdx]));
+        
+        loadCharts(CHART_PERIODS_HOURS[selectedPeriodIdx]);
     }
+
 
 
     private void setupToolbar() {
