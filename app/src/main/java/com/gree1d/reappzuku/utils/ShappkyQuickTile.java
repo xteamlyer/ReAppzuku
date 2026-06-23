@@ -13,30 +13,40 @@ import android.widget.Toast;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.manager.AutoKillManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
 import com.gree1d.reappzuku.R;
 
 public class ShappkyQuickTile extends TileService {
 
     private ShellManager shellManager;
+    private AutoKillManager autoKillManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     public void onTileAdded() {
         super.onTileAdded();
+        AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onTileAdded");
         TileService.requestListeningState(this, new ComponentName(this, ShappkyQuickTile.class));
     }
 
     @Override
     public void onStartListening() {
         super.onStartListening();
+        AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onStartListening");
         updateTileState();
     }
 
     private void updateTileState() {
         Tile tile = getQsTile();
-        if (tile == null) return;
+        if (tile == null) {
+            AppDebugManager.w(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: updateTileState tile is null, skipping");
+            return;
+        }
 
         tile.setIcon(Icon.createWithResource(this, R.drawable.ic_force_stop));
         tile.setLabel(getString(R.string.tile_kill_app_label));
@@ -48,17 +58,26 @@ public class ShappkyQuickTile extends TileService {
 
         tile.setState(Tile.STATE_ACTIVE);
         tile.updateTile();
+        AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: updateTileState tile updated to STATE_ACTIVE");
     }
-    
+
     @Override
     public void onClick() {
         super.onClick();
+        AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick");
         if (shellManager == null) {
             shellManager = new ShellManager(this, handler, executor);
+            AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick ShellManager initialized");
+        }
+        if (autoKillManager == null) {
+            BackgroundAppManager appManager = new BackgroundAppManager(this, handler, executor, shellManager);
+            autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
+            AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick AutoKillManager initialized");
         }
 
         executor.execute(() -> {
             if (!shellManager.resolveAnyShellPermission()) {
+                AppDebugManager.w(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick no shell permission available");
                 handler.post(() -> {
                     shellManager.checkShellPermissions();
                     Toast.makeText(this, "Shizuku or Root permission required", Toast.LENGTH_SHORT).show();
@@ -73,6 +92,7 @@ public class ShappkyQuickTile extends TileService {
                     "dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity'");
             if (dumpOutput != null && !dumpOutput.isEmpty()) {
                 packageName = extractPackageFromActivityDump(dumpOutput);
+                AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick activity dump resolved pkg=" + packageName);
             }
 
             if (packageName == null) {
@@ -80,6 +100,7 @@ public class ShappkyQuickTile extends TileService {
                         "dumpsys window | grep mCurrentFocus");
                 if (windowOutput != null && !windowOutput.isEmpty()) {
                     packageName = extractPackageFromWindowDump(windowOutput);
+                    AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick window dump resolved pkg=" + packageName);
                 }
             }
 
@@ -95,26 +116,31 @@ public class ShappkyQuickTile extends TileService {
                         }
                     }
                 }
+                AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick get-top-activity resolved pkg=" + packageName);
             }
 
             if (packageName != null && !packageName.equals(getPackageName()) && !packageName.equals("com.android.systemui")) {
                 shellManager.runShellCommand("cmd statusbar collapse", null);
 
                 final String killedPackage = packageName;
+                AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick killing foreground pkg=" + killedPackage);
                 String cmd = "am force-stop " + killedPackage;
                 shellManager.runShellCommand(cmd, () -> {
-                    logKilledPackage(killedPackage);
+                    AppDebugManager.i(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick kill success pkg=" + killedPackage);
+                    executor.execute(() -> autoKillManager.recordQuickTileKill(killedPackage));
                     handler.post(() -> {
                         Toast.makeText(this, "Killed: " + killedPackage, Toast.LENGTH_SHORT).show();
                         updateTileState();
                     });
                 }, () -> {
+                    AppDebugManager.w(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick kill failed pkg=" + killedPackage);
                     handler.post(() -> {
                         Toast.makeText(this, "Failed to kill: " + killedPackage, Toast.LENGTH_SHORT).show();
                         updateTileState();
                     });
                 });
             } else {
+                AppDebugManager.w(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onClick no killable foreground app found, resolved pkg=" + packageName);
                 handler.post(() -> {
                     Toast.makeText(this, "No killable foreground app found", Toast.LENGTH_SHORT).show();
                     updateTileState();
@@ -122,7 +148,7 @@ public class ShappkyQuickTile extends TileService {
             }
         });
     }
-    
+
     private String extractPackageFromActivityDump(String output) {
         String[] lines = output.split("\n");
         for (String line : lines) {
@@ -158,45 +184,10 @@ public class ShappkyQuickTile extends TileService {
         return null;
     }
 
-    private void logKilledPackage(String packageName) {
-        executor.execute(() -> {
-            try {
-                com.gree1d.reappzuku.db.AppStatsDao appStatsDao =
-                        com.gree1d.reappzuku.db.AppDatabase.getInstance(getApplicationContext()).appStatsDao();
-                com.gree1d.reappzuku.db.AppStats stats = appStatsDao.getStats(packageName);
-                String appName = resolveInstalledAppName(packageName);
-
-                if (stats == null) {
-                    stats = new com.gree1d.reappzuku.db.AppStats(packageName);
-                    stats.appName = appName;
-                    appStatsDao.insert(stats);
-                } else if ((stats.appName == null || stats.appName.trim().isEmpty())
-                        && appName != null && !appName.trim().isEmpty()) {
-                    appStatsDao.updateAppName(packageName, appName);
-                }
-
-                appStatsDao.incrementKill(packageName, System.currentTimeMillis(), "Quick Tile");
-            } catch (Exception ignored) {
-            }
-        });
-    }
-
-    private String resolveInstalledAppName(String packageName) {
-        try {
-            PackageManager pm = getPackageManager();
-            ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-            CharSequence label = pm.getApplicationLabel(appInfo);
-            if (label != null) {
-                return label.toString();
-            }
-        } catch (PackageManager.NameNotFoundException ignored) {
-        }
-        return null;
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
+        AppDebugManager.d(Category.SHORTCUTS_WIDGETS, "ShappkyQuickTile: onDestroy, shutting down executor");
         executor.shutdownNow();
     }
 }

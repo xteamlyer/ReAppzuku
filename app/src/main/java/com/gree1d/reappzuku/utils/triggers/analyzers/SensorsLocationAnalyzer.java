@@ -2,7 +2,6 @@ package com.gree1d.reappzuku.utils.triggers.analyzers;
 
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +10,14 @@ import java.util.regex.Pattern;
 
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.ShellManager;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
 import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer.TriggerInfo;
 
 public class SensorsLocationAnalyzer {
 
-    private static final String TAG = "SensorsLocationAnalyzer";
+    private static final String FILE_NAME = "SensorsLocationAnalyzer";
 
     private final AppTriggersAnalyzer analyzer;
 
@@ -35,12 +36,12 @@ public class SensorsLocationAnalyzer {
 
         List<String> sensors = parseSensorService(packageName);
         if (sensors.isEmpty()) {
-            Log.d(TAG, "Sensors/sensorservice - no results, trying batterystats fallback");
+            AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": Sensors/sensorservice - no results, trying batterystats fallback");
             sensors = parseSensorsBatteryStats(packageName);
-            if (!sensors.isEmpty()) Log.d(TAG, "Sensors/batterystats - OK: " + sensors);
-            else Log.d(TAG, "Sensors/batterystats - no results");
+            if (!sensors.isEmpty()) AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": Sensors/batterystats - OK: " + sensors);
+            else AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": Sensors/batterystats - no results");
         } else {
-            Log.d(TAG, "Sensors/sensorservice - OK: " + sensors);
+            AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": Sensors/sensorservice - OK: " + sensors);
         }
         if (sensors.isEmpty()) return list;
 
@@ -233,6 +234,8 @@ public class SensorsLocationAnalyzer {
 
         if (reqCount == 0) return list;
 
+        AppDebugManager.d(Category.TRIGGERS, FILE_NAME + ": analyzeLocationRequests: pkg=" + packageName + " reqCount=" + reqCount + " accuracy=" + bestAcc + " hasFg=" + hasFg + " hasBg=" + hasBg);
+
         StringBuilder detail = new StringBuilder(
                 analyzer.getContext().getString(R.string.triggers_location_requests, reqCount));
         if (bestAcc != null) detail.append(" · ").append(bestAcc);
@@ -276,7 +279,7 @@ public class SensorsLocationAnalyzer {
                         analyzer.getContext().getString(R.string.triggers_bg_location_explanation),                        
                         TriggerInfo.Severity.HIGH));
             }
-        } catch (Exception e) { Log.w(TAG, "bg location perm check failed: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(Category.TRIGGERS, FILE_NAME + ": bg location perm check failed", e); }
         return list;
     }
 

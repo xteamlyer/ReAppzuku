@@ -48,13 +48,15 @@ import java.util.concurrent.Executors;
 
 import com.gree1d.reappzuku.core.ShellManager;
 import com.gree1d.reappzuku.manager.BackgroundAppManager;
-import com.gree1d.reappzuku.manager.BatteryStatsManager;
+import com.gree1d.reappzuku.manager.CollectStatsManager;
 import com.gree1d.reappzuku.utils.SleepModeLogManager;
 import com.gree1d.reappzuku.manager.RestrictionsScheduler;
 import com.gree1d.reappzuku.utils.BackgroundRestrictionLog;
 import com.gree1d.reappzuku.core.BaseActivity;
 import com.gree1d.reappzuku.service.ShappkyService;
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 import static com.gree1d.reappzuku.core.AppConstants.*;
@@ -62,6 +64,7 @@ import static com.gree1d.reappzuku.core.AppConstants.*;
 public class StatisticsActivity extends BaseActivity {
 
     private static final String TAG = "StatisticsActivity";
+    private static final String FILE = "StatisticsActivity";
     private static final int TOP_OFFENDERS_LIMIT = 50;
     private static final long[] TOP_OFFENDER_FILTER_WINDOWS_MS = {
             STATS_HISTORY_DURATION_MS,
@@ -104,13 +107,13 @@ public class StatisticsActivity extends BaseActivity {
     private int currentChartIdx = CHART_BATTERY;
 
 
-    private List<BatteryStatsManager.AppResourceStats> currentSorted = null;
+    private List<CollectStatsManager.AppResourceStats> currentSorted = null;
     private double currentTotalHours = 0;
 
     private ActivityStatisticsBinding binding;
     private ShellManager shellManager;
     private BackgroundAppManager appManager;
-    private BatteryStatsManager batteryStatsManager;
+    private CollectStatsManager collectStatsManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -118,6 +121,7 @@ public class StatisticsActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": onCreate");
         binding = ActivityStatisticsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -126,7 +130,7 @@ public class StatisticsActivity extends BaseActivity {
 
         shellManager        = new ShellManager(this.getApplicationContext(), handler, executor);
         appManager          = new BackgroundAppManager(this.getApplicationContext(), handler, executor, shellManager);
-        batteryStatsManager = new BatteryStatsManager(this.getApplicationContext(), handler, executor, shellManager);
+        collectStatsManager = new CollectStatsManager(this.getApplicationContext(), handler, executor, shellManager);
 
         setupToolbar();
         setupBottomNavigation();
@@ -134,8 +138,9 @@ public class StatisticsActivity extends BaseActivity {
         setupChartPager();
         setupListeners();
 
-        batteryCapacityMah = batteryStatsManager.getBatteryCapacityMah();
-        batteryStatsManager.takeSnapshotAsync(() -> loadCharts(CHART_PERIODS_HOURS[selectedPeriodIdx]));
+        batteryCapacityMah = collectStatsManager.getBatteryCapacityMah();
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": battery capacity mAh=" + batteryCapacityMah);
+        collectStatsManager.takeSnapshotAsync(() -> loadCharts(CHART_PERIODS_HOURS[selectedPeriodIdx]));
     }
 
 
@@ -212,9 +217,9 @@ public class StatisticsActivity extends BaseActivity {
     @SuppressWarnings("unchecked")
     private List<PieEntry>[] chartEntries   = new List[CHART_COUNT];
     @SuppressWarnings("unchecked")
-    private List<BatteryStatsManager.AppResourceStats>[] chartSortedByMetric = new List[CHART_COUNT];
+    private List<CollectStatsManager.AppResourceStats>[] chartSortedByMetric = new List[CHART_COUNT];
     @SuppressWarnings("unchecked")
-    private List<BatteryStatsManager.AppResourceStats>[] chartOthers = new List[CHART_COUNT];
+    private List<CollectStatsManager.AppResourceStats>[] chartOthers = new List[CHART_COUNT];
     @SuppressWarnings("unchecked")
     private List<Integer>[] chartColors     = new List[CHART_COUNT];
     private ChartMetric[]   chartMetrics    = { ChartMetric.BATTERY, ChartMetric.CPU, ChartMetric.RAM };
@@ -268,6 +273,7 @@ public class StatisticsActivity extends BaseActivity {
 
 
         if (!ShappkyService.isRunning()) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, FILE + ": loadCharts skipped, ShappkyService not running");
             showChartsLoading(false);
             binding.cardNoData.setVisibility(View.VISIBLE);
             binding.tvNoDataHint.setText(getString(R.string.stats_service_inactive_hint));
@@ -276,11 +282,13 @@ public class StatisticsActivity extends BaseActivity {
             return;
         }
 
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": loadCharts hours=" + hours);
         showChartsLoading(true);
-        batteryStatsManager.getStatsForPeriodAsync(hours, periodStats -> {
+        collectStatsManager.getStatsForPeriodAsync(hours, periodStats -> {
             if (binding == null) return;
             showChartsLoading(false);
             if (!periodStats.hasData) {
+                AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": loadCharts no data for hours=" + hours);
                 binding.cardNoData.setVisibility(View.VISIBLE);
                 binding.tvNoDataHint.setText(periodStats.dataHint);
                 binding.cardChartsPager.setVisibility(View.GONE);
@@ -292,6 +300,7 @@ public class StatisticsActivity extends BaseActivity {
 
 
             if (periodStats.isPartialData) {
+                AppDebugManager.w(Category.STATISTICS_PAGE, FILE + ": loadCharts partial data for hours=" + hours);
                 binding.tvPartialDataWarning.setText(
                         getString(R.string.stats_partial_data_warning));
                 binding.tvPartialDataWarning.setVisibility(View.VISIBLE);
@@ -299,13 +308,15 @@ public class StatisticsActivity extends BaseActivity {
                 binding.tvPartialDataWarning.setVisibility(View.GONE);
             }
 
-            List<BatteryStatsManager.AppResourceStats> sorted = periodStats.sorted;
+            List<CollectStatsManager.AppResourceStats> sorted = periodStats.sorted;
             currentSorted = sorted;
             currentTotalHours = periodStats.actualHours;
+            AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": loadCharts loaded " + sorted.size()
+                    + " apps, actualHours=" + periodStats.actualHours);
 
 
-            BatteryStatsManager.AppResourceStats selfStats = null;
-            for (BatteryStatsManager.AppResourceStats s : sorted) {
+            CollectStatsManager.AppResourceStats selfStats = null;
+            for (CollectStatsManager.AppResourceStats s : sorted) {
                 if (s.isSelf) { selfStats = s; break; }
             }
 
@@ -336,14 +347,14 @@ public class StatisticsActivity extends BaseActivity {
         });
     }
 
-    private void showActiveChart(List<BatteryStatsManager.AppResourceStats> sorted, double actualHours) {
+    private void showActiveChart(List<CollectStatsManager.AppResourceStats> sorted, double actualHours) {
         if (binding == null) return;
         binding.chartBattery.setVisibility(currentChartIdx == CHART_BATTERY ? View.VISIBLE : View.GONE);
         binding.chartCpu.setVisibility(currentChartIdx == CHART_CPU     ? View.VISIBLE : View.GONE);
         binding.chartRam.setVisibility(currentChartIdx == CHART_RAM     ? View.VISIBLE : View.GONE);
 
         double totalBat = 0, totalCpu = 0, totalRam = 0;
-        for (BatteryStatsManager.AppResourceStats s : sorted) {
+        for (CollectStatsManager.AppResourceStats s : sorted) {
             totalBat += s.batteryMah;
             totalCpu += s.cpuPct;
             totalRam += s.ramMb;
@@ -378,26 +389,30 @@ public class StatisticsActivity extends BaseActivity {
 
     private void buildPieChart(PieChart chart,
                                 android.view.ViewGroup othersContainer,
-                                List<BatteryStatsManager.AppResourceStats> sorted,
+                                List<CollectStatsManager.AppResourceStats> sorted,
                                 ChartMetric metric,
                                 int chartIdx) {
         double total = 0;
-        for (BatteryStatsManager.AppResourceStats s : sorted) total += metricValue(s, metric);
-        if (total <= 0) return;
+        for (CollectStatsManager.AppResourceStats s : sorted) total += metricValue(s, metric);
+        if (total <= 0) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, FILE + ": buildPieChart skipped for metric=" + metric
+                    + ", total<=0");
+            return;
+        }
 
-        List<BatteryStatsManager.AppResourceStats> byCurrent = new ArrayList<>(sorted);
+        List<CollectStatsManager.AppResourceStats> byCurrent = new ArrayList<>(sorted);
         byCurrent.sort((a, b) -> Double.compare(metricValue(b, metric), metricValue(a, metric)));
 
         List<PieEntry> entries = new ArrayList<>();
-        List<BatteryStatsManager.AppResourceStats> othersList = new ArrayList<>();
+        List<CollectStatsManager.AppResourceStats> othersList = new ArrayList<>();
         double othersValue = 0;
 
         for (int i = 0; i < byCurrent.size(); i++) {
-            BatteryStatsManager.AppResourceStats s = byCurrent.get(i);
+            CollectStatsManager.AppResourceStats s = byCurrent.get(i);
             double val = metricValue(s, metric);
             float pct = (float)(val / total * 100);
-            boolean forceShow = i < BatteryStatsManager.MIN_TOP_SLICES;
-            if (forceShow || pct > BatteryStatsManager.OTHERS_THRESHOLD_PCT) {
+            boolean forceShow = i < CollectStatsManager.MIN_TOP_SLICES;
+            if (forceShow || pct > CollectStatsManager.OTHERS_THRESHOLD_PCT) {
 
                 entries.add(new PieEntry((float) val, "", s.packageName));
             } else {
@@ -473,8 +488,8 @@ public class StatisticsActivity extends BaseActivity {
 
     private void buildChartLegend(
             List<PieEntry> entries,
-            List<BatteryStatsManager.AppResourceStats> byCurrent,
-            List<BatteryStatsManager.AppResourceStats> othersList,
+            List<CollectStatsManager.AppResourceStats> byCurrent,
+            List<CollectStatsManager.AppResourceStats> othersList,
             List<Integer> colors,
             ChartMetric metric,
             double total) {
@@ -503,11 +518,11 @@ public class StatisticsActivity extends BaseActivity {
                 pkg  = "__others__";
             } else {
                 pkg = tag != null ? tag.toString() : "";
-                BatteryStatsManager.AppResourceStats found = findByPkg(byCurrent, pkg);
+                CollectStatsManager.AppResourceStats found = findByPkg(byCurrent, pkg);
                 name = (found != null && found.appName != null) ? found.appName : pkg;
             }
             final String finalName = name;
-            final List<BatteryStatsManager.AppResourceStats> finalOthers = othersList;
+            final List<CollectStatsManager.AppResourceStats> finalOthers = othersList;
             final double finalTotal = total;
 
 
@@ -576,10 +591,10 @@ public class StatisticsActivity extends BaseActivity {
         return colors;
     }
 
-    private void showOthersDialog(List<BatteryStatsManager.AppResourceStats> others,
+    private void showOthersDialog(List<CollectStatsManager.AppResourceStats> others,
                                    ChartMetric metric, double total) {
         StringBuilder sb = new StringBuilder();
-        for (BatteryStatsManager.AppResourceStats s : others) {
+        for (CollectStatsManager.AppResourceStats s : others) {
             sb.append(String.format(Locale.US, "• %s  %.1f%%\n",
                     s.appName, metricValue(s, metric) / total * 100));
         }
@@ -593,7 +608,7 @@ public class StatisticsActivity extends BaseActivity {
     private void openAppDetail(String packageName, String appName) {
         double totalCpuPct = 0, totalRamMb = 0;
         if (currentSorted != null) {
-            for (BatteryStatsManager.AppResourceStats s : currentSorted) {
+            for (CollectStatsManager.AppResourceStats s : currentSorted) {
                 totalCpuPct += s.cpuPct;
                 totalRamMb  += s.ramMb;
             }
@@ -607,7 +622,7 @@ public class StatisticsActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    private double metricValue(BatteryStatsManager.AppResourceStats s, ChartMetric m) {
+    private double metricValue(CollectStatsManager.AppResourceStats s, ChartMetric m) {
         if (s == null) return 0;
         switch (m) {
             case BATTERY: return s.batteryMah;
@@ -617,9 +632,9 @@ public class StatisticsActivity extends BaseActivity {
         }
     }
 
-    private BatteryStatsManager.AppResourceStats findByPkg(
-            List<BatteryStatsManager.AppResourceStats> list, String pkg) {
-        for (BatteryStatsManager.AppResourceStats s : list) {
+    private CollectStatsManager.AppResourceStats findByPkg(
+            List<CollectStatsManager.AppResourceStats> list, String pkg) {
+        for (CollectStatsManager.AppResourceStats s : list) {
             if (s.packageName.equals(pkg)) return s;
         }
         return null;
@@ -627,11 +642,14 @@ public class StatisticsActivity extends BaseActivity {
 
 
     private void showStatsDialog() {
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showStatsDialog");
         executor.execute(() -> {
             long twelveHoursAgo = System.currentTimeMillis() - STATS_HISTORY_DURATION_MS;
             com.gree1d.reappzuku.db.AppStatsDao appStatsDao = com.gree1d.reappzuku.db.AppDatabase
                     .getInstance(this).appStatsDao();
-            java.util.List<com.gree1d.reappzuku.db.AppStats> statsList = appStatsDao.getAllStatsSince(twelveHoursAgo);
+            java.util.List<com.gree1d.reappzuku.db.AppStatsAggregate> statsList = appStatsDao.getAllStatsSince(twelveHoursAgo);
+            AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showStatsDialog loaded " + statsList.size()
+                    + " stats rows since 12h ago");
 
             List<KillHistoryEntry> historyEntries = new ArrayList<>();
             int totalKills = 0;
@@ -639,7 +657,7 @@ public class StatisticsActivity extends BaseActivity {
             long totalRecoveredKb = 0;
             java.text.DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(this);
 
-            for (com.gree1d.reappzuku.db.AppStats stats : statsList) {
+            for (com.gree1d.reappzuku.db.AppStatsAggregate stats : statsList) {
                 if (stats == null || stats.packageName == null) continue;
                 if (stats.killCount <= 0 && stats.relaunchCount <= 0) continue;
 
@@ -663,7 +681,7 @@ public class StatisticsActivity extends BaseActivity {
                 long lastEventTime = Math.max(stats.lastKillTime, stats.lastRelaunchTime);
                 String badge = lastEventTime > 0 ? timeFormat.format(new java.util.Date(lastEventTime)) : "";
                 historyEntries.add(new KillHistoryEntry(
-                        resolveStatsAppName(stats, appStatsDao),
+                        resolveAggregateAppName(stats, appStatsDao),
                         stats.packageName,
                         String.join(" | ", detailParts),
                         badge,
@@ -706,6 +724,7 @@ public class StatisticsActivity extends BaseActivity {
                 dialog.show();
                 applyCustomAccentToDialogButtons(dialog);
                 dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+                    AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": kill history stats cleared by user");
                     executor.execute(() ->
                             com.gree1d.reappzuku.db.AppDatabase.getInstance(this).appStatsDao().deleteAll());
                 });
@@ -714,6 +733,7 @@ public class StatisticsActivity extends BaseActivity {
     }
 
     private void showTopOffendersDialog() {
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showTopOffendersDialog");
         SettingsListContent content = createSettingsListContent(
                 getString(R.string.stats_top_offenders_empty), true);
         TextView summaryText = content.summaryText;
@@ -724,12 +744,6 @@ public class StatisticsActivity extends BaseActivity {
         SettingsSurfaceAdapter offendersAdapter = new SettingsSurfaceAdapter();
         listView.setAdapter(offendersAdapter);
         listView.setEmptyView(emptyView);
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            SettingsSurfaceRow row = offendersAdapter.getItem(position);
-            if (row != null && row.packageName != null && !row.packageName.isEmpty()) {
-                openAppInfo(row.packageName);
-            }
-        });
 
         ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_dropdown_item_1line, topOffenderFilterLabels);
@@ -753,6 +767,7 @@ public class StatisticsActivity extends BaseActivity {
         });
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": top offenders stats cleared by user");
             executor.execute(() ->
                     com.gree1d.reappzuku.db.AppDatabase.getInstance(this).appStatsDao().deleteAll());
         });
@@ -772,7 +787,7 @@ public class StatisticsActivity extends BaseActivity {
             long windowMs = TOP_OFFENDER_FILTER_WINDOWS_MS[selectedFilterIndex];
             com.gree1d.reappzuku.db.AppStatsDao appStatsDao =
                     com.gree1d.reappzuku.db.AppDatabase.getInstance(this).appStatsDao();
-            List<com.gree1d.reappzuku.db.AppStats> stats;
+            List<com.gree1d.reappzuku.db.AppStatsAggregate> stats;
             if (windowMs > 0) {
                 long since = System.currentTimeMillis() - windowMs;
                 stats = appStatsDao.getAllStatsSince(since);
@@ -781,6 +796,8 @@ public class StatisticsActivity extends BaseActivity {
             }
 
             List<TopOffender> offenders = buildTopOffenders(stats, appStatsDao);
+            AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": loadTopOffenders filter=" + selectedFilterIndex
+                    + " loaded " + offenders.size() + " offenders");
 
             int totalKills = 0;
             int totalRelaunches = 0;
@@ -796,25 +813,32 @@ public class StatisticsActivity extends BaseActivity {
                     offenders.size(), totalKills, totalRelaunches,
                     formatRecoveredSize(totalRecoveredKb));
 
+            final List<TopOffender> finalOffenders = offenders;
             handler.post(() -> {
                 if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) return;
-                adapter.setItems(buildTopOffenderRows(offenders));
+                adapter.setItems(buildTopOffenderRows(finalOffenders));
                 summaryText.setText(summary);
                 loading.setVisibility(View.GONE);
                 listView.setVisibility(View.VISIBLE);
-                emptyView.setVisibility(offenders.isEmpty() ? View.VISIBLE : View.GONE);
+                emptyView.setVisibility(finalOffenders.isEmpty() ? View.VISIBLE : View.GONE);
+                listView.setOnItemClickListener((parent, view, position, id) -> {
+                    if (position < finalOffenders.size()) {
+                        TopOffender o = finalOffenders.get(position);
+                        showKillDetailDialog(o.appName, o.packageName, windowMs);
+                    }
+                });
             });
         });
     }
 
-    private List<TopOffender> buildTopOffenders(List<com.gree1d.reappzuku.db.AppStats> statsList,
+    private List<TopOffender> buildTopOffenders(List<com.gree1d.reappzuku.db.AppStatsAggregate> statsList,
                                                  com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
         List<TopOffender> offenders = new ArrayList<>();
-        for (com.gree1d.reappzuku.db.AppStats stats : statsList) {
+        for (com.gree1d.reappzuku.db.AppStatsAggregate stats : statsList) {
             if (stats == null || stats.packageName == null) continue;
             if (stats.killCount <= 0 && stats.relaunchCount <= 0 && stats.totalRecoveredKb <= 0) continue;
 
-            String appName = resolveStatsAppName(stats, appStatsDao);
+            String appName = resolveAggregateAppName(stats, appStatsDao);
             double score = (stats.killCount * 1.0) + (stats.relaunchCount * 2.0) + (stats.totalRecoveredKb / 102400.0);
             offenders.add(new TopOffender(appName, stats.packageName, stats.killCount,
                     stats.relaunchCount, stats.totalRecoveredKb, score));
@@ -836,6 +860,7 @@ public class StatisticsActivity extends BaseActivity {
     }
 
     private void showBackgroundRestrictionLogDialog() {
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showBackgroundRestrictionLogDialog");
         SettingsListContent content = createSettingsListContent(
                 getString(R.string.settings_restriction_log_empty), false);
         SettingsSurfaceAdapter adapter = new SettingsSurfaceAdapter();
@@ -862,6 +887,7 @@ public class StatisticsActivity extends BaseActivity {
 
         Runnable reloadLog = () -> executor.execute(() -> {
             List<BackgroundRestrictionLog.LogEntry> entries = BackgroundRestrictionLog.readEntries(this);
+            AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": restriction log loaded " + entries.size() + " entries");
             List<SettingsSurfaceRow> rows = buildRestrictionLogRows(entries);
             String summary = getString(R.string.settings_restriction_log_summary, rows.size());
             handler.post(() -> {
@@ -877,26 +903,59 @@ public class StatisticsActivity extends BaseActivity {
         reloadLog.run();
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": restriction log cleared by user");
             appManager.clearBackgroundRestrictionLog();
             reloadLog.run();
         });
     }
 
     private void showKillEntryDetails(KillHistoryEntry entry) {
-        java.text.DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(this);
-        String killTime = entry.lastEventTime > 0
-                ? timeFormat.format(new java.util.Date(entry.lastEventTime)) : "—";
-        String source = entry.lastKillSource != null ? entry.lastKillSource : "—";
+        showKillDetailDialog(entry.appName, entry.packageName, STATS_HISTORY_DURATION_MS);
+    }
 
-        String message = entry.appName + "\n"
-                + entry.packageName + "\n"
-                + killTime + " · " + source;
+    private void showKillDetailDialog(String appName, String packageName, long windowMs) {
+        executor.execute(() -> {
+            long since = windowMs > 0 ? System.currentTimeMillis() - windowMs : 0L;
+            com.gree1d.reappzuku.db.AppStatsDao dao =
+                    com.gree1d.reappzuku.db.AppDatabase.getInstance(this).appStatsDao();
+            List<com.gree1d.reappzuku.db.AppStats> kills = dao.getKillsSince(packageName, since);
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
-                .setMessage(message)
-                .setNegativeButton(getString(R.string.dialog_close), (d, w) -> d.dismiss());
+            java.text.DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(this);
+            java.text.DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(this);
 
-        applyCustomAccentToDialogButtons(builder.show());
+            StringBuilder sb = new StringBuilder();
+            for (com.gree1d.reappzuku.db.AppStats kill : kills) {
+                if (kill.lastKillTime <= 0) continue;
+                java.util.Date d = new java.util.Date(kill.lastKillTime);
+                String source = kill.lastKillSource != null && !kill.lastKillSource.isEmpty()
+                        ? kill.lastKillSource : "—";
+                sb.append(dateFormat.format(d))
+                        .append(" | ")
+                        .append(timeFormat.format(d))
+                        .append("  —  ")
+                        .append(source)
+                        .append("\n");
+            }
+
+            String body = sb.length() > 0 ? sb.toString().trim() : "—";
+
+            handler.post(() -> {
+                android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+                TextView textView = new TextView(this);
+                int pad = (int) (16 * getResources().getDisplayMetrics().density);
+                textView.setPadding(pad, pad, pad, pad);
+                textView.setTextSize(13f);
+                textView.setTypeface(android.graphics.Typeface.MONOSPACE);
+                textView.setText(body);
+                scrollView.addView(textView);
+
+                applyCustomAccentToDialogButtons(new MaterialAlertDialogBuilder(this)
+                        .setTitle(appName)
+                        .setView(scrollView)
+                        .setNegativeButton(getString(R.string.dialog_close), (d, w) -> d.dismiss())
+                        .show());
+            });
+        });
     }
 
     private void showRestrictionLogEntryDetails(BackgroundRestrictionLog.LogEntry entry) {
@@ -1071,6 +1130,7 @@ public class StatisticsActivity extends BaseActivity {
     }
 
     private void showSleepModeLogDialog() {
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showSleepModeLogDialog");
         SettingsListContent content = createSettingsListContent(
                 getString(R.string.log_sleep_mode_empty), false);
         SettingsSurfaceAdapter adapter = new SettingsSurfaceAdapter();
@@ -1096,7 +1156,9 @@ public class StatisticsActivity extends BaseActivity {
         applyCustomAccentToDialogButtons(dialog);
 
         Runnable reloadLog = () -> executor.execute(() -> {
-            List<SettingsSurfaceRow> rows = buildSleepModeLogRows(SleepModeLogManager.readEntries(this));
+            List<SleepModeLogManager.LogEntry> entries = SleepModeLogManager.readEntries(this);
+            AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": sleep mode log loaded " + entries.size() + " entries");
+            List<SettingsSurfaceRow> rows = buildSleepModeLogRows(entries);
             String summary = getString(R.string.settings_restriction_log_summary, rows.size());
             handler.post(() -> {
                 adapter.setItems(rows);
@@ -1109,12 +1171,14 @@ public class StatisticsActivity extends BaseActivity {
         reloadLog.run();
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": sleep mode log cleared by user");
             SleepModeLogManager.clear(this);
             reloadLog.run();
         });
     }
 
     private void showSchedulerLogDialog() {
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": showSchedulerLogDialog");
         SettingsListContent content = createSettingsListContent(
                 getString(R.string.log_scheduler_empty), false);
         SettingsSurfaceAdapter adapter = new SettingsSurfaceAdapter();
@@ -1140,7 +1204,9 @@ public class StatisticsActivity extends BaseActivity {
         applyCustomAccentToDialogButtons(dialog);
 
         Runnable reloadLog = () -> executor.execute(() -> {
-            List<SettingsSurfaceRow> rows = buildSchedulerLogRows(RestrictionsScheduler.SchedulerLog.readEntries(this));
+            List<RestrictionsScheduler.SchedulerLog.Entry> entries = RestrictionsScheduler.SchedulerLog.readEntries(this);
+            AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": scheduler log loaded " + entries.size() + " entries");
+            List<SettingsSurfaceRow> rows = buildSchedulerLogRows(entries);
             String summary = getString(R.string.settings_restriction_log_summary, rows.size());
             handler.post(() -> {
                 adapter.setItems(rows);
@@ -1154,6 +1220,7 @@ public class StatisticsActivity extends BaseActivity {
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
             executor.execute(() -> {
+                AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": scheduler log cleared by user");
                 RestrictionsScheduler.SchedulerLog.clear(this);
                 handler.post(reloadLog);
             });
@@ -1416,19 +1483,23 @@ public class StatisticsActivity extends BaseActivity {
         return rows;
     }
 
-    private String resolveStatsAppName(com.gree1d.reappzuku.db.AppStats stats,
-                                       com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
+    private String resolveAggregateAppName(com.gree1d.reappzuku.db.AppStatsAggregate stats,
+                                            com.gree1d.reappzuku.db.AppStatsDao appStatsDao) {
         if (stats.appName != null && !stats.appName.trim().isEmpty()) return stats.appName;
         try {
             android.content.pm.ApplicationInfo appInfo = getPackageManager().getApplicationInfo(stats.packageName, 0);
             CharSequence label = getPackageManager().getApplicationLabel(appInfo);
             if (label != null) {
                 String name = label.toString();
+                // Обновляем appName во всех записях пакета в БД (где оно пустое)
+                executor.execute(() -> appStatsDao.updateAppName(stats.packageName, name));
                 stats.appName = name;
-                appStatsDao.updateAppName(stats.packageName, name);
                 return name;
             }
-        } catch (android.content.pm.PackageManager.NameNotFoundException ignored) {}
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, FILE + ": resolveAggregateAppName package not found: "
+                    + stats.packageName, e);
+        }
         return stats.packageName;
     }
 
@@ -1500,6 +1571,7 @@ public class StatisticsActivity extends BaseActivity {
             intent.setData(Uri.parse("package:" + packageName));
             startActivity(intent);
         } catch (Exception e) {
+            AppDebugManager.e(Category.STATISTICS_PAGE, FILE + ": openAppInfo failed for " + packageName, e);
             Toast.makeText(this, getString(R.string.settings_open_app_info_error), Toast.LENGTH_SHORT).show();
         }
     }
@@ -1537,6 +1609,7 @@ public class StatisticsActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        AppDebugManager.d(Category.STATISTICS_PAGE, FILE + ": onDestroy");
         executor.shutdownNow();
         binding = null;
     }

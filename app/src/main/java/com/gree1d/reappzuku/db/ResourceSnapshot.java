@@ -25,15 +25,16 @@ public class ResourceSnapshot {
 
     /**
      * Cumulative estimated battery drain in mAh since last charge.
-     * Sourced from: dumpsys batterystats --charged --checkin  (pwi lines).
+     * Sourced from: dumpsys batterystats --charged --checkin (pwi lines).
      * To get drain for a period, diff two snapshots: delta = current - previous.
      */
     public double batteryMah;
 
     /**
-     * Average RAM usage in MB (PSS — Proportional Set Size) over the procstats window.
-     * Sourced from: dumpsys procstats --hours 24.
-     * PSS is the most honest per-app memory metric on Android.
+     * Average RAM usage in MB (PSS — Proportional Set Size).
+     * Sourced from dumpsys procstats --hours 1 (average PSS over the preceding hour).
+     * Populated only on cycle-end snapshots (every 5th); back-filled to the 4 preceding
+     * snapshots in the same cycle via updateRamForCycle(). 0 otherwise.
      */
     public double ramMb;
 

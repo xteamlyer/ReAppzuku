@@ -15,7 +15,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -26,6 +25,8 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import com.gree1d.reappzuku.R;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
@@ -46,7 +47,7 @@ import java.util.concurrent.Executors;
 
 public class UpdateChecker {
 
-    private static final String TAG = "UpdateChecker";
+    private static final String FILE_NAME = "UpdateChecker";
 
     private static final String GITHUB_API_URL =
             "https://api.github.com/repos/gree1d/ReAppzuku/releases/latest";
@@ -65,19 +66,19 @@ public class UpdateChecker {
 
     public static void checkForUpdatesAuto(Context context) {
         if (!isAppInForeground(context)) {
-            Log.d(TAG, "Auto-check skipped: app is in background");
+            AppDebugManager.d(Category.UTILS, FILE_NAME + ": Auto-check skipped: app is in background");
             return;
         }
 
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         long lastCheck = prefs.getLong(KEY_LAST_CHECK_MS, 0);
         if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL_MS) {
-            Log.d(TAG, "Auto-check skipped: within throttle window");
+            AppDebugManager.d(Category.UTILS, FILE_NAME + ": Auto-check skipped: within throttle window");
             return;
         }
 
         if (!isConnected(context)) {
-            Log.d(TAG, "Auto-check skipped: no internet");
+            AppDebugManager.d(Category.UTILS, FILE_NAME + ": Auto-check skipped: no internet");
             return;
         }
 
@@ -86,20 +87,24 @@ public class UpdateChecker {
         ExecutorService exec = Executors.newSingleThreadExecutor();
         exec.execute(() -> {
             ReleaseInfo info = fetchLatestRelease();
-            if (info == null) return;
+            if (info == null) {
+                AppDebugManager.w(Category.UTILS, FILE_NAME + ": Auto-check: fetchLatestRelease returned null, skipping");
+                return;
+            }
 
             String currentVersion = getAppVersion(context);
             if (isNewer(info.tagName, currentVersion)) {
-                Log.i(TAG, "Auto-check: new version found: " + info.tagName);
+                AppDebugManager.i(Category.UTILS, FILE_NAME + ": Auto-check: new version found: " + info.tagName);
                 postUpdateNotification(context, info);
             } else {
-                Log.d(TAG, "Auto-check: already up to date (" + currentVersion + ")");
+                AppDebugManager.d(Category.UTILS, FILE_NAME + ": Auto-check: already up to date (" + currentVersion + ")");
             }
         });
     }
 
     public static void checkForUpdatesManual(Context context, SharedPreferences prefs) {
         if (!isConnected(context)) {
+            AppDebugManager.d(Category.UTILS, FILE_NAME + ": Manual check skipped: no internet");
             showToast(context, "No internet");
             return;
         }
@@ -149,7 +154,7 @@ public class UpdateChecker {
 
             int code = conn.getResponseCode();
             if (code != 200) {
-                Log.w(TAG, "GitHub API returned HTTP " + code);
+                AppDebugManager.w(Category.UTILS, FILE_NAME + ": GitHub API returned HTTP " + code);
                 return null;
             }
 
@@ -181,16 +186,16 @@ public class UpdateChecker {
             return new ReleaseInfo(tagName, body.trim(), downloadUrl, htmlUrl);
 
         } catch (UnknownHostException e) {
-            Log.w(TAG, "No route to GitHub (DNS failed): " + e.getMessage());
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": No route to GitHub (DNS failed): " + e.getMessage());
             return null;
         } catch (SocketTimeoutException e) {
-            Log.w(TAG, "GitHub API timed out: " + e.getMessage());
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": GitHub API timed out: " + e.getMessage());
             return null;
         } catch (IOException e) {
-            Log.w(TAG, "Network I/O error fetching release: " + e.getMessage());
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": Network I/O error fetching release: " + e.getMessage());
             return null;
         } catch (Exception e) {
-            Log.e(TAG, "Unexpected error fetching release info", e);
+            AppDebugManager.e(Category.UTILS, FILE_NAME + ": Unexpected error fetching release info", e);
             return null;
         } finally {
             if (conn != null) {
@@ -212,7 +217,7 @@ public class UpdateChecker {
             }
             return false; // equal
         } catch (Exception e) {
-            Log.w(TAG, "Version parse failed: remote=" + remote + " local=" + local);
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": Version parse failed: remote=" + remote + " local=" + local);
             return false;
         }
     }
@@ -231,6 +236,7 @@ public class UpdateChecker {
             return context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0).versionName;
         } catch (PackageManager.NameNotFoundException e) {
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": getAppVersion: own package not found, using 0.0.0 fallback", e);
             return "0.0.0";
         }
     }
@@ -295,7 +301,7 @@ public class UpdateChecker {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "POST_NOTIFICATIONS not granted, skipping update notification");
+                AppDebugManager.w(Category.UTILS, FILE_NAME + ": POST_NOTIFICATIONS not granted, skipping update notification");
                 return;
             }
         }
@@ -318,7 +324,7 @@ public class UpdateChecker {
         try {
             markwon.setMarkdown(messageView, bodyMd);
         } catch (Exception e) {
-            Log.w(TAG, "Markwon rendering failed, falling back to plain text", e);
+            AppDebugManager.w(Category.UTILS, FILE_NAME + ": Markwon rendering failed, falling back to plain text", e);
             messageView.setText(bodyMd);
         }
 
@@ -341,7 +347,7 @@ public class UpdateChecker {
                         context.startActivity(new Intent(
                                 Intent.ACTION_VIEW, Uri.parse(info.releasePageUrl)));
                     } catch (Exception e) {
-                        Log.e(TAG, "Failed to open release page URL", e);
+                        AppDebugManager.e(Category.UTILS, FILE_NAME + ": Failed to open release page URL", e);
                     }
                 })
                 .setNegativeButton(context.getString(R.string.update_dialog_close), null)

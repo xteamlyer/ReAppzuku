@@ -10,6 +10,8 @@ import java.util.Set;
 
 import com.gree1d.reappzuku.manager.PresetManager;
 import com.gree1d.reappzuku.utils.PresetModel;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
 public class BackupManager {
@@ -32,7 +34,7 @@ public class BackupManager {
         try {
             return prefs.getBoolean(key, defVal);
         } catch (ClassCastException e) {
-            Log.w(TAG, "getSafeBool: key=" + key + " stored as wrong type, falling back to String parse");
+            AppDebugManager.w(Category.BACKUP_RESTORE, "BackupManager: getSafeBool: key=" + key + " stored as wrong type, falling back to String parse");
             String raw = prefs.getString(key, null);
             if (raw == null) return defVal;
             return Boolean.parseBoolean(raw);
@@ -40,11 +42,11 @@ public class BackupManager {
     }
 
     public String createBackupJson() {
-        Log.d(TAG, "createBackupJson: start");
+        AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: start");
         try {
             JSONObject root = new JSONObject();
             root.put(KEY_BACKUP_VERSION, BACKUP_VERSION);
-            Log.d(TAG, "createBackupJson: version written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: version written");
 
             putStringSet(root, KEY_HIDDEN_APPS);
             putStringSet(root, KEY_WHITELISTED_APPS);
@@ -52,28 +54,28 @@ public class BackupManager {
             putStringSet(root, KEY_AUTOSTART_DISABLED_APPS);
             putStringSet(root, KEY_HARD_RESTRICTION_APPS);
             putStringSet(root, KEY_MANUAL_RESTRICTION_APPS);
-            Log.d(TAG, "createBackupJson: app lists written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: app lists written");
 
             putManualOpsMasks(root);
-            Log.d(TAG, "createBackupJson: manual ops masks written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: manual ops masks written");
 
             putStringSet(root, KEY_SLEEP_MODE_APPS);
             putStringSet(root, KEY_SLEEP_MODE_APPS_PERMANENT);
             putStringSet(root, KEY_MEDIUM_RESTRICTION_APPS);
             putStringSet(root, KEY_BATTERY_WHITELIST_REMOVED);
             putStringSet(root, KEY_APP_LAUNCH_TRIGGER_PACKAGES);
-            Log.d(TAG, "createBackupJson: extra sets written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: extra sets written");
 
             root.put(KEY_KILL_MODE, prefs.getInt(KEY_KILL_MODE, 0));
             root.put(KEY_AUTO_KILL_ENABLED, getSafeBool(KEY_AUTO_KILL_ENABLED, false));
             root.put(KEY_PERIODIC_KILL_ENABLED, getSafeBool(KEY_PERIODIC_KILL_ENABLED, false));
             root.put(KEY_KILL_INTERVAL, prefs.getInt(KEY_KILL_INTERVAL, AppConstants.DEFAULT_KILL_INTERVAL_MS));
             root.put(KEY_KILL_ON_SCREEN_OFF, getSafeBool(KEY_KILL_ON_SCREEN_OFF, false));
-            Log.d(TAG, "createBackupJson: kill settings written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: kill settings written");
 
             root.put(KEY_RAM_THRESHOLD, prefs.getInt(KEY_RAM_THRESHOLD, AppConstants.DEFAULT_RAM_THRESHOLD_PERCENT));
             root.put(KEY_RAM_THRESHOLD_ENABLED, getSafeBool(KEY_RAM_THRESHOLD_ENABLED, false));
-            Log.d(TAG, "createBackupJson: RAM settings written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: RAM settings written");
 
             root.put(KEY_SHOW_SYSTEM_APPS, getSafeBool(KEY_SHOW_SYSTEM_APPS, false));
             root.put(KEY_SHOW_PERSISTENT_APPS, getSafeBool(KEY_SHOW_PERSISTENT_APPS, false));
@@ -85,11 +87,11 @@ public class BackupManager {
             root.put(KEY_SORT_MODE, prefs.getInt(KEY_SORT_MODE, AppConstants.SORT_MODE_DEFAULT));
             root.put(KEY_NOTIFICATION_MODE, prefs.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL));
             root.put(KEY_AUTO_KILL_TYPE, prefs.getInt(KEY_AUTO_KILL_TYPE, 0));
-            Log.d(TAG, "createBackupJson: display/UI settings written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: display/UI settings written");
 
             root.put(KEY_SLEEP_MODE_ENABLED, getSafeBool(KEY_SLEEP_MODE_ENABLED, false));
             root.put(KEY_SLEEP_MODE_DELAY, prefs.getLong(KEY_SLEEP_MODE_DELAY, AppConstants.DEFAULT_SLEEP_MODE_DELAY_MS));
-            Log.d(TAG, "createBackupJson: sleep mode settings written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: sleep mode settings written");
 
             root.put(KEY_HW_TRIGGER_HEADSET, getSafeBool(KEY_HW_TRIGGER_HEADSET, false));
             root.put(KEY_HW_TRIGGER_USB, getSafeBool(KEY_HW_TRIGGER_USB, false));
@@ -100,26 +102,26 @@ public class BackupManager {
             root.put(KEY_HW_TRIGGER_HOTSPOT, getSafeBool(KEY_HW_TRIGGER_HOTSPOT, false));
             root.put(KEY_APP_LAUNCH_TRIGGER_ENABLED, getSafeBool(KEY_APP_LAUNCH_TRIGGER_ENABLED, false));
             root.put(KEY_APP_LAUNCH_CLEAR_CACHE, getSafeBool(KEY_APP_LAUNCH_CLEAR_CACHE, false));
-            Log.d(TAG, "createBackupJson: hardware triggers written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: hardware triggers written");
 
             putPresets(root);
-            Log.d(TAG, "createBackupJson: presets written");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: presets written");
 
             String result = root.toString(4);
-            Log.d(TAG, "createBackupJson: success, json length=" + result.length());
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: success, json length=" + result.length());
             return result;
         } catch (Exception e) {
-            Log.e(TAG, "createBackupJson: FAILED", e);
+            AppDebugManager.e(Category.BACKUP_RESTORE, "BackupManager: createBackupJson: FAILED", e);
             return null;
         }
     }
 
     public boolean restoreBackupJson(String json) {
-        Log.d(TAG, "restoreBackupJson: start, json length=" + (json != null ? json.length() : -1));
+        AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: start, json length=" + (json != null ? json.length() : -1));
         try {
             JSONObject root = new JSONObject(json);
             int version = root.optInt(KEY_BACKUP_VERSION, -1);
-            Log.d(TAG, "restoreBackupJson: backup version=" + version);
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: backup version=" + version);
 
             SharedPreferences.Editor editor = prefs.edit();
 
@@ -129,28 +131,28 @@ public class BackupManager {
             restoreSet(editor, root, KEY_AUTOSTART_DISABLED_APPS);
             restoreSet(editor, root, KEY_HARD_RESTRICTION_APPS);
             restoreSet(editor, root, KEY_MANUAL_RESTRICTION_APPS);
-            Log.d(TAG, "restoreBackupJson: app lists restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: app lists restored");
 
             restoreManualOpsMasks(editor, root);
-            Log.d(TAG, "restoreBackupJson: manual ops masks restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: manual ops masks restored");
 
             restoreSet(editor, root, KEY_SLEEP_MODE_APPS);
             restoreSet(editor, root, KEY_SLEEP_MODE_APPS_PERMANENT);
             restoreSet(editor, root, KEY_MEDIUM_RESTRICTION_APPS);
             restoreSet(editor, root, KEY_BATTERY_WHITELIST_REMOVED);
             restoreSet(editor, root, KEY_APP_LAUNCH_TRIGGER_PACKAGES);
-            Log.d(TAG, "restoreBackupJson: extra sets restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: extra sets restored");
 
             restoreInt(editor, root, KEY_KILL_MODE);
             restoreBoolean(editor, root, KEY_AUTO_KILL_ENABLED);
             restoreBoolean(editor, root, KEY_PERIODIC_KILL_ENABLED);
             restoreInt(editor, root, KEY_KILL_INTERVAL);
             restoreBoolean(editor, root, KEY_KILL_ON_SCREEN_OFF);
-            Log.d(TAG, "restoreBackupJson: kill settings restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: kill settings restored");
 
             restoreInt(editor, root, KEY_RAM_THRESHOLD);
             restoreBoolean(editor, root, KEY_RAM_THRESHOLD_ENABLED);
-            Log.d(TAG, "restoreBackupJson: RAM settings restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: RAM settings restored");
 
             restoreBoolean(editor, root, KEY_SHOW_SYSTEM_APPS);
             restoreBoolean(editor, root, KEY_SHOW_PERSISTENT_APPS);
@@ -162,11 +164,11 @@ public class BackupManager {
             restoreInt(editor, root, KEY_SORT_MODE);
             restoreInt(editor, root, KEY_NOTIFICATION_MODE);
             restoreInt(editor, root, KEY_AUTO_KILL_TYPE);
-            Log.d(TAG, "restoreBackupJson: display/UI settings restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: display/UI settings restored");
 
             restoreBoolean(editor, root, KEY_SLEEP_MODE_ENABLED);
             restoreLong(editor, root, KEY_SLEEP_MODE_DELAY);
-            Log.d(TAG, "restoreBackupJson: sleep mode settings restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: sleep mode settings restored");
 
             restoreBoolean(editor, root, KEY_HW_TRIGGER_HEADSET);
             restoreBoolean(editor, root, KEY_HW_TRIGGER_USB);
@@ -177,17 +179,17 @@ public class BackupManager {
             restoreBoolean(editor, root, KEY_HW_TRIGGER_HOTSPOT);
             restoreBoolean(editor, root, KEY_APP_LAUNCH_TRIGGER_ENABLED);
             restoreBoolean(editor, root, KEY_APP_LAUNCH_CLEAR_CACHE);
-            Log.d(TAG, "restoreBackupJson: hardware triggers restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: hardware triggers restored");
 
             editor.apply();
 
             restorePresets(root);
-            Log.d(TAG, "restoreBackupJson: presets restored");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: presets restored");
 
-            Log.d(TAG, "restoreBackupJson: success");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: success");
             return true;
         } catch (Exception e) {
-            Log.e(TAG, "restoreBackupJson: FAILED", e);
+            AppDebugManager.e(Category.BACKUP_RESTORE, "BackupManager: restoreBackupJson: FAILED", e);
             return false;
         }
     }
@@ -200,7 +202,7 @@ public class BackupManager {
                 set.add(array.getString(i));
             }
             editor.putStringSet(key, set);
-            Log.d(TAG, "restoreSet: " + key + " -> " + set.size() + " items");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreSet: " + key + " -> " + set.size() + " items");
         }
     }
 
@@ -208,7 +210,7 @@ public class BackupManager {
         Set<String> stored = prefs.getStringSet(key, new HashSet<>());
         Set<String> set = stored == null ? new HashSet<>() : new HashSet<>(stored);
         root.put(key, new JSONArray(set));
-        Log.d(TAG, "putStringSet: " + key + " -> " + set.size() + " items");
+        AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: putStringSet: " + key + " -> " + set.size() + " items");
     }
 
     private void putManualOpsMasks(JSONObject root) throws Exception {
@@ -220,7 +222,7 @@ public class BackupManager {
             masks.put(pkg, mask);
         }
         root.put(KEY_MANUAL_OPS_MASKS, masks);
-        Log.d(TAG, "putManualOpsMasks: " + manualPackages.size() + " packages");
+        AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: putManualOpsMasks: " + manualPackages.size() + " packages");
     }
 
     private void restoreManualOpsMasks(SharedPreferences.Editor editor, JSONObject root) throws Exception {
@@ -233,7 +235,7 @@ public class BackupManager {
             editor.putInt(KEY_MANUAL_OPS_PREFIX + pkg, masks.getInt(pkg));
             count++;
         }
-        Log.d(TAG, "restoreManualOpsMasks: " + count + " packages");
+        AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreManualOpsMasks: " + count + " packages");
     }
 
     private void putPresets(JSONObject root) throws Exception {
@@ -242,18 +244,18 @@ public class BackupManager {
         for (int presetNumber : new int[]{ PresetModel.PRESET_1, PresetModel.PRESET_2 }) {
             PresetModel model = presetManager.loadPreset(presetNumber);
             if (model == null) {
-                Log.d(TAG, "putPresets: preset #" + presetNumber + " not set, skipping");
+                AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: putPresets: preset #" + presetNumber + " not set, skipping");
                 continue;
             }
             presets.put(KEY_PRESET_PREFIX + presetNumber, model.toJson());
-            Log.d(TAG, "putPresets: preset #" + presetNumber + " written, name=" + model.name);
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: putPresets: preset #" + presetNumber + " written, name=" + model.name);
         }
         root.put(KEY_PRESETS, presets);
     }
 
     private void restorePresets(JSONObject root) throws Exception {
         if (!root.has(KEY_PRESETS)) {
-            Log.d(TAG, "restorePresets: no presets in backup, skipping");
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restorePresets: no presets in backup, skipping");
             return;
         }
         JSONObject presets = root.getJSONObject(KEY_PRESETS);
@@ -261,13 +263,13 @@ public class BackupManager {
         for (int presetNumber : new int[]{ PresetModel.PRESET_1, PresetModel.PRESET_2 }) {
             String key = KEY_PRESET_PREFIX + presetNumber;
             if (!presets.has(key)) {
-                Log.d(TAG, "restorePresets: preset #" + presetNumber + " not in backup, skipping");
+                AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restorePresets: preset #" + presetNumber + " not in backup, skipping");
                 continue;
             }
             PresetModel model = PresetModel.fromJson(presetNumber, presets.getJSONObject(key));
             presetManager.savePreset(model);
             presetManager.scheduleAlarms(model);
-            Log.d(TAG, "restorePresets: preset #" + presetNumber + " restored, name=" + model.name);
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restorePresets: preset #" + presetNumber + " restored, name=" + model.name);
         }
         presetManager.checkAndApplyCurrentPreset();
     }
@@ -276,7 +278,7 @@ public class BackupManager {
         if (root.has(key)) {
             boolean value = root.getBoolean(key);
             editor.putBoolean(key, value);
-            Log.d(TAG, "restoreBoolean: " + key + "=" + value);
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreBoolean: " + key + "=" + value);
         }
     }
 
@@ -284,7 +286,7 @@ public class BackupManager {
         if (root.has(key)) {
             int value = root.getInt(key);
             editor.putInt(key, value);
-            Log.d(TAG, "restoreInt: " + key + "=" + value);
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreInt: " + key + "=" + value);
         }
     }
 
@@ -292,7 +294,7 @@ public class BackupManager {
         if (root.has(key)) {
             long value = root.getLong(key);
             editor.putLong(key, value);
-            Log.d(TAG, "restoreLong: " + key + "=" + value);
+            AppDebugManager.d(Category.BACKUP_RESTORE, "BackupManager: restoreLong: " + key + "=" + value);
         }
     }
 }

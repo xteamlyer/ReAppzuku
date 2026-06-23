@@ -7,6 +7,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        AppDebugManager.init(this);
         DynamicColors.applyToActivitiesIfAvailable(this);
     }
 }

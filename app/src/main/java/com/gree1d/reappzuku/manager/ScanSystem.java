@@ -3,7 +3,8 @@ package com.gree1d.reappzuku.manager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.util.Log;
+import com.gree1d.reappzuku.core.AppDebugManager;
+import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,8 +23,6 @@ import com.gree1d.reappzuku.utils.triggers.AppTriggersAnalyzer;
 import com.gree1d.reappzuku.R;
 
 public class ScanSystem {
-
-    private static final String TAG = "ScanSystem";
 
     public enum Category { WAKELOCK, NETWORK, FGS, ALARM, SENSOR, LOCATION }
 
@@ -56,6 +55,7 @@ public class ScanSystem {
     }
 
     public List<AppLoad> scan(List<AppModel> apps) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scan() started, apps=" + apps.size());
         Map<String, AppLoad> map = new LinkedHashMap<>();
         Map<String, String>  uidMap = new LinkedHashMap<>();
 
@@ -80,7 +80,7 @@ public class ScanSystem {
 
         pool.shutdown();
         for (Future<Void> f : Arrays.asList(fWakelocks, fNetwork, fServices, fAlarms, fSensors, fLocation, fHistory)) {
-            try { f.get(); } catch (Exception e) { Log.w(TAG, "scan task failed: " + e.getMessage()); }
+            try { f.get(); } catch (Exception e) { AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scan task failed: " + e.getMessage(), e); }
         }
 
         List<AppLoad> result = new ArrayList<>();
@@ -90,12 +90,17 @@ public class ScanSystem {
                     .allMatch(f -> f.category == Category.NETWORK);
             if (!onlyNetwork) result.add(load);
         }
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scan() finished, results=" + result.size());
         return result;
     }
 
     private void scanWakelocks(Map<String, AppLoad> map, Map<String, String> uidMap) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelocks() started");
         String powerOutput = shellManager.runShellCommandAndGetFullOutput("dumpsys power");
-        if (powerOutput == null || powerOutput.trim().isEmpty()) return;
+        if (powerOutput == null || powerOutput.trim().isEmpty()) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelocks() — dumpsys power output is empty");
+            return;
+        }
 
         StringBuilder wlBlock = new StringBuilder();
         boolean inSection = false;
@@ -104,7 +109,10 @@ public class ScanSystem {
             if (inSection && line.trim().startsWith("Suspend Blockers:")) break;
             if (inSection) wlBlock.append(line).append("\n");
         }
-        if (wlBlock.length() == 0) return;
+        if (wlBlock.length() == 0) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelocks() — Wake Locks block not found in dumpsys power");
+            return;
+        }
 
         Pattern heldMsPat  = Pattern.compile("held=(\\d+)ms");
         Pattern acquirePat = Pattern.compile("\\bacq(?:uire)?[=:](\\d+)");
@@ -156,13 +164,18 @@ public class ScanSystem {
                 if (byTag && !byUid)    detail.append(" · via system");
 
                 entry.getValue().findings.add(new Finding(Category.WAKELOCK, detail.toString()));
+                AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelocks() — wakelock found for " + pkg + ": " + detail);
                 break;
             }
         }
     }
 
     private void scanNetwork(Map<String, AppLoad> map, Map<String, String> uidMap) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanNetwork() started");
         String netstats = shellManager.runShellCommandAndGetFullOutput("dumpsys netstats detail");
+        if (netstats == null || netstats.trim().isEmpty()) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanNetwork() — dumpsys netstats output is empty");
+        }
 
         for (Map.Entry<String, AppLoad> entry : map.entrySet()) {
             String pkg = entry.getKey();
@@ -197,6 +210,8 @@ public class ScanSystem {
 
             entry.getValue().findings.add(new Finding(Category.NETWORK,
                     "↓ " + formatBytes(rxBytes) + " / ↑ " + formatBytes(txBytes)));
+            AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanNetwork() — traffic found for " + pkg
+                    + ": rx=" + formatBytes(rxBytes) + " tx=" + formatBytes(txBytes));
         }
     }
 
@@ -220,13 +235,17 @@ public class ScanSystem {
                 try { rx += Long.parseLong(p[5]); } catch (Exception ignored) {}
                 try { tx += Long.parseLong(p[7]); } catch (Exception ignored) {}
             }
-        } catch (Exception e) { Log.w(TAG, "network proc fallback: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: readNetworkBytesProcFallback() — failed", e); }
         return new long[]{rx, tx};
     }
 
     private void scanServices(Map<String, AppLoad> map) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanServices() started");
         String output = shellManager.runShellCommandAndGetFullOutput("dumpsys activity services");
-        if (output == null || output.trim().isEmpty()) return;
+        if (output == null || output.trim().isEmpty()) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanServices() — dumpsys activity services output is empty");
+            return;
+        }
 
         Pattern svcPat  = Pattern.compile("ServiceRecord\\{[^}]+\\s+([\\w.]+)/\\.?([\\w.$]+)");
         Pattern typePat = Pattern.compile("foregroundServiceType=(\\S+)");
@@ -278,15 +297,23 @@ public class ScanSystem {
             if (imp     != null) detail.append(" · notif:").append(imp);
             detail.append(" · ").append(killable ? "can stop" : "protected");
             load.findings.add(new Finding(Category.FGS, detail.toString()));
+            AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: emitService() — FGS found for "
+                    + load.packageName + ": " + detail);
         } else if (isSticky) {
             load.findings.add(new Finding(Category.FGS,
                     "Sticky: " + (svc != null ? svc : load.packageName)));
+            AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: emitService() — sticky service found for "
+                    + load.packageName + ": " + svc);
         }
     }
 
     private void scanAlarms(Map<String, AppLoad> map) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanAlarms() started");
         String output = shellManager.runShellCommandAndGetFullOutput("dumpsys alarm");
-        if (output == null || output.trim().isEmpty()) return;
+        if (output == null || output.trim().isEmpty()) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanAlarms() — dumpsys alarm output is empty");
+            return;
+        }
 
         AppTriggersAnalyzer.AlarmDumpsysParser parser = new AppTriggersAnalyzer.AlarmDumpsysParser();
 
@@ -314,6 +341,8 @@ public class ScanSystem {
                 detail.append(" · every ").append(formatInterval(minInterval));
 
             entry.getValue().findings.add(new Finding(Category.ALARM, detail.toString()));
+            AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanAlarms() — alarms found for " + pkg
+                    + ": wakeup=" + wakeupCount + " normal=" + normalCount);
         }
     }
 
@@ -337,8 +366,10 @@ public class ScanSystem {
     }
 
     private void scanSensors(Map<String, AppLoad> map) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanSensors() started");
         String output = shellManager.runShellCommandAndGetFullOutput("dumpsys sensorservice");
         if (output == null || output.trim().isEmpty()) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanSensors() — dumpsys sensorservice empty, using batterystats fallback");
             scanSensorsBatteryStatsFallback(map);
             return;
         }
@@ -395,12 +426,17 @@ public class ScanSystem {
 
         for (Map.Entry<String, List<String>> e : found.entrySet()) {
             AppLoad load = map.get(e.getKey());
-            if (load != null) load.findings.add(new Finding(Category.SENSOR,
-                    String.join(", ", e.getValue())));
+            if (load != null) {
+                load.findings.add(new Finding(Category.SENSOR,
+                        String.join(", ", e.getValue())));
+                AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanSensors() — sensors found for "
+                        + e.getKey() + ": " + String.join(", ", e.getValue()));
+            }
         }
 
         for (String pkg : map.keySet()) {
             if (!found.containsKey(pkg)) {
+                AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanSensors() — no sensorservice data for " + pkg + ", trying batterystats fallback");
                 scanSensorsBatteryStatsFallback(map, pkg);
             }
         }
@@ -434,15 +470,23 @@ public class ScanSystem {
             }
             if (!sensors.isEmpty()) {
                 AppLoad load = map.get(pkg);
-                if (load != null) load.findings.add(new Finding(Category.SENSOR,
-                        String.join(", ", sensors)));
+                if (load != null) {
+                    load.findings.add(new Finding(Category.SENSOR,
+                            String.join(", ", sensors)));
+                    AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanSensorsBatteryStatsFallback() — sensors found for "
+                            + pkg + ": " + String.join(", ", sensors));
+                }
             }
-        } catch (Exception e) { Log.w(TAG, "sensors batterystats fallback: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanSensorsBatteryStatsFallback() — failed for " + pkg, e); }
     }
 
     private void scanLocation(Map<String, AppLoad> map) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanLocation() started");
         String output = shellManager.runShellCommandAndGetFullOutput("dumpsys location");
-        if (output == null || output.trim().isEmpty()) return;
+        if (output == null || output.trim().isEmpty()) {
+            AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanLocation() — dumpsys location output is empty");
+            return;
+        }
 
         Pattern ivPat  = Pattern.compile("interval=(\\d+)");
         Pattern fgPat  = Pattern.compile("foreground=(true|false)");
@@ -496,6 +540,7 @@ public class ScanSystem {
             if (activeGps > 0) detail.append(" · GPS ").append(formatDuration(activeGps));
 
             entry.getValue().findings.add(new Finding(Category.LOCATION, detail.toString()));
+            AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanLocation() — location found for " + pkg + ": " + detail);
         }
     }
 
@@ -586,10 +631,14 @@ public class ScanSystem {
         return (ms / 3_600_000) + "h";
     }
     private void scanWakelockHistory(Map<String, AppLoad> map) {
+        AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelockHistory() started");
         try {
             String history = shellManager.runShellCommandAndGetFullOutput(
                     "dumpsys batterystats --history");
-            if (history == null || history.trim().isEmpty()) return;
+            if (history == null || history.trim().isEmpty()) {
+                AppDebugManager.w(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelockHistory() — batterystats history is empty");
+                return;
+            }
 
             Pattern timePat = Pattern.compile("RESET:TIME:\\s*(\\d+)");
             long baseUnixMs = 0, baseOffsetMs = 0;
@@ -679,9 +728,11 @@ public class ScanSystem {
                 if (!detail.isEmpty()) {
                     entry.getValue().findings.add(new Finding(Category.WAKELOCK,
                             context.getString(R.string.scansystem_wakelock_history) + "\n" + detail));
+                    AppDebugManager.d(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelockHistory() — history finding added for " + pkg
+                            + ", pairs=" + pairs.size());
                 }
             }
-        } catch (Exception e) { Log.w(TAG, "wakelock history: " + e.getMessage()); }
+        } catch (Exception e) { AppDebugManager.e(AppDebugManager.Category.SCAN, "ScanSystem: scanWakelockHistory() — failed", e); }
     }
 
     private long parseHistoryOffset(String line) {

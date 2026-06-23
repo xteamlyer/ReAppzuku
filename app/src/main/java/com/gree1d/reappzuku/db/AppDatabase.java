@@ -16,7 +16,7 @@ import androidx.annotation.NonNull;
         SchedulerLog.class,
         SleepModeLog.class
     },
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -114,6 +114,39 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    static final Migration MIGRATION_10_11 = new Migration(10, 11) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `app_stats_new` (" +
+                       "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                       "`packageName` TEXT NOT NULL, " +
+                       "`appName` TEXT, " +
+                       "`relaunchCount` INTEGER NOT NULL DEFAULT 0, " +
+                       "`totalRecoveredKb` INTEGER NOT NULL DEFAULT 0, " +
+                       "`lastKillTime` INTEGER NOT NULL DEFAULT 0, " +
+                       "`lastRelaunchTime` INTEGER NOT NULL DEFAULT 0, " +
+                       "`lastKillSource` TEXT)");
+
+            db.execSQL("INSERT INTO `app_stats_new` " +
+                       "(`packageName`, `appName`, `relaunchCount`, `totalRecoveredKb`, " +
+                       "`lastKillTime`, `lastRelaunchTime`, `lastKillSource`) " +
+                       "SELECT `packageName`, `appName`, `relaunchCount`, `totalRecoveredKb`, " +
+                       "`lastKillTime`, `lastRelaunchTime`, `lastKillSource` " +
+                       "FROM `app_stats`");
+
+            db.execSQL("DROP TABLE `app_stats`");
+
+            db.execSQL("ALTER TABLE `app_stats_new` RENAME TO `app_stats`");
+
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_stats_packageName` " +
+                       "ON `app_stats` (`packageName`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_stats_packageName_lastKillTime` " +
+                       "ON `app_stats` (`packageName`, `lastKillTime`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_stats_lastKillTime` " +
+                       "ON `app_stats` (`lastKillTime`)");
+        }
+    };
+
     public abstract AppStatsDao appStatsDao();
     public abstract ResourceSnapshotDao resourceSnapshotDao();
     public abstract BgRestrictionLog.Dao bgRestrictionLogDao();
@@ -133,7 +166,8 @@ public abstract class AppDatabase extends RoomDatabase {
                         MIGRATION_6_7,
                         MIGRATION_7_8,
                         MIGRATION_8_9,
-                        MIGRATION_9_10
+                        MIGRATION_9_10,
+                        MIGRATION_10_11
                     )
                     .fallbackToDestructiveMigration()
                     .build();
