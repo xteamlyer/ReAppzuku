@@ -261,11 +261,20 @@ public class ShappkyService extends Service {
                 break;
 
             case "TAKE_SNAPSHOT":
-                AppDebugManager.d(Category.UTILS, FILE_NAME + ": TAKE_SNAPSHOT received, running snapshot then rescheduling");
-                collectStatsManager.takeSnapshotAsync(() -> {
+                AppDebugManager.d(Category.UTILS, FILE_NAME + ": TAKE_SNAPSHOT received");
+                long snapshotDueAt = collectStatsManager.checkSnapshotDue(System.currentTimeMillis());
+                if (snapshotDueAt == 0L) {
+                    collectStatsManager.takeSnapshotAsync(() -> {
+                        releaseSnapshotWakeLock();
+                        scheduleSnapshotAlarm();
+                    });
+                } else {
+                    // Alarm fired early (Doze shift) — reschedule to the exact due time
+                    AppDebugManager.d(Category.UTILS, FILE_NAME
+                            + ": TAKE_SNAPSHOT: too early, rescheduling to exact time");
                     releaseSnapshotWakeLock();
-                    scheduleSnapshotAlarm();
-                });
+                    scheduleSnapshotAlarmAt(snapshotDueAt);
+                }
                 break;
         }
 
@@ -469,6 +478,25 @@ public class ShappkyService extends Service {
             wl.release();
             AppDebugManager.d(Category.UTILS, FILE_NAME + ": releaseSnapshotWakeLock: released");
         }
+    }
+
+    private void scheduleSnapshotAlarmAt(long triggerAt) {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        if (am == null) {
+            AppDebugManager.e(Category.UTILS, FILE_NAME
+                    + ": scheduleSnapshotAlarmAt: AlarmManager is null");
+            return;
+        }
+        PendingIntent pi = getSnapshotAlarmIntent();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+        } else {
+            am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+        }
+        long nowMs = System.currentTimeMillis();
+        AppDebugManager.d(Category.UTILS, FILE_NAME
+                + ": scheduleSnapshotAlarmAt: armed, triggerAt=" + triggerAt
+                + " (in " + ((triggerAt - nowMs) / 60_000) + " min)");
     }
 
     private void cancelSnapshotAlarm() {
