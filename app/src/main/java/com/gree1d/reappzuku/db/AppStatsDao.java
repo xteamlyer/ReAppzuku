@@ -67,6 +67,11 @@ public interface AppStatsDao {
     int getCount();
 
 
+    @Query("SELECT * FROM app_stats " +
+           "WHERE packageName = :packageName AND lastKillTime > :sinceTime " +
+           "ORDER BY lastKillTime DESC")
+    List<AppStats> getKillsSince(String packageName, long sinceTime);
+
     @Query("DELETE FROM app_stats WHERE id IN (" +
            "SELECT id FROM app_stats ORDER BY lastKillTime ASC LIMIT :deleteCount)")
     void deleteOldestStats(int deleteCount);
