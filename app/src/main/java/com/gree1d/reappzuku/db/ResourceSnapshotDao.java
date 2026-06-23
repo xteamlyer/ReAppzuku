@@ -69,23 +69,26 @@ public interface ResourceSnapshotDao {
     List<String> getPackagesInHour(long hourStart, long hourEnd);
 
     /**
-     * Updates only the RAM fields (ramMb, minRamMb, maxRamMb) and clears the isTemporary flag
+     * Updates ramMb and maxRamMb from procstats and clears the isTemporary flag
      * for all snapshots of the given package within the given hour.
      * CPU, battery, and all other fields are left untouched.
      * Called once per package after a successful procstats --hours 1 run.
      *
      * @param avgRamMb  average PSS from procstats (replaces temporary meminfo value in ramMb)
-     * @param minRamMb  minimum PSS from procstats
      * @param maxRamMb  peak PSS from procstats
      * @param pkg       package name
      * @param hourStart start of the completed hour (inclusive)
      * @param hourEnd   end of the completed hour (exclusive, == hourStart + 3600_000)
+     *
+     * Note: minRamMb is intentionally NOT updated here — it retains the lowest meminfo
+     * value observed across the 15-min slots, which is more meaningful than the procstats
+     * min (procstats --hours 1 can return 0 for short-lived or intermittent processes).
      */
     @Query("UPDATE resource_snapshots " +
-           "SET ramMb = :avgRamMb, minRamMb = :minRamMb, maxRamMb = :maxRamMb, isTemporary = 0 " +
+           "SET ramMb = :avgRamMb, maxRamMb = :maxRamMb, isTemporary = 0 " +
            "WHERE packageName = :pkg " +
            "AND timestamp >= :hourStart AND timestamp < :hourEnd")
-    void updateRamFields(double avgRamMb, double minRamMb, double maxRamMb,
+    void updateRamFields(double avgRamMb, double maxRamMb,
                          String pkg, long hourStart, long hourEnd);
 
     /**
