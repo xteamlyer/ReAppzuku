@@ -219,7 +219,7 @@ public class AppResourceDetailActivity extends BaseActivity {
         AppDebugManager.d(Category.STATISTICS_PAGE, TAG + ": buildActivityChart building chart with "
                 + slices.size() + " slices for hours=" + hours());
         int h = hours();
-        boolean sparseLabels = h >= 12;
+        boolean sparseLabels = h >= 6;
 
         java.text.DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(this);
 
