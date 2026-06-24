@@ -932,9 +932,11 @@ public class StatisticsActivity extends BaseActivity {
         reloadLog.run();
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
-            AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": restriction log cleared by user");
-            appManager.clearBackgroundRestrictionLog();
-            reloadLog.run();
+            executor.execute(() -> {
+                AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": restriction log cleared by user");
+                appManager.clearBackgroundRestrictionLog();
+                handler.post(reloadLog);
+            });
         });
     }
 
@@ -1278,9 +1280,11 @@ public class StatisticsActivity extends BaseActivity {
         reloadLog.run();
 
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
-            AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": sleep mode log cleared by user");
-            SleepModeLogManager.clear(this);
-            reloadLog.run();
+            executor.execute(() -> {
+                AppDebugManager.i(Category.STATISTICS_PAGE, FILE + ": sleep mode log cleared by user");
+                SleepModeLogManager.clear(this);
+                handler.post(reloadLog);
+            });
         });
     }
 
