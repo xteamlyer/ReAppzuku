@@ -29,7 +29,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
-import com.gree1d.reappzuku.service.UpdateCheckerWorker;
+import com.gree1d.reappzuku.service.UpdateCheckWorker;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
@@ -113,7 +113,7 @@ public class UpdateChecker {
         });
     }
 
-    static ReleaseInfo fetchLatestRelease() {
+    public static ReleaseInfo fetchLatestRelease() {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(GITHUB_API_URL);
@@ -174,7 +174,7 @@ public class UpdateChecker {
         }
     }
 
-    static boolean isNewer(String remote, String local) {
+    public static boolean isNewer(String remote, String local) {
         if (remote == null || remote.isEmpty()) return false;
         try {
             int[] r = parseVersion(remote.replaceFirst("^v", ""));
@@ -201,7 +201,7 @@ public class UpdateChecker {
         return nums;
     }
 
-    static String getAppVersion(Context context) {
+    public static String getAppVersion(Context context) {
         try {
             return context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0).versionName;
@@ -211,7 +211,7 @@ public class UpdateChecker {
         }
     }
 
-    static void postUpdateNotification(Context context, ReleaseInfo info) {
+    public static void postUpdateNotification(Context context, ReleaseInfo info) {
         NotificationManager nm =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
@@ -319,7 +319,7 @@ public class UpdateChecker {
                 .trim();
     }
 
-    static class ReleaseInfo {
+    public static class ReleaseInfo {
         final String tagName;
         final String changelog;
         final String downloadUrl;
