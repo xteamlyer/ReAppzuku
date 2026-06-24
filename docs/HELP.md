@@ -302,7 +302,7 @@ Tapping app in list opens quick action menu:
 
 Triggers is a deep diagnostic tool that analyzes **real reasons** for an app's background activity at system level. Instead of guesswork — precise technical facts: what's keeping app in memory, how often it wakes up, and whether it has active network connections right now.
 
-Analyzes **62 independent factors (42 main and 20 additional ones depending Android version)** via system commands in real time.
+Analyzes **63 independent factors (43 main and 20 additional ones depending Android version)** via system commands in real time.
 
 ---
 
@@ -508,6 +508,9 @@ App was recently active but not in foreground — sign of a hidden background wa
 - **AppOps**
   - **START_FOREGROUND (blocked)** — system has blocked right to launch Foreground Service. App is trying to operate in background but is restricted.
   - **MANAGE_MEDIA** — manages media sessions of other applications. Associated with `mediaProcessing` FGS type on Android 15.
+  
+- **ContentProvider**.
+The app has declared one or more ContentProviders. Other apps or the system can query them directly via URI — Android will automatically start the process on an incoming request even if it was not running. Shows the authority addresses of registered providers.
   
 - **Wakelocks History**.
 Shows history of last 5 **WAKELOCK** held by app. If app holds wakelock too long, that's bad sign.
