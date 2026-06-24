@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.gree1d.reappzuku.manager.UpdateChecker;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
 
