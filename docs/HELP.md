@@ -926,7 +926,7 @@ Link to GitHub repository.
 
 **Check for Updates**\
 Manually checks GitHub for a new release and shows it if found.
-Automatic update checks run once a day.
+Automatic update check occurs every 12 hours.
 
 **Telegram**\
 You can write to ReAppzuku dev in telegram.
