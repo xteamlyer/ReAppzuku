@@ -509,6 +509,9 @@ App was recently active but not in foreground — sign of a hidden background wa
   - **START_FOREGROUND (blocked)** — system has blocked right to launch Foreground Service. App is trying to operate in background but is restricted.
   - **MANAGE_MEDIA** — manages media sessions of other applications. Associated with `mediaProcessing` FGS type on Android 15.
   
+- **ContentProvider**.
+The app has declared one or more ContentProviders. Other apps or the system can query them directly via URI — Android will automatically start the process on an incoming request even if it was not running. Shows the authority addresses of registered providers.
+  
 - **Wakelocks History**.
 Shows history of last 5 **WAKELOCK** held by app. If app holds wakelock too long, that's bad sign.
 
