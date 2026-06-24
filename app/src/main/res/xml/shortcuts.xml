@@ -7,9 +7,9 @@
         android:shortcutShortLabel="@string/shortcut_kill_short_label"
         android:shortcutLongLabel="@string/shortcut_kill_long_label">
         <intent
-            android:action="android.intent.action.VIEW"
+            android:action="android.intent.action.WIDGET_KILL"
             android:targetPackage="com.gree1d.reappzuku"
-            android:targetClass="com.gree1d.reappzuku.KillShortcutActivity" />
+            android:targetClass="com.gree1d.reappzuku.utils.KillShortcutActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 </shortcuts>
