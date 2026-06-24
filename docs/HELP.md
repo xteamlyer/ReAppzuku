@@ -302,7 +302,7 @@ Tapping app in list opens quick action menu:
 
 Triggers is a deep diagnostic tool that analyzes **real reasons** for an app's background activity at system level. Instead of guesswork — precise technical facts: what's keeping app in memory, how often it wakes up, and whether it has active network connections right now.
 
-Analyzes **62 independent factors (42 main and 20 additional ones depending Android version)** via system commands in real time.
+Analyzes **63 independent factors (43 main and 20 additional ones depending Android version)** via system commands in real time.
 
 ---
 
