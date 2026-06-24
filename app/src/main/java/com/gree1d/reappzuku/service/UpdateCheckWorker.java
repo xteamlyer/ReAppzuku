@@ -1,4 +1,4 @@
-package com.gree1d.reappzuku.manager;
+package com.gree1d.reappzuku.service;
 
 import android.content.Context;
 
@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.gree1d.reappzuku.manager.UpdateChecker;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
 

@@ -29,6 +29,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
+import com.gree1d.reappzuku.service.UpdateCheckWorker;
 import static com.gree1d.reappzuku.core.AppConstants.*;
 import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 
@@ -63,9 +64,9 @@ public class UpdateChecker {
     private static final int CONNECT_TIMEOUT_MS = 8_000;
     private static final int READ_TIMEOUT_MS    = 8_000;
 
-    private static final String WORK_NAME          = "update_check_periodic";
-    private static final long   CHECK_INTERVAL_DAYS = 1;
-    private static final long   RETRY_BACKOFF_MINS  = 5;
+    private static final String WORK_NAME           = "update_check_periodic";
+    private static final long   CHECK_INTERVAL_HOURS = 12;
+    private static final long   RETRY_BACKOFF_MINS   = 5;
 
     public static void schedulePeriodicCheck(Context context) {
         Constraints constraints = new Constraints.Builder()
@@ -74,7 +75,7 @@ public class UpdateChecker {
 
         PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
                 UpdateCheckWorker.class,
-                CHECK_INTERVAL_DAYS, TimeUnit.DAYS)
+                CHECK_INTERVAL_HOURS, TimeUnit.HOURS)
                 .setConstraints(constraints)
                 .setBackoffCriteria(
                         BackoffPolicy.LINEAR,
@@ -83,11 +84,11 @@ public class UpdateChecker {
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request);
 
         AppDebugManager.d(Category.UTILS, FILE_NAME + ": Periodic update check scheduled (interval=" +
-                CHECK_INTERVAL_DAYS + "d, backoff=" + RETRY_BACKOFF_MINS + "m)");
+                CHECK_INTERVAL_HOURS + "h, backoff=" + RETRY_BACKOFF_MINS + "m)");
     }
 
     public static void checkForUpdatesManual(Context context, SharedPreferences prefs) {
@@ -112,7 +113,7 @@ public class UpdateChecker {
         });
     }
 
-    static ReleaseInfo fetchLatestRelease() {
+    public static ReleaseInfo fetchLatestRelease() {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(GITHUB_API_URL);
@@ -173,7 +174,7 @@ public class UpdateChecker {
         }
     }
 
-    static boolean isNewer(String remote, String local) {
+    public static boolean isNewer(String remote, String local) {
         if (remote == null || remote.isEmpty()) return false;
         try {
             int[] r = parseVersion(remote.replaceFirst("^v", ""));
@@ -200,7 +201,7 @@ public class UpdateChecker {
         return nums;
     }
 
-    static String getAppVersion(Context context) {
+    public static String getAppVersion(Context context) {
         try {
             return context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0).versionName;
@@ -210,7 +211,7 @@ public class UpdateChecker {
         }
     }
 
-    static void postUpdateNotification(Context context, ReleaseInfo info) {
+    public static void postUpdateNotification(Context context, ReleaseInfo info) {
         NotificationManager nm =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
@@ -318,11 +319,11 @@ public class UpdateChecker {
                 .trim();
     }
 
-    static class ReleaseInfo {
-        final String tagName;
-        final String changelog;
-        final String downloadUrl;
-        final String releasePageUrl;
+    public static class ReleaseInfo {
+        public final String tagName;
+        public final String changelog;
+        public final String downloadUrl;
+        public final String releasePageUrl;
 
         ReleaseInfo(String tagName, String changelog, String downloadUrl, String releasePageUrl) {
             this.tagName        = tagName;
