@@ -181,11 +181,11 @@
     <!-- ══════════════════════════════════════════════
          ФОНОВЫЙ СЕРВИС (ShappkyService)
          ══════════════════════════════════════════════ -->
-    <string name="service_notification_title" translatable="false">ReAppzuku Service</string>
+    <string name="service_notification_title">ReAppzuku Service</string>
     <string name="service_notification_text">Мониторинг фоновых приложений</string>
     <string name="service_shizuku_lost_title">ReAppzuku сервисы</string>
     <string name="service_shizuku_lost_text">Нет доступа к Shizuku. Приложение не может продолжить работу.</string>
-    <string name="service_channel_foreground_name" translatable="false">ReAppzuku Foreground Service</string>
+    <string name="service_channel_foreground_name">ReAppzuku Foreground Service</string>
     <string name="service_channel_actions_name">ReAppzuku Уведомления</string>
 
     <!-- ══════════════════════════════════════════════
