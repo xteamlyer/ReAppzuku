@@ -98,34 +98,6 @@ public class CollectStatsManager {
                 FILE_NAME + ": saveLastSnapshotMs: saved " + formatSlot(timestampMs));
     }
 
-    public long checkSnapshotDue(long nowMs) {
-        long last = getLastSnapshotMs();
-        if (last == 0L) {
-            AppDebugManager.d(Category.UTILS,
-                    FILE_NAME + ": checkSnapshotDue: no previous timestamp → take now");
-            return 0L;
-        }
-        if (nowMs < last) {
-            AppDebugManager.w(Category.UTILS,
-                    FILE_NAME + ": checkSnapshotDue: clock jumped backwards"
-                    + " (now=" + nowMs + " < last=" + last + ") → take now");
-            return 0L;
-        }
-        long elapsed = nowMs - last;
-        if (elapsed >= SLOT_MS) {
-            AppDebugManager.d(Category.UTILS,
-                    FILE_NAME + ": checkSnapshotDue: elapsed=" + (elapsed / 60_000)
-                    + "min ≥ 15min → take now");
-            return 0L;
-        }
-        long nextDue = last + SLOT_MS;
-        AppDebugManager.d(Category.UTILS,
-                FILE_NAME + ": checkSnapshotDue: elapsed=" + (elapsed / 60_000)
-                + "min < 15min → reschedule at " + formatSlot(nextDue)
-                + " (in " + ((nextDue - nowMs) / 60_000) + "min)");
-        return nextDue;
-    }
-
     private long getLastProcstatsMs() {
         return getStatsPrefs().getLong(KEY_LAST_PROCSTATS_MS, 0L);
     }
