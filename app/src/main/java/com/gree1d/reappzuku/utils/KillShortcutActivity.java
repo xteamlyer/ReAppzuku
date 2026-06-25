@@ -3,6 +3,7 @@ package com.gree1d.reappzuku.utils;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -35,6 +36,20 @@ public class KillShortcutActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppDebugManager.d(Category.SHORTCUTS_WIDGETS, TAG + ": onCreate, action=" + (getIntent() != null ? getIntent().getAction() : "null"));
+
+        String action = getIntent() != null ? getIntent().getAction() : null;
+        if ("WIDGET_KILL".equals(action)) {
+            AppDebugManager.d(Category.SHORTCUTS_WIDGETS, TAG + ": WIDGET_KILL received, proxying to ShappkyService");
+            Intent service = new Intent(this, com.gree1d.reappzuku.service.ShappkyService.class);
+            service.setAction("WIDGET_KILL");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(service);
+            } else {
+                startService(service);
+            }
+            finish();
+            return;
+        }
 
         shellManager = new ShellManager(this, handler, executor);
 
