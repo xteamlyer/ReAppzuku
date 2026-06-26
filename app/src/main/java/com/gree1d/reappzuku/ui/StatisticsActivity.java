@@ -1466,6 +1466,20 @@ public class StatisticsActivity extends BaseActivity {
         }
         contentContainer.getLayoutParams().height = (int) (screenHeight * 0.55);
 
+        // Растягиваем ListView на всю высоту контейнера, чтобы последняя запись не обрезалась
+        ListView lv = contentView.findViewById(R.id.top_offenders_list);
+        if (lv != null) {
+            lv.getLayoutParams().height = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+            // Добавляем footer-разделитель — визуально последняя запись теперь
+            // заканчивается разделителем так же, как все остальные
+            View footer = new View(this);
+            footer.setLayoutParams(new android.widget.AbsListView.LayoutParams(
+                    android.widget.AbsListView.LayoutParams.MATCH_PARENT,
+                    Math.round(getResources().getDisplayMetrics().density)));
+            footer.setBackgroundColor(ContextCompat.getColor(this, R.color.divider_color));
+            lv.addFooterView(footer, null, false);
+        }
+
         return new MaterialAlertDialogBuilder(this).setTitle(title).setView(dialogView).create();
     }
 
