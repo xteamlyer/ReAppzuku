@@ -100,15 +100,6 @@
     <string name="bgrest_help_manual_title">MANUAL</string>
     <string name="bgrest_help_manual_body">Elige manualmente las restricciones requeridas para cada app.</string>
 
-    <string name="manual_op_run_any_in_background">RUN_ANY_IN_BACKGROUND</string>
-    <string name="manual_op_run_in_background">RUN_IN_BACKGROUND</string>
-    <string name="manual_op_start_foreground">START_FOREGROUND</string>
-    <string name="manual_op_fgs_from_background">START_FOREGROUND_SERVICES_FROM_BACKGROUND</string>
-    <string name="manual_op_wake_lock">WAKE_LOCK</string>
-    <string name="manual_op_alarm_wakeup">ALARM_WAKEUP</string>
-    <string name="manual_op_boot_completed">RECEIVE_BOOT_COMPLETED</string>
-    <string name="manual_op_interact_across_profiles">INTERACT_ACROSS_PROFILES</string>
-
     <!-- Main menu (main.xml) -->
     <string name="menu_select_all">Seleccionar todo</string>
     <string name="menu_deselect_all">Deseleccionar todo</string>
