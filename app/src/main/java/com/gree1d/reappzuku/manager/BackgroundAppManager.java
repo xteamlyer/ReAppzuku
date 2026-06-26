@@ -46,6 +46,7 @@ public class BackgroundAppManager {
     private static final String WAKE_LOCK_RESTRICTION_OP = "WAKE_LOCK";
     private static final String ALARM_RESTRICTION_OP = "ALARM_WAKEUP";
     private static final String INTERACT_ACROSS_PROFILES_OP = "INTERACT_ACROSS_PROFILES";
+    public static final String OP_SCHEDULE_EXACT_ALARM = "SCHEDULE_EXACT_ALARM";
     private static final Pattern PACKAGE_NAME_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+");
     private static final String FORCE_STOP_COMMAND_PREFIX = "am force-stop ";
     private static final int STANDBY_BUCKET_RARE = 40;
@@ -59,14 +60,16 @@ public class BackgroundAppManager {
         WAKE_LOCK_RESTRICTION_OP,
         ALARM_RESTRICTION_OP,
         BOOT_RESTRICTION_OP,
-        INTERACT_ACROSS_PROFILES_OP
+        INTERACT_ACROSS_PROFILES_OP,
+        OP_SCHEDULE_EXACT_ALARM 
     };
 
     public static final String[] MEDIUM_OPS = {
         BACKGROUND_RESTRICTION_OP,
         BG_RUN_RESTRICTION_OP,
         ALARM_RESTRICTION_OP,
-        FGS_FROM_BG_RESTRICTION_OP
+        FGS_FROM_BG_RESTRICTION_OP,
+        OP_SCHEDULE_EXACT_ALARM
     };
 
     public enum RestrictionType { SOFT, MEDIUM, HARD, MANUAL }
