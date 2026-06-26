@@ -713,7 +713,7 @@ Auto-Kill срабатывает в момент открытия выбранн
 `RUN_IN_BACKGROUND ignore`\
 `ALARM_WAKEUP ignore`\
 `START_FOREGROUND_SERVICES_FROM_BACKGROUND ignore`\
-`SCHEDULE_EXACT_ALARM`\
+`SCHEDULE_EXACT_ALARM ignore`\
 `Standby Bucket: Rare`
 
 - **Жёсткое**\
@@ -729,7 +729,7 @@ Auto-Kill срабатывает в момент открытия выбранн
 `RECEIVE_BOOT_COMPLETED ignore`\
 `INTERACT_ACROSS_PROFILES ignore`\
 `Battery optimization whitelist removal`\
-`SCHEDULE_EXACT_ALARM`\
+`SCHEDULE_EXACT_ALARM ignore`\
 `Standby Bucket: Restricted`
 
 - **Ручное**\
