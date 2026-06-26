@@ -72,7 +72,6 @@ public class StatisticsActivity extends BaseActivity {
     final Handler handler = new Handler(Looper.getMainLooper());
     final ExecutorService executor = Executors.newCachedThreadPool();
 
-    /** Делегат — вся диалоговая логика страницы. */
     private StatisticsActivityDialogs dialogs;
 
     @SuppressWarnings("unchecked")
@@ -85,6 +84,7 @@ public class StatisticsActivity extends BaseActivity {
     private List<Integer>[] chartColors = new List[CHART_COUNT];
     private ChartMetric[] chartMetrics  = { ChartMetric.BATTERY, ChartMetric.CPU, ChartMetric.RAM };
     private double[]      chartTotals   = new double[CHART_COUNT];
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -327,6 +327,7 @@ public class StatisticsActivity extends BaseActivity {
         binding.layoutChartsLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
     }
 
+
     enum ChartMetric { BATTERY, CPU, RAM }
 
     private void buildPieChart(PieChart chart,
@@ -526,6 +527,10 @@ public class StatisticsActivity extends BaseActivity {
         intent.putExtra(AppResourceDetailActivity.EXTRA_TOTAL_RAM_MB, totalRamMb);
         intent.putExtra(AppResourceDetailActivity.EXTRA_PERIOD_IDX, selectedPeriodIdx);
         startActivity(intent);
+    }
+
+    android.content.SharedPreferences prefs() {
+        return sharedPreferences;
     }
 
     double metricValue(CollectStatsManager.AppResourceStats s, ChartMetric m) {

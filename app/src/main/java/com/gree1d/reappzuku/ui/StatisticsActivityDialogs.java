@@ -376,7 +376,6 @@ class StatisticsActivityDialogs {
         });
     }
 
-    /** Диалог «Others» на пай-чарте (list of small-share apps). */
     void showOthersDialog(List<com.gree1d.reappzuku.manager.CollectStatsManager.AppResourceStats> others,
                           StatisticsActivity.ChartMetric metric, double total) {
         StringBuilder sb = new StringBuilder();
@@ -430,9 +429,9 @@ class StatisticsActivityDialogs {
                     empty.setTextColor(ContextCompat.getColor(activity, R.color.text_primary));
                     container.addView(empty);
                 } else {
-                    int accentRaw = activity.sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+                    int accentRaw = activity.prefs().getInt(KEY_ACCENT, ACCENT_SYSTEM);
                     int badgeColor = accentRaw == ACCENT_CUSTOM
-                            ? activity.sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
+                            ? activity.prefs().getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
                             : com.google.android.material.color.MaterialColors.getColor(
                                     container, com.google.android.material.R.attr.colorSecondary);
 
@@ -617,7 +616,6 @@ class StatisticsActivityDialogs {
 
         applyCustomAccentToDialogButtons(builder.show());
     }
-
 
     private void loadTopOffenders(int filterIndex, SettingsSurfaceAdapter adapter, TextView summaryText,
                                    ProgressBar loading, ListView listView, TextView emptyView) {
@@ -816,7 +814,6 @@ class StatisticsActivityDialogs {
         return rows;
     }
 
-
     private AlertDialog createSettingsSurfaceDialog(String title, String subtitle, View contentView) {
         View dialogView = activity.getLayoutInflater().inflate(R.layout.dialog_settings_surface, null);
         TextView subtitleView = dialogView.findViewById(R.id.dialog_surface_subtitle);
@@ -904,7 +901,7 @@ class StatisticsActivityDialogs {
     }
 
     void applyCustomAccentToDialogButtons(AlertDialog dialog) {
-        int accent = activity.sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        int accent = activity.prefs().getInt(KEY_ACCENT, ACCENT_SYSTEM);
         if (accent != ACCENT_CUSTOM) return;
         int nightMode = activity.getResources().getConfiguration().uiMode
                 & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
@@ -1126,18 +1123,18 @@ class StatisticsActivityDialogs {
             bindOptionalText((TextView) view.findViewById(R.id.offender_metrics), item.detail);
             bindOptionalText((TextView) view.findViewById(R.id.offender_score),   item.badge);
 
-            int accent = activity.sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+            int accent = activity.prefs().getInt(KEY_ACCENT, ACCENT_SYSTEM);
             TextView rank  = view.findViewById(R.id.offender_rank);
             TextView score = view.findViewById(R.id.offender_score);
             if (accent == ACCENT_CUSTOM) {
-                int color = activity.sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
+                int color = activity.prefs().getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
                 if (rank  != null) rank.setTextColor(color);
                 if (score != null) score.setTextColor(color);
             }
             if (score != null) {
                 if (item.badge != null && !item.badge.trim().isEmpty()) {
                     int badgeColor = accent == ACCENT_CUSTOM
-                            ? activity.sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
+                            ? activity.prefs().getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
                             : com.google.android.material.color.MaterialColors.getColor(
                                     score, com.google.android.material.R.attr.colorSecondary);
                     android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
