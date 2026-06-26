@@ -899,47 +899,37 @@ public class BackgroundAppManager {
 
     private BackgroundRestrictionState getBackgroundRestrictionState() {
         Set<String> fallbackPackages = getBackgroundRestrictedApps();
+        
         if (!supportsBackgroundRestriction() || !shellManager.hasAnyShellPermission()) {
             return new BackgroundRestrictionState(fallbackPackages, false);
         }
-
+    
         Set<String> restrictedPackages = new HashSet<>();
         boolean querySucceeded = false;
-
-        String ignoreOutput = shellManager.runShellCommandAndGetFullOutput(
-                "cmd appops query-op --user current " + BACKGROUND_RESTRICTION_OP + " ignore");
-        if (ignoreOutput != null) {
-            querySucceeded = true;
-            mergeBackgroundRestrictedPackages(restrictedPackages, ignoreOutput);
+    
+        for (String op : ALL_OPS) {
+            String[] modes = {"ignore", "deny"};
+            
+            for (String mode : modes) {
+                String output = shellManager.runShellCommandAndGetFullOutput(
+                        "cmd appops query-op --user current " + op + " " + mode);
+                
+                if (output != null && !output.isEmpty()) {
+                    querySucceeded = true;
+                    mergeBackgroundRestrictedPackages(restrictedPackages, output);
+                }
+            }
         }
-
-        String denyOutput = shellManager.runShellCommandAndGetFullOutput(
-                "cmd appops query-op --user current " + BACKGROUND_RESTRICTION_OP + " deny");
-        if (denyOutput != null) {
-            querySucceeded = true;
-            mergeBackgroundRestrictedPackages(restrictedPackages, denyOutput);
-        }
-
-        String hardIgnoreOutput = shellManager.runShellCommandAndGetFullOutput(
-                "cmd appops query-op --user current " + FOREGROUND_RESTRICTION_OP + " ignore");
-        if (hardIgnoreOutput != null) {
-            querySucceeded = true;
-            mergeBackgroundRestrictedPackages(restrictedPackages, hardIgnoreOutput);
-        }
-
-        String hardDenyOutput = shellManager.runShellCommandAndGetFullOutput(
-                "cmd appops query-op --user current " + FOREGROUND_RESTRICTION_OP + " deny");
-        if (hardDenyOutput != null) {
-            querySucceeded = true;
-            mergeBackgroundRestrictedPackages(restrictedPackages, hardDenyOutput);
-        }
-
+    
         if (!querySucceeded) {
-            AppDebugManager.w(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": getBackgroundRestrictionState all appops queries failed, using fallback ("
-                    + fallbackPackages.size() + " packages from prefs)");
+            AppDebugManager.w(Category.BACKGROUND_RESTRICTIONS, 
+                FILE_NAME + ": getBackgroundRestrictionState all appops queries failed, using fallback ("
+                + fallbackPackages.size() + " packages from prefs)");
         }
+        
         return new BackgroundRestrictionState(querySucceeded ? restrictedPackages : fallbackPackages, querySucceeded);
     }
+
 
     private void mergeBackgroundRestrictedPackages(Set<String> packages, String output) {
         if (output == null || output.trim().isEmpty()) {
