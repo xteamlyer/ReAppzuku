@@ -729,6 +729,7 @@ Bloquea el lanzamiento de servicios, el programador de tareas (job scheduler) y 
 `RUN_IN_BACKGROUND ignore`\
 `ALARM_WAKEUP ignore`\
 `START_FOREGROUND_SERVICES_FROM_BACKGROUND ignore`\
+`SCHEDULE_EXACT_ALARM`\
 `Standby Bucket: Rare`
 
 - **Estricta / Hard**\
@@ -745,6 +746,7 @@ Una vez que la app se minimiza o cambias a otra — el sistema la cierra inmedia
 `RECEIVE_BOOT_COMPLETED ignore`\
 `INTERACT_ACROSS_PROFILES ignore`\
 `Eliminación de la lista blanca de optimización de batería`\
+`SCHEDULE_EXACT_ALARM`\
 `Standby Bucket: Restricted`
 
 - **Manual**\
@@ -795,6 +797,11 @@ Evita que la app interactúe con otros perfiles de trabajo. Relevante principalm
 **Bloquea:** llamadas entre perfiles y la transferencia de datos entre el perfil principal y el de trabajo.\
 **No bloquea:** el funcionamiento de la app dentro de un solo perfil.
 
+- **SCHEDULE_EXACT_ALARM**
+Impide que la aplicación programe alarmas exactas mediante `AlarmManager.setExact()` y métodos similares. A diferencia de `ALARM_WAKEUP`, esta restricción bloquea el registro de la alarma en sí, no solo la capacidad de despertar el dispositivo.\
+**Bloquea:** llamadas a `setExact()`, `setExactAndAllowWhileIdle()` y otros métodos exactos de AlarmManager — la aplicación no podrá registrar una tarea diferida con tiempo preciso.\
+**No bloquea:** temporizadores inexactos (`setInexactRepeating()`), tareas de JobScheduler y WorkManager.
+
 - **Estado Standby: Raro (Rare)**\
 Marcado por el sistema como usado raramente. Bloquea la app a nivel del sistema:
   - Red en segundo plano. La red solo está disponible durante las raras ventanas de mantenimiento del sistema.
@@ -823,6 +830,7 @@ Marcado por el sistema como una app que no se usa desde hace mucho tiempo o que 
 | ALARM_WAKEUP | — | ✓ | ✓ | opcional |
 | RECEIVE_BOOT_COMPLETED | — | — | ✓ | opcional |
 | INTERACT_ACROSS_PROFILES | — | — | ✓ | opcional |
+| SCHEDULE_EXACT_ALARM | — | ✓ | ✓ | opcional |
 | Estado Standby Bucket | — | Rare | Restricted | opcional |
 
 **Estados de la lista**:
