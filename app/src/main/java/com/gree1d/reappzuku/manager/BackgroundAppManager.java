@@ -83,6 +83,7 @@ public class BackgroundAppManager {
     private boolean showPersistentApps = false;
     private SharedPreferences sharedpreferences;
     private RestrictionsScheduler scheduler;
+    private AutoKillManager autoKillManager;
 
     public BackgroundAppManager(Context context, Handler handler, ExecutorService executor,
             ShellManager shellManager) {
@@ -95,6 +96,10 @@ public class BackgroundAppManager {
 
     public void setScheduler(RestrictionsScheduler scheduler) {
         this.scheduler = scheduler;
+    }
+
+    public void setAutoKillManager(AutoKillManager autoKillManager) {
+        this.autoKillManager = autoKillManager;
     }
 
     private String runPs(String psCommand) {
@@ -501,25 +506,35 @@ public class BackgroundAppManager {
                     int[] opsCount = applyManualOps(packageName, opsMask, "ignore");
                     int manualBucket = getManualBucket(packageName);
                     if (manualBucket != 0) applyBucket(packageName, manualBucket);
-                    ShellManager.ShellResult forceStopResult = shellManager
-                            .runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    if (getManualWhitelistRemoval(packageName)) applyBatteryWhitelistRemoval(packageName);
+                    if (autoKillManager != null) {
+                        autoKillManager.killPackageSync(packageName);
+                    } else {
+                        shellManager.runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    }
                     if (opsCount[0] == 0) success = false;
-                    logRestrictionResult(packageName, "reapply-manual", null, forceStopResult, opsCount, manualBucket);
+                    logRestrictionResult(packageName, "reapply-manual", null, null, opsCount, manualBucket);
                 } else if (hardSet.contains(packageName)) {
                     int[] opsCount = applyAllHardOps(packageName, "ignore");
                     applyBucket(packageName, STANDBY_BUCKET_RESTRICTED);
                     applyBatteryWhitelistRemoval(packageName);
-                    ShellManager.ShellResult forceStopResult = shellManager
-                            .runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    if (autoKillManager != null) {
+                        autoKillManager.killPackageSync(packageName);
+                    } else {
+                        shellManager.runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    }
                     if (opsCount[0] == 0) success = false;
-                    logRestrictionResult(packageName, "reapply-hard", null, forceStopResult, opsCount, STANDBY_BUCKET_RESTRICTED);
+                    logRestrictionResult(packageName, "reapply-hard", null, null, opsCount, STANDBY_BUCKET_RESTRICTED);
                 } else if (mediumSet.contains(packageName)) {
                     int[] opsCount = applyMediumOps(packageName, "ignore");
                     applyBucket(packageName, STANDBY_BUCKET_RARE);
-                    ShellManager.ShellResult forceStopResult = shellManager
-                            .runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    if (autoKillManager != null) {
+                        autoKillManager.killPackageSync(packageName);
+                    } else {
+                        shellManager.runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    }
                     if (opsCount[0] == 0) success = false;
-                    logRestrictionResult(packageName, "reapply-medium", null, forceStopResult, opsCount, STANDBY_BUCKET_RARE);
+                    logRestrictionResult(packageName, "reapply-medium", null, null, opsCount, STANDBY_BUCKET_RARE);
                 } else {
                     ShellManager.ShellResult restrictResult = shellManager
                             .runShellCommandForResult(buildBackgroundRestrictionCommand(packageName, "ignore"));
@@ -528,10 +543,12 @@ public class BackgroundAppManager {
                         logRestrictionResult(packageName, "reapply-soft", restrictResult, null);
                         continue;
                     }
-                    ShellManager.ShellResult forceStopResult = shellManager
-                            .runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
-                    if (!forceStopResult.succeeded()) success = false;
-                    logRestrictionResult(packageName, "reapply-soft", restrictResult, forceStopResult);
+                    if (autoKillManager != null) {
+                        autoKillManager.killPackageSync(packageName);
+                    } else {
+                        shellManager.runShellCommandForResult(FORCE_STOP_COMMAND_PREFIX + packageName);
+                    }
+                    logRestrictionResult(packageName, "reapply-soft", restrictResult, null);
                 }
             }
 
@@ -597,6 +614,7 @@ public class BackgroundAppManager {
                     int[] opsCount = applyManualOps(packageName, opsMask, "ignore");
                     int manualBucket = getManualBucket(packageName);
                     if (manualBucket != 0) applyBucket(packageName, manualBucket);
+                    if (getManualWhitelistRemoval(packageName)) applyBatteryWhitelistRemoval(packageName);
                     if (opsCount[0] == 0) success = false;
                     logRestrictionResult(packageName, "reapply-manual", null, null, opsCount, manualBucket);
                 } else if (hard.contains(packageName)) {
@@ -815,9 +833,28 @@ public class BackgroundAppManager {
 
     public String liftRestrictionsForScheduler(String packageName) {
         if (!getBackgroundRestrictedApps().contains(packageName)) return "skipped";
+        RestrictionType type = getRestrictionType(packageName);
         resetBucket(packageName);
         restoreBatteryWhitelist(packageName);
-        int[] counts = applyAllHardOps(packageName, "allow");
+        int[] counts;
+        switch (type) {
+            case HARD:
+                counts = applyAllHardOps(packageName, "default");
+                break;
+            case MEDIUM:
+                counts = applyMediumOps(packageName, "default");
+                break;
+            case MANUAL:
+                int opsMask = getManualOpsMask(packageName);
+                counts = applyManualOps(packageName, opsMask, "default");
+                break;
+            case SOFT:
+            default:
+                boolean ok = shellManager.runShellCommandForResult(
+                        buildBackgroundRestrictionCommand(packageName, "default")).succeeded();
+                counts = ok ? new int[]{1, 0} : new int[]{0, 1};
+                break;
+        }
         if (counts[0] == 0) return "error";
         if (counts[1] == 0) return "ok";
         return "partial";
@@ -843,6 +880,7 @@ public class BackgroundAppManager {
                 counts = applyManualOps(packageName, opsMask, "ignore");
                 int manualBucket = getManualBucket(packageName);
                 if (manualBucket != 0) applyBucket(packageName, manualBucket);
+                if (getManualWhitelistRemoval(packageName)) applyBatteryWhitelistRemoval(packageName);
                 break;
             case SOFT:
             default:
@@ -893,6 +931,10 @@ public class BackgroundAppManager {
         saveBatteryWhitelistRemoved(removed);
         BackgroundRestrictionLog.log(context, packageName, "allow",
                 "battery-whitelist-restored", "restored to deviceidle whitelist");
+    }
+
+    public void ensureBatteryWhitelistRestriction(String packageName) {
+        applyBatteryWhitelistRemoval(packageName);
     }
 
 
@@ -996,6 +1038,10 @@ public class BackgroundAppManager {
                 }
 
                 AppDebugManager.w(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": watchdog: drift detected " + pkg + " missing=" + missing);
+                if (autoKillManager != null) {
+                    AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": watchdog: killing before repair: " + pkg);
+                    autoKillManager.killPackageSync(pkg);
+                }
                 int ok = 0, fail = 0;
                 List<String> failedOps = new ArrayList<>();
                 List<String> repairedOps = new ArrayList<>();
@@ -1302,6 +1348,14 @@ public class BackgroundAppManager {
 
     public void saveManualBucket(String packageName, int bucket) {
         sharedpreferences.edit().putInt(KEY_MANUAL_BUCKET_PREFIX + packageName, bucket).apply();
+    }
+
+    public boolean getManualWhitelistRemoval(String packageName) {
+        return sharedpreferences.getBoolean(KEY_MANUAL_WHITELIST_REMOVAL_PREFIX + packageName, false);
+    }
+
+    public void saveManualWhitelistRemoval(String packageName, boolean value) {
+        sharedpreferences.edit().putBoolean(KEY_MANUAL_WHITELIST_REMOVAL_PREFIX + packageName, value).apply();
     }
 
 
