@@ -718,7 +718,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
     private void showManualOpsDialog(AppModel app, TextView chipView, int currentMask, int currentBucket) {
         AppDebugManager.d(Category.SETTINGS_PAGE, "FilterAppsAdapter: showManualOpsDialog pkg=" + app.getPackageName() + ", currentMask=0x" + Integer.toHexString(currentMask) + ", currentBucket=" + currentBucket);
         String[] ops = BackgroundAppManager.ALL_OPS;
-
+    
         String[] labels = {
             context.getString(R.string.manual_op_run_any_in_background),
             context.getString(R.string.manual_op_run_in_background),
@@ -730,18 +730,18 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             context.getString(R.string.manual_op_interact_across_profiles),
             context.getString(R.string.manual_op_schedule_exact_alarm),
         };
-
+    
         boolean[] checked = new boolean[ops.length];
         for (int i = 0; i < ops.length; i++) {
             checked[i] = (currentMask & (1 << i)) != 0;
         }
-
+    
         android.widget.ScrollView scrollView = new android.widget.ScrollView(context);
         android.widget.LinearLayout listLayout = new android.widget.LinearLayout(context);
         listLayout.setOrientation(android.widget.LinearLayout.VERTICAL);
         int paddingH = (int) (context.getResources().getDisplayMetrics().density * 16);
         int paddingV = (int) (context.getResources().getDisplayMetrics().density * 4);
-
+    
         CheckBox[] boxes = new CheckBox[ops.length];
         for (int i = 0; i < ops.length; i++) {
             final int idx = i;
@@ -753,7 +753,16 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             boxes[i] = cb;
             listLayout.addView(cb);
         }
-
+    
+        final boolean[] whitelistRemoval = {manualWhitelistRemovalSet.contains(app.getPackageName())};
+    
+        CheckBox cbWhitelistRemoval = new CheckBox(context);
+        cbWhitelistRemoval.setText(context.getString(R.string.manual_whitelist_removal));
+        cbWhitelistRemoval.setChecked(whitelistRemoval[0]);
+        cbWhitelistRemoval.setPadding(paddingH, paddingV * 3, paddingH, paddingV * 3);
+        cbWhitelistRemoval.setOnCheckedChangeListener((btn, isChecked) -> whitelistRemoval[0] = isChecked);
+        listLayout.addView(cbWhitelistRemoval);
+        
         View divider = new View(context);
         android.widget.LinearLayout.LayoutParams divParams =
                 new android.widget.LinearLayout.LayoutParams(
@@ -762,22 +771,21 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         divider.setLayoutParams(divParams);
         divider.setBackgroundColor(0x44888888);
         listLayout.addView(divider);
-
+    
         final int[] selectedBucket = {currentBucket};
-        final boolean[] whitelistRemoval = {manualWhitelistRemovalSet.contains(app.getPackageName())};
-
+    
         CheckBox cbRare = new CheckBox(context);
         cbRare.setText(context.getString(R.string.manual_bucket_rare));
         cbRare.setChecked(currentBucket == 40);
         cbRare.setPadding(paddingH, paddingV * 3, paddingH, paddingV * 3);
         listLayout.addView(cbRare);
-
+    
         CheckBox cbRestricted = new CheckBox(context);
         cbRestricted.setText(context.getString(R.string.manual_bucket_restricted));
         cbRestricted.setChecked(currentBucket == 45);
         cbRestricted.setPadding(paddingH, paddingV * 3, paddingH, paddingV * 3);
         listLayout.addView(cbRestricted);
-
+    
         cbRare.setOnCheckedChangeListener((btn, isChecked) -> {
             if (isChecked) {
                 selectedBucket[0] = 40;
@@ -794,25 +802,10 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
                 selectedBucket[0] = 0;
             }
         });
-
-        View divider2 = new View(context);
-        android.widget.LinearLayout.LayoutParams divParams2 =
-                new android.widget.LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, 1);
-        divParams2.setMargins(paddingH, paddingV * 3, paddingH, paddingV * 3);
-        divider2.setLayoutParams(divParams2);
-        divider2.setBackgroundColor(0x44888888);
-        listLayout.addView(divider2);
-
-        CheckBox cbWhitelistRemoval = new CheckBox(context);
-        cbWhitelistRemoval.setText(context.getString(R.string.manual_whitelist_removal));
-        cbWhitelistRemoval.setChecked(whitelistRemoval[0]);
-        cbWhitelistRemoval.setPadding(paddingH, paddingV * 3, paddingH, paddingV * 3);
-        cbWhitelistRemoval.setOnCheckedChangeListener((btn, isChecked) -> whitelistRemoval[0] = isChecked);
-        listLayout.addView(cbWhitelistRemoval);
-
+    
+    
         scrollView.addView(listLayout);
-
+    
         new MaterialAlertDialogBuilder(context)
                 .setTitle(context.getString(R.string.filter_manual_ops_dialog_title,
                         app.getAppName()))
@@ -855,7 +848,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
                     notifySelectionChanged();
                 })
                 .show();
-
+    
         if (hasAccent()) {
             android.content.res.ColorStateList tint =
                     android.content.res.ColorStateList.valueOf(accentColor);
@@ -865,6 +858,7 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             cbWhitelistRemoval.setButtonTintList(tint);
         }
     }
+
 
     private View makeDivider(int paddingH) {
         View divider = new View(context);
