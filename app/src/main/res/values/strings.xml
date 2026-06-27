@@ -110,6 +110,7 @@
     <string name="manual_op_boot_completed" translatable="false">RECEIVE_BOOT_COMPLETED</string>
     <string name="manual_op_interact_across_profiles" translatable="false">INTERACT_ACROSS_PROFILES</string>
     <string name="manual_op_schedule_exact_alarm" translatable="false">SCHEDULE_EXACT_ALARM</string>
+    <string name="manual_whitelist_removal" translatable="false">Battery Whitelist (deviceidle) remove</string>
 
     <!-- Main menu (main.xml) -->
     <string name="menu_select_all">Select all</string>
