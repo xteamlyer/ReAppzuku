@@ -724,10 +724,11 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             context.getString(R.string.manual_op_run_in_background),
             context.getString(R.string.manual_op_start_foreground),
             context.getString(R.string.system_exempt_from_power_restrictions),
-            context.getString(R.string.start_activities_from_background),
+            context.getString(R.string.get_usage_stats),
             context.getString(R.string.manual_op_wake_lock),            
             context.getString(R.string.manual_op_schedule_exact_alarm),
             context.getString(R.string.manual_op_interact_across_profiles),
+            context.getString(R.string.access_notifications),
             
         };
     
