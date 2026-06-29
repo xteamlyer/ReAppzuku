@@ -3,7 +3,6 @@ package com.gree1d.reappzuku.utils;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
