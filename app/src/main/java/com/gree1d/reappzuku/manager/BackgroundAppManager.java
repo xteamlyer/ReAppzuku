@@ -41,10 +41,9 @@ public class BackgroundAppManager {
     private static final String BACKGROUND_RESTRICTION_OP = "RUN_ANY_IN_BACKGROUND";
     private static final String BG_RUN_RESTRICTION_OP = "RUN_IN_BACKGROUND";
     private static final String FOREGROUND_RESTRICTION_OP = "START_FOREGROUND";
-    private static final String FGS_FROM_BG_RESTRICTION_OP = "START_FOREGROUND_SERVICES_FROM_BACKGROUND";
-    private static final String BOOT_RESTRICTION_OP = "RECEIVE_BOOT_COMPLETED";
     private static final String WAKE_LOCK_RESTRICTION_OP = "WAKE_LOCK";
-    private static final String ALARM_RESTRICTION_OP = "ALARM_WAKEUP";
+    private static final String SYSTEM_EXEMPT_OP = "SYSTEM_EXEMPT_FROM_POWER_RESTRICTIONS";
+    private static final String START_ACTIVITIES_FROM_BG_OP = "START_ACTIVITIES_FROM_BACKGROUND";
     private static final String INTERACT_ACROSS_PROFILES_OP = "INTERACT_ACROSS_PROFILES";
     public static final String OP_SCHEDULE_EXACT_ALARM = "SCHEDULE_EXACT_ALARM";
     private static final Pattern PACKAGE_NAME_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+");
@@ -56,19 +55,18 @@ public class BackgroundAppManager {
         BACKGROUND_RESTRICTION_OP,
         BG_RUN_RESTRICTION_OP,
         FOREGROUND_RESTRICTION_OP,
-        FGS_FROM_BG_RESTRICTION_OP,
         WAKE_LOCK_RESTRICTION_OP,
-        ALARM_RESTRICTION_OP,
-        BOOT_RESTRICTION_OP,
+        SYSTEM_EXEMPT_OP,
+        START_ACTIVITIES_FROM_BG_OP,
         INTERACT_ACROSS_PROFILES_OP,
-        OP_SCHEDULE_EXACT_ALARM 
+        OP_SCHEDULE_EXACT_ALARM
     };
 
     public static final String[] MEDIUM_OPS = {
         BACKGROUND_RESTRICTION_OP,
         BG_RUN_RESTRICTION_OP,
-        ALARM_RESTRICTION_OP,
-        FGS_FROM_BG_RESTRICTION_OP,
+        SYSTEM_EXEMPT_OP,
+        START_ACTIVITIES_FROM_BG_OP,
         OP_SCHEDULE_EXACT_ALARM
     };
 
@@ -701,10 +699,6 @@ public class BackgroundAppManager {
 
     private String buildHardRestrictionCommand(String packageName, String mode) {
         return "cmd appops set --user current " + packageName + " " + FOREGROUND_RESTRICTION_OP + " " + mode;
-    }
-
-    private String buildBootRestrictionCommand(String packageName, String mode) {
-        return "cmd appops set --user current " + packageName + " " + BOOT_RESTRICTION_OP + " " + mode;
     }
 
     private boolean applyBucket(String packageName, int bucket) {
