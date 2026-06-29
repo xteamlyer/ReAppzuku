@@ -723,12 +723,12 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             context.getString(R.string.manual_op_run_any_in_background),
             context.getString(R.string.manual_op_run_in_background),
             context.getString(R.string.manual_op_start_foreground),
-            context.getString(R.string.manual_op_fgs_from_background),
-            context.getString(R.string.manual_op_wake_lock),
-            context.getString(R.string.manual_op_alarm_wakeup),
-            context.getString(R.string.manual_op_boot_completed),
-            context.getString(R.string.manual_op_interact_across_profiles),
+            context.getString(R.string.system_exempt_from_power_restrictions),
+            context.getString(R.string.start_activities_from_background),
+            context.getString(R.string.manual_op_wake_lock),            
             context.getString(R.string.manual_op_schedule_exact_alarm),
+            context.getString(R.string.manual_op_interact_across_profiles),
+            
         };
     
         boolean[] checked = new boolean[ops.length];
