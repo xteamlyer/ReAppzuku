@@ -174,7 +174,13 @@ public class MainActivity extends BaseActivity {
         loadSettingsAndApplyToManager();
 
         shellManager.setShizukuPermissionListener(shizukuPermissionListener);
-        shellManager.setOnRootCheckCompleteListener(() -> shellManager.checkShellPermissions());
+        
+        executor.execute(() -> {
+            shellManager.resolveAnyShellPermissionBlocking();
+            
+            handler.post(() -> shellManager.checkShellPermissions());
+        });
+        
         loadBackgroundApps();
         ramMonitor.startMonitoring();
         AppDebugManager.d(Category.MAIN_PAGE, "MainActivity: onCreate finished");
