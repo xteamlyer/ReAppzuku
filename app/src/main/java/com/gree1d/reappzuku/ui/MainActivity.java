@@ -76,6 +76,7 @@ public class MainActivity extends BaseActivity {
     private static final int NOTIFICATION_PERMISSION_CODE = 1;
 
     private ActivityMainBinding binding;
+    private int currentNavBarHeight = 0;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private ShellManager shellManager;
@@ -173,13 +174,7 @@ public class MainActivity extends BaseActivity {
         loadSettingsAndApplyToManager();
 
         shellManager.setShizukuPermissionListener(shizukuPermissionListener);
-        
-        executor.execute(() -> {
-            shellManager.resolveAnyShellPermissionBlocking();
-            
-            handler.post(() -> shellManager.checkShellPermissions());
-        });
-        
+        shellManager.setOnRootCheckCompleteListener(() -> shellManager.checkShellPermissions());
         loadBackgroundApps();
         ramMonitor.startMonitoring();
         AppDebugManager.d(Category.MAIN_PAGE, "MainActivity: onCreate finished");
@@ -252,6 +247,14 @@ public class MainActivity extends BaseActivity {
         });
         binding.bottomNavigation.getRoot().addOnLayoutChangeListener(
                 (v, l, t, r, b, ol, ot, or, ob) -> updateRecyclerBottomPadding());
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.coordinator, (v, insets) -> {
+            currentNavBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            if (binding.killButton.getVisibility() == View.VISIBLE) {
+                binding.killButton.setPadding(0, 0, 0, currentNavBarHeight);
+            }
+            return insets;
+        });
 
         listAdapter.setOnAppActionListener(new BackgroundAppsRecyclerViewAdapter.OnAppActionListener() {
             @Override
@@ -863,12 +866,7 @@ public class MainActivity extends BaseActivity {
         boolean hasSelection = fullAppsList.stream().anyMatch(AppModel::isSelected);
         if (hasSelection) {
             binding.bottomNavigation.getRoot().setVisibility(View.GONE);
-            int navBarHeight = 0;
-            WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(binding.coordinator);
-            if (insets != null) {
-                navBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
-            }
-            binding.killButton.setPadding(0, 0, 0, navBarHeight);
+            binding.killButton.setPadding(0, 0, 0, currentNavBarHeight);
             binding.killButton.setVisibility(View.VISIBLE);
             updateKillButtonText();
         } else {
