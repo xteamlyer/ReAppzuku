@@ -204,6 +204,15 @@ public class MainActivity extends BaseActivity {
             ((androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) lp).bottomMargin = marginPx;
             binding.killButton.setLayoutParams(lp);
         }
+
+        android.view.ViewGroup.LayoutParams scrimLp = binding.killButtonNavScrim.getLayoutParams();
+        if (marginPx > 0) {
+            scrimLp.height = marginPx;
+            binding.killButtonNavScrim.setLayoutParams(scrimLp);
+            binding.killButtonNavScrim.setVisibility(View.VISIBLE);
+        } else {
+            binding.killButtonNavScrim.setVisibility(View.GONE);
+        }
     }
 
     private void setupBottomNavigation() {
@@ -231,6 +240,7 @@ public class MainActivity extends BaseActivity {
 
     private void setupKillButton() {
         int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        int killButtonColor;
         if (accent == ACCENT_CUSTOM) {
             int customColor = sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR);
             int onColor = sharedPreferences.getInt(KEY_ACCENT_ON_COLOR, ACCENT_ON_WHITE) == ACCENT_ON_BLACK
@@ -238,16 +248,20 @@ public class MainActivity extends BaseActivity {
             binding.killButton.setBackgroundTintList(
                     ColorStateList.valueOf(customColor));
             binding.killButton.setTextColor(onColor);
+            killButtonColor = customColor;
         } else if (accent != ACCENT_SYSTEM) {
             int accentColor = resolveColorAttr(androidx.appcompat.R.attr.colorPrimary);
             binding.killButton.setBackgroundTintList(
                     ColorStateList.valueOf(accentColor));
             binding.killButton.setTextColor(isLightAccent() ? Color.BLACK : Color.WHITE);
+            killButtonColor = accentColor;
         } else {
+            killButtonColor = Color.parseColor("#0136FF");
             binding.killButton.setBackgroundTintList(
-                    ColorStateList.valueOf(Color.parseColor("#0136FF")));
+                    ColorStateList.valueOf(killButtonColor));
             binding.killButton.setTextColor(Color.WHITE);
         }
+        binding.killButtonNavScrim.setBackgroundColor(killButtonColor);
     }
 
     private void setupListeners() {
