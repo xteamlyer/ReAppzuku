@@ -198,6 +198,14 @@ public class MainActivity extends BaseActivity {
         binding.recyclerView.setPadding(0, topPadding, 0, bottomNavHeight);
     }
 
+    private void setKillButtonBottomMargin(int marginPx) {
+        android.view.ViewGroup.LayoutParams lp = binding.killButton.getLayoutParams();
+        if (lp instanceof androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+            ((androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) lp).bottomMargin = marginPx;
+            binding.killButton.setLayoutParams(lp);
+        }
+    }
+
     private void setupBottomNavigation() {
         binding.bottomNavigation.navIconMain.setSelected(true);
         binding.bottomNavigation.navIconSettings.setSelected(false);
@@ -257,7 +265,7 @@ public class MainActivity extends BaseActivity {
         ViewCompat.setOnApplyWindowInsetsListener(binding.coordinator, (v, insets) -> {
             currentNavBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
             if (binding.killButton.getVisibility() == View.VISIBLE) {
-                binding.killButton.setPadding(0, 0, 0, currentNavBarHeight);
+                setKillButtonBottomMargin(currentNavBarHeight);
             }
             return insets;
         });
@@ -872,12 +880,12 @@ public class MainActivity extends BaseActivity {
         boolean hasSelection = fullAppsList.stream().anyMatch(AppModel::isSelected);
         if (hasSelection) {
             binding.bottomNavigation.getRoot().setVisibility(View.GONE);
-            binding.killButton.setPadding(0, 0, 0, currentNavBarHeight);
+            setKillButtonBottomMargin(currentNavBarHeight);
             binding.killButton.setVisibility(View.VISIBLE);
             updateKillButtonText();
         } else {
             binding.killButton.setVisibility(View.GONE);
-            binding.killButton.setPadding(0, 0, 0, 0);
+            setKillButtonBottomMargin(0);
             binding.bottomNavigation.getRoot().setVisibility(View.VISIBLE);
         }
         updateSelectAllMenuItem();
