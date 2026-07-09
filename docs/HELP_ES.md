@@ -9,7 +9,7 @@
 - [¿Qué es ReAppzuku?](#qué-es-reappzuku)
 - [Requisitos](#requisitos)
 - [Configuración de supervivencia en segundo plano](#configuración-de-supervivencia-en-segundo-plano)
-- [¿Por dónde empezar?](#¿por-dónde-empezar?)
+- [¿Por dónde empezar?](#por-dónde-empezar)
 - [Control manual](#control-manual)
 - [Principal](#principal)
   - [Barra de herramientas](#barra-de-herramientas)
