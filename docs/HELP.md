@@ -226,7 +226,7 @@ At first glance, ReAppzuku may look like a complex tool with a huge number of se
 
 **Initial setup**\
 Grant Root or Shizuku permissions. Be sure to remove all system restrictions on the app (battery optimization, autostart lock, recents lock, etc.).\
-After launching ReAppzuku, go to settings and enable **Background Service** — this setting starts the app's background processes: app monitoring, statistics collection, etc.
+After launching ReAppzuku, go to settings and enable **Foreground Service** — this setting starts the app's background processes: app monitoring, statistics collection, etc.
 
 **Collecting statistics**\
 Don't rush to enable Auto-Kill or configure other restrictions right away. Give the app 1–2 days to collect statistics — this will help more accurately determine which apps actually load the device in the background.
