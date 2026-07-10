@@ -513,7 +513,7 @@ public class AppTriggersAnalyzer {
             boolean persistent = false;
 
             Pattern procPat  = Pattern.compile(
-                    "ProcessRecord\\{[^}]+\\s" + Pattern.quote(packageName) + "/");
+                    "ProcessRecord\\{[0-9a-fA-F]+\\s+\\d+:" + Pattern.quote(packageName) + "(?:[/:]|$)");
             Pattern adjPat   = Pattern.compile("\\badj=([-\\d]+)");
             Pattern statePat = Pattern.compile("\\bcurProcState=(\\w+)");
 
