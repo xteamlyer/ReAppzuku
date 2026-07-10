@@ -753,7 +753,7 @@ Auto-Kill спрацьовує в момент відкриття вибрани
 `INTERACT_ACROSS_PROFILES ignore`\
 `ACCESS_NOTIFICATIONS ignore`\
 `SYSTEM_EXEMPT_FROM_SUSPENSION ignore`\
-`RUN_USER_INITIATED_JOBS`\
+`RUN_USER_INITIATED_JOBS ignore`\
 `Battery optimization whitelist removal`\
 `Standby Bucket: Restricted`
 
