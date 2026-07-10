@@ -102,10 +102,17 @@ public class AppOptionsBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-        expandFullyForCurrentOrientation();
+        if (isWideScreenOrientation()) {
+            expandFullyForWideScreen();
+        }
     }
 
-    private void expandFullyForCurrentOrientation() {
+    private boolean isWideScreenOrientation() {
+        return getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    private void expandFullyForWideScreen() {
         BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
         if (dialog == null) return;
 
