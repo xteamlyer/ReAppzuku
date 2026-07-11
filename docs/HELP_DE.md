@@ -17,7 +17,7 @@
 - [Einstellungen](#einstellungen)
   - [Informationen](#-informationen)
   - [Aussehen](#-aussehen)
-  - [App Stabilität](#-app-stabilität)
+  - [App Stabilität](#️-app-stabilität)
   - [Auto-Kill Einstellungen](#-auto-kill-einstellungen)
   - [Erweiterte Tools](#-erweiterte-tools)
     - [Hintergrundbeschränkungen](#hintergrundbeschränkungen)
