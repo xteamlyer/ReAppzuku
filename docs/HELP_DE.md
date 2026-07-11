@@ -15,16 +15,16 @@
   - [Symbolleiste](#symbolleiste)
   - [App-Trigger](#app-trigger)
 - [Einstellungen](#einstellungen)
-  - [Informationen](#informationen)
-  - [Aussehen](#aussehen)
-  - [App-Stabilität](#app-stabilität)
-  - [Auto-Kill-Einstellungen](#auto-kill-einstellungen)
-  - [Erweiterte Tools](#erweiterte-tools)
+  - [Informationen](#-informationen)
+  - [Aussehen](#-aussehen)
+  - [App Stabilität](#-app-stabilität)
+  - [Auto-Kill Einstellungen](#-auto-kill-einstellungen)
+  - [Erweiterte Tools](#-erweiterte-tools)
     - [Hintergrundbeschränkungen](#hintergrundbeschränkungen)
     - [Planung der Beschränkungen](#planung-der-beschränkungen)
     - [Schlafmodus](#schlafmodus)
-  - [Über](#über)
-- [Statistiken & Protokolle](#statistiken--protokolle)
+  - [Über](#ℹ️-über)
+- [Statistiken & Protokolle](#-statistiken--protokolle)
 - [Geschützte Apps](#geschützte-apps)
 - [FAQ](#faq)
 
@@ -614,7 +614,7 @@ Konfigurieren Sie das Benachrichtigungsverhalten. Kritische Benachrichtigungen u
 
 ---
 
-### ⚙️ App-Stabilität
+### ⚙️ App Stabilität
 ↩️ [Inhaltsverzeichnis](#inhaltsverzeichnis)
 
 **Hintergrunddienst**\
@@ -622,7 +622,7 @@ Hauptschalter für die Automatisierung. Startet den persistenten ReAppzuku-Hinte
 
 ---
 
-### 🎯 Auto-Kill-Einstellungen
+### 🎯 Auto-Kill Einstellungen
 ↩️ [Inhaltsverzeichnis](#inhaltsverzeichnis)
 
 **Periodisches Auto-Kill**\
