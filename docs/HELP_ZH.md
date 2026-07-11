@@ -769,7 +769,7 @@ Android 11–13：设备处于 Deep Doze 或 Light Doze。Wakelocks、网络、J
 `INTERACT_ACROSS_PROFILES ignore`\
 `ACCESS_NOTIFICATIONS ignore`\
 `SYSTEM_EXEMPT_FROM_SUSPENSION ignore`\
-`RUN_USER_INITIATED_JOBS ignore`\
+`RUN_USER_INITIATED_JOBS`\
 `电池优化白名单移除`\
 `Standby Bucket: Restricted`
 
@@ -805,8 +805,6 @@ Android 11–13：设备处于 Deep Doze 或 Light Doze。Wakelocks、网络、J
 
 </details>
 
-</details>
-
 <details>
 <summary>Android 12+</summary>
 
@@ -815,8 +813,6 @@ Android 11–13：设备处于 Deep Doze 或 Light Doze。Wakelocks、网络、J
 
 - **ACCESS_NOTIFICATIONS**
 禁止应用访问通知侦听器服务。此限制可防止应用读取、拦截或与其他应用的通知进行交互。
-
-</details>
 
 </details>
 
