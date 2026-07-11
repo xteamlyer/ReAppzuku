@@ -22,6 +22,7 @@ import com.gree1d.reappzuku.manager.ScanSystem;
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
+import com.gree1d.reappzuku.utils.FocusHighlightUtil;
 
 public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.ViewHolder> {
 
@@ -62,6 +63,8 @@ public class ScanResultAdapter extends RecyclerView.Adapter<ScanResultAdapter.Vi
 
         holder.findingsContainer.removeAllViews();
         buildFindingsView(holder.findingsContainer, load.findings);
+
+        FocusHighlightUtil.apply(holder.header);
 
         holder.header.setOnClickListener(v -> {
             boolean isExpanded = holder.findingsContainer.getVisibility() == View.VISIBLE;

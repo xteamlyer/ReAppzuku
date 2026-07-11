@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.gree1d.reappzuku.utils.AppModel;
+import com.gree1d.reappzuku.utils.FocusHighlightUtil;
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.PreferenceKeys;
 import com.gree1d.reappzuku.core.AppDebugManager;
@@ -147,6 +148,16 @@ public class BackgroundAppsRecyclerViewAdapter extends RecyclerView.Adapter<Back
 
             itemView.setOnClickListener(null);
             itemView.setOnLongClickListener(null);
+
+            binding.linear1.setFocusable(true);
+            binding.linear1.setFocusableInTouchMode(false);
+            binding.btnAppAction.setFocusable(true);
+            binding.btnAppAction.setFocusableInTouchMode(false);
+            binding.linear1.setNextFocusRightId(binding.btnAppAction.getId());
+            binding.btnAppAction.setNextFocusLeftId(binding.linear1.getId());
+
+            FocusHighlightUtil.apply(binding.linear1);
+            FocusHighlightUtil.apply(binding.btnAppAction, 20, 2);
 
             if (selectionMode) {
                 binding.linear1.setOnClickListener(v -> {
