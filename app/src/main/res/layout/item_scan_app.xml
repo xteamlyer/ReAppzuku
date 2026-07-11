@@ -12,7 +12,9 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="12dp"
-        android:background="?attr/selectableItemBackground">
+        android:focusable="true"
+        android:focusableInTouchMode="false"
+        android:clickable="true">
 
         <ImageView
             android:id="@+id/scan_app_icon"
