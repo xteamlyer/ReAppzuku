@@ -1890,6 +1890,9 @@ abstract class SettingsActivityDialogs extends BaseActivity {
         final boolean[] showUser    = {true};
         final boolean[] showRunning = {false};
 
+        final Set<BackgroundAppManager.RestrictionType> restrictionFilter = new HashSet<>();
+        final Set<SleepModeManager.FreezeType> freezeFilter = new HashSet<>();
+
         updateSortButtonText(btnSort, false);
 
         btnSort.setOnClickListener(v -> {
@@ -1900,13 +1903,50 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                     .setCheckable(true).setChecked(showUser[0]);
             popup.getMenu().add(0, 2, 2, getString(R.string.filter_running))
                     .setCheckable(true).setChecked(showRunning[0]);
+
+            if (adapter.isRestrictionMode()) {
+                popup.getMenu().add(0, 3, 3, getString(R.string.restriction_badge_soft))
+                        .setCheckable(true).setChecked(restrictionFilter.contains(BackgroundAppManager.RestrictionType.SOFT));
+                popup.getMenu().add(0, 4, 4, getString(R.string.restriction_badge_medium))
+                        .setCheckable(true).setChecked(restrictionFilter.contains(BackgroundAppManager.RestrictionType.MEDIUM));
+                popup.getMenu().add(0, 5, 5, getString(R.string.restriction_badge_hard))
+                        .setCheckable(true).setChecked(restrictionFilter.contains(BackgroundAppManager.RestrictionType.HARD));
+                popup.getMenu().add(0, 6, 6, getString(R.string.restriction_badge_manual))
+                        .setCheckable(true).setChecked(restrictionFilter.contains(BackgroundAppManager.RestrictionType.MANUAL));
+            } else if (adapter.isSleepMode()) {
+                popup.getMenu().add(0, 3, 3, getString(R.string.freeze_badge_timer))
+                        .setCheckable(true).setChecked(freezeFilter.contains(SleepModeManager.FreezeType.TIMER));
+                popup.getMenu().add(0, 4, 4, getString(R.string.freeze_badge_permanent))
+                        .setCheckable(true).setChecked(freezeFilter.contains(SleepModeManager.FreezeType.PERMANENT));
+            }
+
             popup.setOnMenuItemClickListener(item -> {
                 switch (item.getItemId()) {
                     case 0: showSystem[0]  = !showSystem[0];  item.setChecked(showSystem[0]);  break;
                     case 1: showUser[0]    = !showUser[0];    item.setChecked(showUser[0]);    break;
                     case 2: showRunning[0] = !showRunning[0]; item.setChecked(showRunning[0]); break;
+                    case 3:
+                        if (adapter.isRestrictionMode()) toggleFilter(restrictionFilter, BackgroundAppManager.RestrictionType.SOFT);
+                        else toggleFilter(freezeFilter, SleepModeManager.FreezeType.TIMER);
+                        item.setChecked(!item.isChecked());
+                        break;
+                    case 4:
+                        if (adapter.isRestrictionMode()) toggleFilter(restrictionFilter, BackgroundAppManager.RestrictionType.MEDIUM);
+                        else toggleFilter(freezeFilter, SleepModeManager.FreezeType.PERMANENT);
+                        item.setChecked(!item.isChecked());
+                        break;
+                    case 5:
+                        toggleFilter(restrictionFilter, BackgroundAppManager.RestrictionType.HARD);
+                        item.setChecked(!item.isChecked());
+                        break;
+                    case 6:
+                        toggleFilter(restrictionFilter, BackgroundAppManager.RestrictionType.MANUAL);
+                        item.setChecked(!item.isChecked());
+                        break;
                 }
                 adapter.setFilters(showSystem[0], showUser[0], showRunning[0]);
+                if (adapter.isRestrictionMode()) adapter.setRestrictionTypeFilter(restrictionFilter);
+                if (adapter.isSleepMode()) adapter.setFreezeTypeFilter(freezeFilter);
                 return true;
             });
             popup.setOnDismissListener(d -> updateSortButtonText(btnSort, false));
@@ -1920,6 +1960,10 @@ abstract class SettingsActivityDialogs extends BaseActivity {
     private void updateSortButtonText(TextView btn, boolean open) {
         String label = getString(R.string.filter_sort_button);
         btn.setText(open ? label + "  ▲" : label + "  ▼");
+    }
+
+    private <T> void toggleFilter(Set<T> set, T value) {
+        if (!set.remove(value)) set.add(value);
     }
 
     protected List<AppModel> filterOutProtected(List<AppModel> apps) {
