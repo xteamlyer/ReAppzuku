@@ -44,7 +44,6 @@ class StatisticsActivityDialogs {
 
     private static final String FILE = "StatisticsActivityDialogs";
     private static final int TOP_OFFENDERS_LIMIT = 50;
-    private static final float DIALOG_HEIGHT_FRACTION = 0.7f;
     private static final long[] TOP_OFFENDER_FILTER_WINDOWS_MS = {
             STATS_HISTORY_DURATION_MS,
             24 * 60 * 60 * 1000L,
@@ -823,36 +822,6 @@ class StatisticsActivityDialogs {
         subtitleView.setVisibility(subtitle == null || subtitle.trim().isEmpty() ? View.GONE : View.VISIBLE);
         contentContainer.addView(contentView);
 
-        ListView lv = contentView.findViewById(R.id.top_offenders_list);
-        if (lv != null) {
-            lv.getLayoutParams().height = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-            View footer = new View(activity);
-            footer.setLayoutParams(new android.widget.AbsListView.LayoutParams(
-                    android.widget.AbsListView.LayoutParams.MATCH_PARENT,
-                    Math.round(activity.getResources().getDisplayMetrics().density)));
-            footer.setBackgroundColor(ContextCompat.getColor(activity, R.color.divider_color));
-            lv.addFooterView(footer, null, false);
-        }
-
-        int screenHeight = getUsableScreenHeight();
-        int fixedWindowHeight = (int) (screenHeight * DIALOG_HEIGHT_FRACTION);
-        int chromeHeight = estimateDialogChromeHeight(subtitle);
-        int contentHeight = Math.max(dpToPx(120), fixedWindowHeight - chromeHeight);
-        contentContainer.getLayoutParams().height = contentHeight;
-
-        AlertDialog dialog = new MaterialAlertDialogBuilder(activity).setTitle(title).setView(dialogView).create();
-
-        dialog.setOnShowListener(d -> {
-            android.view.Window window = dialog.getWindow();
-            if (window != null) {
-                window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, fixedWindowHeight);
-            }
-        });
-
-        return dialog;
-    }
-
-    private int getUsableScreenHeight() {
         int screenHeight;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             android.view.WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
@@ -864,23 +833,20 @@ class StatisticsActivityDialogs {
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             screenHeight = dm.heightPixels;
         }
-        return screenHeight;
-    }
+        contentContainer.getLayoutParams().height = (int)(screenHeight * 0.55);
 
-    private int estimateDialogChromeHeight(String subtitle) {
-        float density = activity.getResources().getDisplayMetrics().density;
-        float chromeDp = 8 + 16   
-                + 56              
-                + 52             
-                + 16;            
-        if (subtitle != null && !subtitle.trim().isEmpty()) {
-            chromeDp += 20 + 12;   
+        ListView lv = contentView.findViewById(R.id.top_offenders_list);
+        if (lv != null) {
+            lv.getLayoutParams().height = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+            View footer = new View(activity);
+            footer.setLayoutParams(new android.widget.AbsListView.LayoutParams(
+                    android.widget.AbsListView.LayoutParams.MATCH_PARENT,
+                    Math.round(activity.getResources().getDisplayMetrics().density)));
+            footer.setBackgroundColor(ContextCompat.getColor(activity, R.color.divider_color));
+            lv.addFooterView(footer, null, false);
         }
-        return Math.round(chromeDp * density);
-    }
 
-    private int dpToPx(float dp) {
-        return Math.round(dp * activity.getResources().getDisplayMetrics().density);
+        return new MaterialAlertDialogBuilder(activity).setTitle(title).setView(dialogView).create();
     }
 
     private SettingsListContent createSettingsListContent(String emptyText, boolean showFilter) {
