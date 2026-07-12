@@ -40,6 +40,18 @@
             android:foreground="?attr/selectableItemBackground" />
 
         <TextView
+            android:id="@+id/filter_btn_selectall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/menu_select_all"
+            android:textColor="@color/colorAccent"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:gravity="center"
+            android:foreground="?attr/selectableItemBackground"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/filter_btn_clear"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
