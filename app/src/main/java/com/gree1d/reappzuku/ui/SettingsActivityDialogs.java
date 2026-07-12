@@ -280,7 +280,7 @@ abstract class SettingsActivityDialogs extends BaseActivity {
             searchBox.setVisibility(View.VISIBLE);
             filterOptions.setVisibility(View.VISIBLE);
 
-            setupFilterListeners(dialogView, filterAdapter);
+            setupFilterListeners(dialogView, filterAdapter, true);
             getAppManager().updateRunningState(allApps, () -> {
                 if (!whitelistDialog.isShowing()) return;
                 filterAdapter.notifyDataSetChanged();
@@ -1863,13 +1863,27 @@ abstract class SettingsActivityDialogs extends BaseActivity {
     }
 
     protected void setupFilterListeners(View dialogView, FilterAppsAdapter adapter) {
+        setupFilterListeners(dialogView, adapter, false);
+    }
+
+    protected void setupFilterListeners(View dialogView, FilterAppsAdapter adapter, boolean showSelectAll) {
         TextView btnSort = dialogView.findViewById(R.id.filter_btn_sort);
         TextView btnClear = dialogView.findViewById(R.id.filter_btn_clear);
+        TextView btnSelectAll = dialogView.findViewById(R.id.filter_btn_selectall);
 
         if (getSharedPreferences().getInt(KEY_ACCENT, ACCENT_SYSTEM) == ACCENT_CUSTOM) {
             int color = getDialogAccentColor();
             btnSort.setTextColor(color);
             btnClear.setTextColor(color);
+            btnSelectAll.setTextColor(color);
+        }
+
+        if (showSelectAll) {
+            btnSelectAll.setVisibility(View.VISIBLE);
+            btnSelectAll.setOnClickListener(v -> adapter.selectAllVisible());
+        } else {
+            btnSelectAll.setVisibility(View.GONE);
+            btnSelectAll.setOnClickListener(null);
         }
 
         final boolean[] showSystem  = {false};
