@@ -43,7 +43,7 @@ import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 class StatisticsActivityDialogs {
 
     private static final String FILE = "StatisticsActivityDialogs";
-    private static final int TOP_OFFENDERS_LIMIT = 50;.
+    private static final int TOP_OFFENDERS_LIMIT = 50;
     private static final float DIALOG_HEIGHT_FRACTION = 0.7f;
     private static final long[] TOP_OFFENDER_FILTER_WINDOWS_MS = {
             STATS_HISTORY_DURATION_MS,
