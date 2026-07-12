@@ -822,19 +822,6 @@ class StatisticsActivityDialogs {
         subtitleView.setVisibility(subtitle == null || subtitle.trim().isEmpty() ? View.GONE : View.VISIBLE);
         contentContainer.addView(contentView);
 
-        int screenHeight;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            android.view.WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
-            Insets insets = WindowInsetsCompat.toWindowInsetsCompat(metrics.getWindowInsets())
-                    .getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
-            screenHeight = metrics.getBounds().height() - insets.top - insets.bottom;
-        } else {
-            DisplayMetrics dm = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
-            screenHeight = dm.heightPixels;
-        }
-        contentContainer.getLayoutParams().height = (int)(screenHeight * 0.55);
-
         ListView lv = contentView.findViewById(R.id.top_offenders_list);
         if (lv != null) {
             lv.getLayoutParams().height = android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -846,7 +833,47 @@ class StatisticsActivityDialogs {
             lv.addFooterView(footer, null, false);
         }
 
-        return new MaterialAlertDialogBuilder(activity).setTitle(title).setView(dialogView).create();
+        AlertDialog dialog = new MaterialAlertDialogBuilder(activity).setTitle(title).setView(dialogView).create();
+
+        dialog.setOnShowListener(d -> {
+            android.view.Window window = dialog.getWindow();
+            if (window == null) return;
+
+            int fixedWindowHeight = computeFixedDialogWindowHeight();
+            window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, fixedWindowHeight);
+
+            dialogView.post(() -> {
+                int chromeHeight = dialogView.getHeight() - contentContainer.getHeight();
+                int targetContentHeight = fixedWindowHeight - chromeHeight;
+                if (targetContentHeight > 0) {
+                    contentContainer.getLayoutParams().height = targetContentHeight;
+                    contentContainer.requestLayout();
+                }
+            });
+        });
+
+        return dialog;
+    }
+
+
+    private int computeFixedDialogWindowHeight() {
+        int screenHeight;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            android.view.WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
+            Insets insets = WindowInsetsCompat.toWindowInsetsCompat(metrics.getWindowInsets())
+                    .getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            screenHeight = metrics.getBounds().height() - insets.top - insets.bottom;
+        } else {
+            DisplayMetrics dm = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+            screenHeight = dm.heightPixels;
+        }
+
+        boolean isLandscape = activity.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+
+        float fraction = isLandscape ? 0.9f : 0.55f;
+        return (int) (screenHeight * fraction);
     }
 
     private SettingsListContent createSettingsListContent(String emptyText, boolean showFilter) {
