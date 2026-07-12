@@ -46,6 +46,9 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
     private boolean showRunningOnly = false;
     private CharSequence lastConstraint = "";
 
+    private Set<BackgroundAppManager.RestrictionType> restrictionTypeFilter = new HashSet<>();
+    private Set<SleepModeManager.FreezeType> freezeTypeFilter = new HashSet<>();
+
     private final boolean restrictionMode;
     private final boolean sleepMode;
 
@@ -217,6 +220,26 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         AppDebugManager.d(Category.SETTINGS_PAGE, "FilterAppsAdapter: initialized (restrictionMode=" + restrictionMode + ", sleepMode=" + sleepMode + "), total=" + allApps.size() + ", filtered=" + filteredApps.size());
     }
 
+    public boolean isRestrictionMode() {
+        return restrictionMode;
+    }
+
+    public boolean isSleepMode() {
+        return sleepMode;
+    }
+
+    public void setRestrictionTypeFilter(Set<BackgroundAppManager.RestrictionType> types) {
+        AppDebugManager.d(Category.SETTINGS_PAGE, "FilterAppsAdapter: setRestrictionTypeFilter() types=" + types);
+        this.restrictionTypeFilter = types;
+        getFilter().filter(lastConstraint);
+    }
+
+    public void setFreezeTypeFilter(Set<SleepModeManager.FreezeType> types) {
+        AppDebugManager.d(Category.SETTINGS_PAGE, "FilterAppsAdapter: setFreezeTypeFilter() types=" + types);
+        this.freezeTypeFilter = types;
+        getFilter().filter(lastConstraint);
+    }
+
     public void setOnSelectionChangedListener(OnSelectionChangedListener listener) {
         this.selectionChangedListener = listener;
     }
@@ -312,6 +335,14 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         notifyDataSetChanged();
     }
 
+    public void selectAllVisible() {
+        AppDebugManager.d(Category.SETTINGS_PAGE, "FilterAppsAdapter: selectAllVisible() called, count=" + filteredApps.size());
+        for (AppModel app : filteredApps) {
+            app.setSelected(true);
+        }
+        notifyDataSetChanged();
+    }
+
     private void filterInitialList() {
         this.filteredApps.clear();
         for (AppModel app : allApps) {
@@ -331,6 +362,18 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
         if (app.isSystemApp() && !showSystem) return false;
         if (!app.isSystemApp() && !showUser) return false;
         if (showRunningOnly && app.getAppRamBytes() <= 0) return false;
+        if (restrictionMode && !restrictionTypeFilter.isEmpty()) {
+            if (!app.isSelected()) return false;
+            BackgroundAppManager.RestrictionType type = restrictionTypeMap.getOrDefault(
+                    app.getPackageName(), BackgroundAppManager.RestrictionType.SOFT);
+            if (!restrictionTypeFilter.contains(type)) return false;
+        }
+        if (sleepMode && !freezeTypeFilter.isEmpty()) {
+            if (!app.isSelected()) return false;
+            SleepModeManager.FreezeType type = freezeTypeMap.getOrDefault(
+                    app.getPackageName(), SleepModeManager.FreezeType.TIMER);
+            if (!freezeTypeFilter.contains(type)) return false;
+        }
         return true;
     }
 
@@ -733,7 +776,6 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
             context.getString(R.string.run_user_initiated_jobs),
         };
     
-        // SDK-unsupported ops are checked=false and locked regardless of any stale saved bit.
         int supportedMask = BackgroundAppManager.supportedOpsMask();
         boolean[] checked = new boolean[ops.length];
         for (int i = 0; i < ops.length; i++) {
@@ -762,7 +804,6 @@ public class FilterAppsAdapter extends BaseAdapter implements Filterable {
                 cb.setAlpha(0.4f);
                 AppDebugManager.d(Category.SETTINGS_PAGE, "FilterAppsAdapter: manualOps op unsupported on sdk="
                         + android.os.Build.VERSION.SDK_INT + " op=" + ops[idx]);
-                // No listener attached — checked[idx] stays false and cannot be toggled by the user.
             }
             boxes[i] = cb;
             listLayout.addView(cb);

@@ -753,7 +753,7 @@ Auto-Kill спрацьовує в момент відкриття вибрани
 `INTERACT_ACROSS_PROFILES ignore`\
 `ACCESS_NOTIFICATIONS ignore`\
 `SYSTEM_EXEMPT_FROM_SUSPENSION ignore`\
-`RUN_USER_INITIATED_JOBS ignore`\
+`RUN_USER_INITIATED_JOBS`\
 `Battery optimization whitelist removal`\
 `Standby Bucket: Restricted`
 
@@ -789,8 +789,6 @@ Auto-Kill спрацьовує в момент відкриття вибрани
 
 </details>
 
-</details>
-
 <details>
 <summary>Android 12+</summary>
 
@@ -799,8 +797,6 @@ Auto-Kill спрацьовує в момент відкриття вибрани
 
 - **ACCESS_NOTIFICATIONS**
 Забороняє додатку доступ до служби прослуховування сповіщень. Це обмеження не дозволяє додатку читати, перехоплювати або взаємодіяти зі сповіщеннями інших програм.
-
-</details>
 
 </details>
 

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,9 +14,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import com.gree1d.reappzuku.utils.AppModel;
+import com.gree1d.reappzuku.utils.FocusHighlightUtil;
 import com.gree1d.reappzuku.R;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
@@ -97,6 +101,35 @@ public class AppOptionsBottomSheet extends BottomSheetDialogFragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        if (isWideScreenOrientation()) {
+            expandFullyForWideScreen();
+        }
+    }
+
+    private boolean isWideScreenOrientation() {
+        return getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    private void expandFullyForWideScreen() {
+        BottomSheetDialog dialog = (BottomSheetDialog) getDialog();
+        if (dialog == null) return;
+
+        FrameLayout bottomSheet = dialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheet == null) return;
+
+        BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+        behavior.setSkipCollapsed(true);
+        behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+        ViewGroup.LayoutParams params = bottomSheet.getLayoutParams();
+        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+        bottomSheet.setLayoutParams(params);
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -152,6 +185,14 @@ public class AppOptionsBottomSheet extends BottomSheetDialogFragment {
         checkBlacklist.setButtonTintList(accentTint);
         checkHidden.setButtonTintList(accentTint);
         checkBgRestrict.setButtonTintList(accentTint);
+
+        for (View row : new View[] {
+                btnInfo, btnTriggers, btnUninstall, btnHiddenSingle,
+                addToHeader, itemWhitelist, itemBlacklist, itemHidden, itemBgRestrict }) {
+            FocusHighlightUtil.apply(row);
+        }
+
+        btnInfo.post(btnInfo::requestFocus);
 
         btnInfo.setOnClickListener(v -> {
             AppDebugManager.d(Category.MAIN_PAGE, "AppOptionsBottomSheet: app info clicked for pkg=" + pkg);

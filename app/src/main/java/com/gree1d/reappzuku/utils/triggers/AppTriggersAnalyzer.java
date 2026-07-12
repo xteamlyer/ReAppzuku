@@ -513,8 +513,8 @@ public class AppTriggersAnalyzer {
             boolean persistent = false;
 
             Pattern procPat  = Pattern.compile(
-                    "ProcessRecord\\{[^}]+\\s" + Pattern.quote(packageName) + "/");
-            Pattern adjPat   = Pattern.compile("\\badj=([-\\d]+)");
+                    "ProcessRecord\\{[0-9a-fA-F]+\\s+\\d+:" + Pattern.quote(packageName) + "(?:[/:]|$)");
+            Pattern adjPat   = Pattern.compile("(?:\\boom(?: adj)?:.*?\\bcur=([-\\d]+)\\b)|(?:\\badj=([-\\d]+)\\b)");
             Pattern statePat = Pattern.compile("\\bcurProcState=(\\w+)");
 
             boolean inBlock = false;
@@ -529,8 +529,10 @@ public class AppTriggersAnalyzer {
                 if (!inBlock) continue;
 
                 Matcher mAdj = adjPat.matcher(line);
-                if (mAdj.find() && adj == Integer.MAX_VALUE)
-                    adj = Integer.parseInt(mAdj.group(1));
+                if (mAdj.find() && adj == Integer.MAX_VALUE) {
+                    String adjStr = mAdj.group(1) != null ? mAdj.group(1) : mAdj.group(2);
+                    adj = Integer.parseInt(adjStr);
+                }
 
                 Matcher mState = statePat.matcher(line);
                 if (mState.find() && procState == null)

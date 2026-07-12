@@ -805,8 +805,6 @@ Evita que la app interactúe con otros perfiles de trabajo. Relevante principalm
 
 </details>
 
-</details>
-
 <details>
 <summary>Android 12+</summary>
 
@@ -815,8 +813,6 @@ Impide que la aplicación programe alarmas exactas mediante `AlarmManager.setExa
 
 - **ACCESS_NOTIFICATIONS**
 Prohíbe a la aplicación acceder al servicio de escucha de notificaciones. Esta restricción evita que la aplicación lea, intercepte o interactúe con las notificaciones de otros programas.
-
-</details>
 
 </details>
 

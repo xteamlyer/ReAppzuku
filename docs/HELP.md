@@ -804,8 +804,6 @@ Prevents app from interacting with other work profiles. Primarily relevant on en
 
 </details>
 
-</details>
-
 <details>
 <summary>Android 12+</summary>
 
@@ -814,8 +812,6 @@ Prevents the app from scheduling exact alarms via `AlarmManager.setExact()` and 
 
 - **ACCESS_NOTIFICATIONS**
 Restricts the app from accessing the notification listener service. This prevention stops the app from reading, intercepting, or interacting with notifications from other applications.
-
-</details>
 
 </details>
 
