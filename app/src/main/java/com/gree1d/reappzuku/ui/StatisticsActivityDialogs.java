@@ -43,7 +43,8 @@ import static com.gree1d.reappzuku.core.PreferenceKeys.*;
 class StatisticsActivityDialogs {
 
     private static final String FILE = "StatisticsActivityDialogs";
-    private static final int TOP_OFFENDERS_LIMIT = 50;
+    private static final int TOP_OFFENDERS_LIMIT = 50;.
+    private static final float DIALOG_HEIGHT_FRACTION = 0.7f;
     private static final long[] TOP_OFFENDER_FILTER_WINDOWS_MS = {
             STATS_HISTORY_DURATION_MS,
             24 * 60 * 60 * 1000L,
@@ -833,30 +834,25 @@ class StatisticsActivityDialogs {
             lv.addFooterView(footer, null, false);
         }
 
+        int screenHeight = getUsableScreenHeight();
+        int fixedWindowHeight = (int) (screenHeight * DIALOG_HEIGHT_FRACTION);
+        int chromeHeight = estimateDialogChromeHeight(subtitle);
+        int contentHeight = Math.max(dpToPx(120), fixedWindowHeight - chromeHeight);
+        contentContainer.getLayoutParams().height = contentHeight;
+
         AlertDialog dialog = new MaterialAlertDialogBuilder(activity).setTitle(title).setView(dialogView).create();
 
         dialog.setOnShowListener(d -> {
             android.view.Window window = dialog.getWindow();
-            if (window == null) return;
-
-            int fixedWindowHeight = computeFixedDialogWindowHeight();
-            window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, fixedWindowHeight);
-
-            dialogView.post(() -> {
-                int chromeHeight = dialogView.getHeight() - contentContainer.getHeight();
-                int targetContentHeight = fixedWindowHeight - chromeHeight;
-                if (targetContentHeight > 0) {
-                    contentContainer.getLayoutParams().height = targetContentHeight;
-                    contentContainer.requestLayout();
-                }
-            });
+            if (window != null) {
+                window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, fixedWindowHeight);
+            }
         });
 
         return dialog;
     }
 
-
-    private int computeFixedDialogWindowHeight() {
+    private int getUsableScreenHeight() {
         int screenHeight;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             android.view.WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
@@ -868,12 +864,23 @@ class StatisticsActivityDialogs {
             activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
             screenHeight = dm.heightPixels;
         }
+        return screenHeight;
+    }
 
-        boolean isLandscape = activity.getResources().getConfiguration().orientation
-                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    private int estimateDialogChromeHeight(String subtitle) {
+        float density = activity.getResources().getDisplayMetrics().density;
+        float chromeDp = 8 + 16   
+                + 56              
+                + 52             
+                + 16;            
+        if (subtitle != null && !subtitle.trim().isEmpty()) {
+            chromeDp += 20 + 12;   
+        }
+        return Math.round(chromeDp * density);
+    }
 
-        float fraction = isLandscape ? 0.9f : 0.55f;
-        return (int) (screenHeight * fraction);
+    private int dpToPx(float dp) {
+        return Math.round(dp * activity.getResources().getDisplayMetrics().density);
     }
 
     private SettingsListContent createSettingsListContent(String emptyText, boolean showFilter) {
