@@ -374,9 +374,11 @@ public class SettingsActivity extends SettingsActivityDialogs
         updateAutoKillTypeText(autoKillManager.getAutoKillType());
         updateAutomationOptionsVisibility(serviceEnabled, periodicKillEnabled);
 
-        binding.switchSleepMode.setChecked(sleepModeManager.isSleepModeEnabled());
+        boolean sleepModeEnabled = sleepModeManager.isSleepModeEnabled();
+        binding.switchSleepMode.setChecked(sleepModeEnabled);
         long sleepDelay = sharedPreferences.getLong(KEY_SLEEP_MODE_DELAY, DEFAULT_SLEEP_MODE_DELAY_MS);
         updateSleepModeDelayText(sleepDelay);
+        updateSleepModeOptionsVisibility(serviceEnabled, sleepModeEnabled);
 
         try {
             String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -450,13 +452,16 @@ public class SettingsActivity extends SettingsActivityDialogs
                 return;
             }
             sleepModeManager.setSleepModeEnabled(isChecked);
+            updateSleepModeOptionsVisibility(isServiceEnabled(), isChecked);
         });
         binding.layoutSleepModeApps.setOnClickListener(v -> {
             if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            if (!binding.switchSleepMode.isChecked()) return;
             showSleepModeAppsDialog();
         });
         binding.layoutSleepModeDelay.setOnClickListener(v -> {
             if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
+            if (!binding.switchSleepMode.isChecked()) return;
             showSleepModeDelayDialog();
         });
 
@@ -601,6 +606,14 @@ public class SettingsActivity extends SettingsActivityDialogs
                 : getString(R.string.settings_notification_mode_all));
     }
 
+    private void updateSleepModeOptionsVisibility(boolean serviceEnabled, boolean sleepModeEnabled) {
+        float alpha = (serviceEnabled && sleepModeEnabled) ? 1.0f : 0.5f;
+        binding.layoutSleepModeApps.setAlpha(alpha);
+        binding.layoutSleepModeApps.setClickable(serviceEnabled && sleepModeEnabled);
+        binding.layoutSleepModeDelay.setAlpha(alpha);
+        binding.layoutSleepModeDelay.setClickable(serviceEnabled && sleepModeEnabled);
+    }
+
     @Override
     protected void updateSleepModeDelayText(long delayMs) {
         String[] labels = getResources().getStringArray(R.array.settings_sleep_mode_delay_labels);
@@ -650,8 +663,31 @@ public class SettingsActivity extends SettingsActivityDialogs
         }
 
         binding.switchSleepMode.setEnabled(serviceEnabled);
-        binding.layoutSleepModeApps.setAlpha(alpha);
-        binding.layoutSleepModeDelay.setAlpha(alpha);
+        updateSleepModeOptionsVisibility(serviceEnabled, binding.switchSleepMode.isChecked());
+
+        binding.layoutAdditionalScenarios.setAlpha(alpha);
+        binding.layoutPresets.setAlpha(alpha);
+        binding.layoutAddShortcut.setAlpha(alpha);
+        binding.layoutHiddenApps.setAlpha(alpha);
+
+        applyForegroundServiceDependentState(serviceEnabled);
+    }
+
+
+    private void applyForegroundServiceDependentState(boolean serviceEnabled) {
+        float alpha = serviceEnabled ? 1.0f : 0.5f;
+
+        binding.layoutPeriodicKill.setEnabled(serviceEnabled);
+        binding.layoutScreenLock.setEnabled(serviceEnabled);
+        binding.layoutRamThresholdToggle.setEnabled(serviceEnabled);
+
+        binding.layoutRestrictionsScheduler.setEnabled(serviceEnabled);
+        binding.layoutAdditionalScenarios.setEnabled(serviceEnabled);
+        binding.layoutPresets.setEnabled(serviceEnabled);
+        binding.layoutAddShortcut.setEnabled(serviceEnabled);
+        binding.layoutHiddenApps.setEnabled(serviceEnabled);
+        binding.layoutHiddenApps.setClickable(serviceEnabled);
+
     }
 
     private void applyPresetActiveState(boolean presetActive) {
@@ -682,6 +718,13 @@ public class SettingsActivity extends SettingsActivityDialogs
             if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
             showAutoKillTypeDialog();
         });
+
+        boolean serviceEnabledNow = isServiceEnabled();
+        boolean periodicEnabledNow = binding.switchPeriodicKill.isChecked();
+        boolean killIntervalClickable = !presetActive && serviceEnabledNow && periodicEnabledNow;
+        binding.layoutKillInterval.setAlpha(killIntervalClickable ? 1.0f : 0.5f);
+        binding.layoutKillInterval.setClickable(killIntervalClickable);
+        binding.layoutKillInterval.setOnClickListener(killIntervalClickable ? v -> showKillIntervalDialog() : null);
         binding.layoutBlacklist.setAlpha(alpha);
         binding.layoutBlacklist.setOnClickListener(presetActive ? v -> showPresetActiveDialog() : v -> {
             if (!isServiceEnabled()) { showServiceRequiredToast(); return; }
