@@ -92,6 +92,12 @@ public class SettingsActivity extends SettingsActivityDialogs
         putAutoKillPref(KEY_PERIODIC_KILL_ENABLED, isChecked);
         boolean serviceEnabled = binding.switchAutoKill.isChecked();
         updateAutomationOptionsVisibility(serviceEnabled, isChecked);
+        if (isChecked && serviceEnabled) {
+            AppDebugManager.d(Category.SETTINGS_PAGE, FILE_NAME + ": periodicKill enabled, waking scheduleNextKill loop");
+            Intent wakeIntent = new Intent(this, ShappkyService.class);
+            wakeIntent.setAction(ShappkyService.ACTION_RESCHEDULE_PERIODIC_KILL);
+            ContextCompat.startForegroundService(this, wakeIntent);
+        }
     };
 
     private final android.widget.CompoundButton.OnCheckedChangeListener screenOffListener = (buttonView, isChecked) ->
