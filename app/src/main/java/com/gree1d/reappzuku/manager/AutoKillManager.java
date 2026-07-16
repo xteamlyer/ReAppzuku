@@ -416,10 +416,28 @@ public class AutoKillManager {
     }
 
     public void killPackageSync(String packageName) {
+        killPackageSync(packageName, "Manual Kill");
+    }
+
+    public void killPackageSync(String packageName, String source) {
         if (packageName == null || packageName.isEmpty()) return;
         String cmd = buildKillCommand(packageName);
-        AppDebugManager.d(Category.AUTO_KILL_BASE, "AutoKillManager: killPackageSync: " + cmd);
+        AppDebugManager.d(Category.AUTO_KILL_BASE, "AutoKillManager: killPackageSync: " + cmd + " source=" + source);
         shellManager.runShellCommandAndGetFullOutput(cmd);
+
+        long appRamBytes = 0;
+        for (AppModel app : currentAppsList) {
+            if (app.getPackageName().equals(packageName)) {
+                appRamBytes = app.getAppRamBytes();
+                break;
+            }
+        }
+        final Map<String, Long> recoveredKbByPackage = new HashMap<>();
+        if (appRamBytes > 0) {
+            recoveredKbByPackage.put(packageName, appRamBytes);
+        }
+        recordSuccessfulKills(Collections.singletonList(packageName), recoveredKbByPackage, source);
+        killOrphanShellProcesses(Collections.singleton(packageName));
     }
 
     private void sendKillNotification(int count) {

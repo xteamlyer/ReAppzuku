@@ -77,11 +77,6 @@ public class BackgroundAppManager {
         SYSTEM_EXEMPT_FROM_SUSPENSION_OP
     };
 
-    /**
-     * Minimum SDK level (Build.VERSION_CODES) required for each entry in ALL_OPS, by index.
-     * Ops whose required SDK is not met by the current device are unsupported and must not
-     * be applied in MEDIUM/HARD/MANUAL modes.
-     */
     public static final int[] OP_MIN_SDK = {
         Build.VERSION_CODES.R,                 // BACKGROUND_RESTRICTION_OP        (Android 11+)
         Build.VERSION_CODES.R,                 // BG_RUN_RESTRICTION_OP            (Android 11+)
@@ -96,13 +91,11 @@ public class BackgroundAppManager {
         Build.VERSION_CODES.UPSIDE_DOWN_CAKE   // RUN_USER_INITIATED_JOBS_OP       (Android 14+)
     };
 
-    /** True if the given ALL_OPS index is supported on the current device's SDK level. */
     public static boolean isOpSupported(int opIndex) {
         if (opIndex < 0 || opIndex >= OP_MIN_SDK.length) return false;
         return Build.VERSION.SDK_INT >= OP_MIN_SDK[opIndex];
     }
 
-    /** True if the given op name is supported on the current device's SDK level. */
     public static boolean isOpSupported(String opName) {
         for (int i = 0; i < ALL_OPS.length; i++) {
             if (ALL_OPS[i].equals(opName)) return isOpSupported(i);
@@ -110,7 +103,6 @@ public class BackgroundAppManager {
         return false;
     }
 
-    /** Bitmask of ALL_OPS indices supported on the current device's SDK level. */
     public static int supportedOpsMask() {
         int mask = 0;
         for (int i = 0; i < ALL_OPS.length; i++) {
@@ -119,12 +111,10 @@ public class BackgroundAppManager {
         return mask;
     }
 
-    /** Intersects the given mask with the ops supported on the current SDK. */
     public static int filterSupportedMask(int mask) {
         return mask & supportedOpsMask();
     }
 
-    /** Bits present in mask but NOT supported on the current SDK — these must be skipped. */
     public static int unsupportedMaskOf(int mask) {
         return mask & ~supportedOpsMask();
     }
@@ -1117,7 +1107,7 @@ public class BackgroundAppManager {
                 if (autoKillManager != null
                         && (hardSet.contains(pkg) || manualSet.contains(pkg) || getMediumRestrictedApps().contains(pkg))) {
                     AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": watchdog: killing before repair: " + pkg);
-                    autoKillManager.killPackageSync(pkg);
+                    autoKillManager.killPackageSync(pkg, "WatchDog Kill");
                 }
                 int ok = 0, fail = 0;
                 List<String> failedOps = new ArrayList<>();
