@@ -139,6 +139,8 @@ public class ShappkyService extends Service {
         appManager = new BackgroundAppManager(this, handler, executor, shellManager);
         AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": BackgroundAppManager initialized");
         autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
+        appManager.setAutoKillManager(autoKillManager);
+        AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": AutoKillManager attached to BackgroundAppManager");
         sleepModeManager = new SleepModeManager(this, handler, executor, shellManager);
         collectStatsManager = new CollectStatsManager(this, shellManager);
         scheduler = new RestrictionsScheduler(this, handler, executor, shellManager, appManager, sleepModeManager);
