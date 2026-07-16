@@ -50,6 +50,7 @@ public class ShappkyService extends Service {
     private static final String FILE_NAME = "ShappkyService";
     static final String ACTION_IDLE_FREEZE = "com.gree1d.reappzuku.IDLE_FREEZE";
     static final String ACTION_HEARTBEAT_CHECK = "com.gree1d.reappzuku.HEARTBEAT_CHECK";
+    public static final String ACTION_RESCHEDULE_PERIODIC_KILL = "com.gree1d.reappzuku.RESCHEDULE_PERIODIC_KILL";
     private static final int FREEZE_ALARM_REQUEST_CODE = 1001;
     private static final int RESTART_ALARM_REQUEST_CODE = 1002;
     private static final int HEARTBEAT_ALARM_REQUEST_CODE = 1003;
@@ -287,6 +288,11 @@ public class ShappkyService extends Service {
                     releaseSnapshotWakeLock();
                     scheduleSnapshotAlarm();
                 });
+                break;
+
+            case ACTION_RESCHEDULE_PERIODIC_KILL:
+                AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": ACTION_RESCHEDULE_PERIODIC_KILL received, waking scheduleNextKill loop");
+                scheduleNextKill();
                 break;
         }
 
@@ -542,6 +548,12 @@ public class ShappkyService extends Service {
             return;
 
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+
+        if (!prefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false)) {
+            AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": scheduleNextKill: periodic kill disabled, loop stopped (waiting for ACTION_RESCHEDULE_PERIODIC_KILL)");
+            return;
+        }
+
         int killInterval = prefs.getInt(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
 
         handler.postDelayed(() -> {
@@ -570,8 +582,7 @@ public class ShappkyService extends Service {
                         autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill), resolveKillSource("Service Periodic Kill"));
                     }
                 } else {
-                    AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": scheduleNextKill: skipped (autoKill=" + autoKillEnabled + " periodic=" + periodicKillEnabled + ")");
-                    handler.post(this::scheduleNextKill);
+                    AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": scheduleNextKill: stopped (autoKill=" + autoKillEnabled + " periodic=" + periodicKillEnabled + ")");
                 }
             });
         }, killInterval);
