@@ -33,6 +33,7 @@
          COMMON / SHARED
          ══════════════════════════════════════════════ -->
     <string name="url_open_failed">Unable to open link</string>
+    <string name="kill_history_detail">Detailed Auto-Kill log</string>
 
     <!-- Common dialog buttons -->
     <string name="stats_top_offenders_reset">Reset</string>
