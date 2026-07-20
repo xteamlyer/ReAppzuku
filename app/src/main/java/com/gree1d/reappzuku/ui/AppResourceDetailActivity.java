@@ -123,6 +123,7 @@ public class AppResourceDetailActivity extends BaseActivity {
             }
     
             boolean isWhitelisted = appManager.getWhitelistedApps().contains(packageName);
+            boolean isProtected = com.gree1d.reappzuku.core.ProtectedApps.isProtected(this, packageName);
             String finalAppName = appName != null ? appName : packageName;
     
             app = new AppModel(
@@ -133,7 +134,7 @@ public class AppResourceDetailActivity extends BaseActivity {
                 icon, 
                 isSystem,
                 false, 
-                false  
+                isProtected  
             );
             
             app.setWhitelisted(isWhitelisted);
