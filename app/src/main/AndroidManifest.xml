@@ -66,6 +66,10 @@
             android:exported="false"
             android:parentActivityName="com.gree1d.reappzuku.ui.MainActivity"
             android:theme="@style/AppTheme.NoAnimation" />
+        <activity 
+            android:name=".ui.LogDetailActivity"
+            android:parentActivityName="com.gree1d.reappzuku.ui.LogDetailActivity"
+            android:theme="@style/AppTheme" />
         <activity
             android:name="com.gree1d.reappzuku.ui.PresetSettingsActivity"
             android:exported="false"
