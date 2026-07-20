@@ -91,7 +91,7 @@
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
-                app:strokeColor="?attr/colorStroke"
+                app:strokeColor="?attr/colorOutline"
                 app:cardBackgroundColor="?attr/colorSurface">
 
                 <TextView
