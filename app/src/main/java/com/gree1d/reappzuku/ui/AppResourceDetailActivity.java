@@ -109,31 +109,46 @@ public class AppResourceDetailActivity extends BaseActivity {
 
     private void setupAddToListButton() {
         AppModel app = findAppModel(packageName);
+        
         if (app == null) {
-            AppDebugManager.w(Category.STATISTICS_PAGE, TAG + ": setupAddToListButton could not resolve AppModel for pkg=" + packageName);
-            binding.sheetAddToTitle.setVisibility(View.GONE);
-            return;
+            app = new AppModel(packageName, appName != null ? appName : packageName);
+            app.setWhitelisted(appManager.getWhitelistedApps().contains(packageName));
+            boolean isBlacklisted = autoKillManager.getBlacklistedApps().contains(packageName);
+            
+            try {
+                int flags = getPackageManager().getApplicationInfo(packageName, 0).flags;
+                boolean isSystem = (flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0;
+                app.setProtected(isSystem); 
+            } catch (PackageManager.NameNotFoundException e) {
+                app.setProtected(false);
+            }
         }
-
+    
         if (app.isProtected()) {
             AppDebugManager.d(Category.STATISTICS_PAGE, TAG + ": setupAddToListButton hidden, protected app pkg=" + packageName);
             binding.sheetAddToTitle.setVisibility(View.GONE);
             return;
         }
-
+    
         binding.sheetAddToTitle.setVisibility(View.VISIBLE);
-        binding.sheetAddToTitle.setOnClickListener(v -> showStatsAppOptionsSheet(app));
+        
+        final AppModel finalApp = app;
+        binding.sheetAddToTitle.setOnClickListener(v -> showStatsAppOptionsSheet(finalApp));
     }
-
+    
     private AppModel findAppModel(String pkg) {
         if (pkg == null) return null;
-        for (AppModel app : appManager.getCurrentAppsList()) {
+        List<AppModel> currentApps = appManager.getCurrentAppsList();
+        if (currentApps == null || currentApps.isEmpty()) return null;
+        
+        for (AppModel app : currentApps) {
             if (pkg.equals(app.getPackageName())) {
                 return app;
             }
         }
         return null;
     }
+
 
     private void showStatsAppOptionsSheet(AppModel app) {
         String pkg = app.getPackageName();
