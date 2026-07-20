@@ -14,11 +14,16 @@ import android.widget.TextView;
 import com.gree1d.reappzuku.core.ShellManager;
 import com.gree1d.reappzuku.core.BaseActivity;
 import com.gree1d.reappzuku.manager.CollectStatsManager;
+import com.gree1d.reappzuku.manager.BackgroundAppManager;
+import com.gree1d.reappzuku.manager.AutoKillManager;
 import com.gree1d.reappzuku.core.PreferenceKeys;
 import com.gree1d.reappzuku.core.AppConstants;
 import com.gree1d.reappzuku.core.AppDebugManager;
 import com.gree1d.reappzuku.core.AppDebugManager.Category;
+import com.gree1d.reappzuku.utils.AppModel;
 import com.gree1d.reappzuku.R;
+
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -60,6 +65,8 @@ public class AppResourceDetailActivity extends BaseActivity {
     private ActivityAppResourceDetailBinding binding;
     private CollectStatsManager collectStatsManager;
     private ShellManager shellManager;
+    private BackgroundAppManager appManager;
+    private AutoKillManager autoKillManager;
     private final Handler handler         = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -90,11 +97,161 @@ public class AppResourceDetailActivity extends BaseActivity {
 
         shellManager        = new ShellManager(getApplicationContext(), handler, executor);
         collectStatsManager = new CollectStatsManager(getApplicationContext(), handler, executor, shellManager);
+        appManager           = new BackgroundAppManager(this, handler, executor, shellManager);
+        autoKillManager      = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
 
         setupToolbar();
         setupAppCard();
         setupPeriodTabs();
+        setupAddToListButton();
         loadData(PERIODS_HOURS[selectedPeriodIdx]);
+    }
+
+    private void setupAddToListButton() {
+        AppModel app = findAppModel(packageName);
+        if (app == null) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, TAG + ": setupAddToListButton could not resolve AppModel for pkg=" + packageName);
+            binding.sheetAddToTitle.setVisibility(View.GONE);
+            return;
+        }
+
+        if (app.isProtected()) {
+            AppDebugManager.d(Category.STATISTICS_PAGE, TAG + ": setupAddToListButton hidden, protected app pkg=" + packageName);
+            binding.sheetAddToTitle.setVisibility(View.GONE);
+            return;
+        }
+
+        binding.sheetAddToTitle.setVisibility(View.VISIBLE);
+        binding.sheetAddToTitle.setOnClickListener(v -> showStatsAppOptionsSheet(app));
+    }
+
+    private AppModel findAppModel(String pkg) {
+        if (pkg == null) return null;
+        for (AppModel app : appManager.getCurrentAppsList()) {
+            if (pkg.equals(app.getPackageName())) {
+                return app;
+            }
+        }
+        return null;
+    }
+
+    private void showStatsAppOptionsSheet(AppModel app) {
+        String pkg = app.getPackageName();
+
+        int accent = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT, AppConstants.ACCENT_SYSTEM);
+        int accentColor = accent == AppConstants.ACCENT_CUSTOM
+                ? sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT_CUSTOM_COLOR, AppConstants.ACCENT_CUSTOM_DEFAULT_COLOR)
+                : ContextCompat.getColor(this, R.color.toolbar_navy);
+
+        StatsAppOptionsBottomSheet sheet = StatsAppOptionsBottomSheet.newInstance(
+                app,
+                appManager.getWhitelistedApps().contains(pkg),
+                autoKillManager.getBlacklistedApps().contains(pkg),
+                appManager.supportsBackgroundRestriction(),
+                getBackgroundRestrictionMenuTitle(app),
+                accentColor
+        );
+
+        try {
+            android.graphics.drawable.Drawable icon = getPackageManager().getApplicationIcon(pkg);
+            sheet.setAppIcon(icon);
+        } catch (PackageManager.NameNotFoundException e) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, TAG + ": showStatsAppOptionsSheet failed to load icon for " + pkg, e);
+        }
+
+        sheet.setListener(new StatsAppOptionsBottomSheet.Listener() {
+            @Override
+            public void onToggleWhitelist(boolean nowChecked) {
+                toggleListMembership(app, "whitelist");
+            }
+
+            @Override
+            public void onToggleBlacklist(boolean nowChecked) {
+                toggleListMembership(app, "blacklist");
+            }
+
+            @Override
+            public void onToggleBackgroundRestriction(boolean nowChecked) {
+                toggleBackgroundRestriction(app);
+            }
+        });
+
+        sheet.show(getSupportFragmentManager(), "stats_app_options");
+    }
+
+    private void toggleListMembership(AppModel app, String listType) {
+        if (app.isProtected()) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, TAG
+                    + ": toggleListMembership blocked, protected app pkg=" + app.getPackageName() + " listType=" + listType);
+            return;
+        }
+
+        String pkg = app.getPackageName();
+        java.util.Set<String> currentSet;
+        String addedMsg, removedMsg;
+
+        switch (listType) {
+            case "whitelist":
+                currentSet = appManager.getWhitelistedApps();
+                addedMsg = getString(R.string.main_added_to_whitelist);
+                removedMsg = getString(R.string.main_removed_from_whitelist);
+                break;
+            case "blacklist":
+                currentSet = autoKillManager.getBlacklistedApps();
+                addedMsg = getString(R.string.main_added_to_blacklist);
+                removedMsg = getString(R.string.main_removed_from_blacklist);
+                break;
+            default:
+                AppDebugManager.w(Category.STATISTICS_PAGE, TAG + ": toggleListMembership unknown listType=" + listType);
+                return;
+        }
+
+        boolean wasInList = currentSet.contains(pkg);
+        if (wasInList) {
+            currentSet.remove(pkg);
+        } else {
+            currentSet.add(pkg);
+        }
+        AppDebugManager.d(Category.STATISTICS_PAGE, TAG + ": toggleListMembership " + listType + " for " + pkg
+                + " nowInList=" + !wasInList);
+
+        switch (listType) {
+            case "whitelist":
+                appManager.saveWhitelistedApps(currentSet);
+                app.setWhitelisted(!wasInList);
+                break;
+            case "blacklist":
+                autoKillManager.saveBlacklistedApps(currentSet);
+                break;
+        }
+
+        Toast.makeText(this, wasInList ? removedMsg : addedMsg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void toggleBackgroundRestriction(AppModel app) {
+        if (app.isProtected()) {
+            AppDebugManager.w(Category.STATISTICS_PAGE, TAG
+                    + ": toggleBackgroundRestriction blocked, protected app pkg=" + app.getPackageName());
+            return;
+        }
+        boolean enableRestriction = !app.isBackgroundRestrictionDesired();
+        AppDebugManager.i(Category.STATISTICS_PAGE, TAG + ": toggleBackgroundRestriction pkg=" + app.getPackageName()
+                + " enable=" + enableRestriction);
+        appManager.setBackgroundRestricted(app.getPackageName(), enableRestriction, null);
+        app.setBackgroundRestrictionDesired(enableRestriction);
+    }
+
+    private String getBackgroundRestrictionMenuTitle(AppModel app) {
+        if (app.needsBackgroundRestrictionReapply()) {
+            return getString(R.string.main_restriction_menu_out_of_sync);
+        }
+        if (app.isBackgroundRestrictionExternal()) {
+            return getString(R.string.main_restriction_menu_external);
+        }
+        if (app.isBackgroundRestrictionDesired() && !app.isBackgroundRestrictionActualKnown()) {
+            return getString(R.string.main_restriction_menu_saved);
+        }
+        return getString(R.string.main_restriction_menu_default);
     }
 
     private void setupToolbar() {
