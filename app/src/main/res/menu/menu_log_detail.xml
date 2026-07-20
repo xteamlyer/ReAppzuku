@@ -4,6 +4,7 @@
 
     <item
         android:id="@+id/action_log_detail_clear"
+        android:icon="@drawable/ic_cleanlog"
         android:title="@string/settings_restriction_log_clear"
         app:showAsAction="always" />
 
