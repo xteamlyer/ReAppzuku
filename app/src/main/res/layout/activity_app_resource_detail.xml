@@ -36,7 +36,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- App identity card -->
+            <!-- App identity card  -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -83,6 +83,23 @@
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/sheet_add_to_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:text="@string/menu_add_to"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
 
             <!-- Period selector: 2h / 6h / 12h / 24h -->
             <com.google.android.material.tabs.TabLayout
@@ -354,6 +371,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
+                android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="?attr/colorSurface">
@@ -364,6 +382,7 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <!-- Card title -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -380,24 +399,6 @@
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:id="@+id/sheet_add_to_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="16dp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp"
-                android:text="@string/menu_add_to"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" /> 
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
