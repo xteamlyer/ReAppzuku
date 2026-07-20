@@ -32,6 +32,7 @@
          COMMON / SHARED
          ══════════════════════════════════════════════ -->
     <string name="url_open_failed">No se pudo abrir el enlace</string>
+    <string name="kill_history_detail">Registro detallado de Kill</string>
 
     <!-- Common dialog buttons -->
     <string name="stats_top_offenders_reset">Restablecer</string>
