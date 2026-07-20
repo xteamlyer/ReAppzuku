@@ -1,5 +1,6 @@
 package com.gree1d.reappzuku.ui;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,18 +34,21 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
     private static final String ARG_PACKAGE     = "package";
     private static final String ARG_WINDOW_MS   = "window_ms";
     private static final String ARG_BG_SUPPORTED = "bg_supported";
+    private static final String ARG_ACCENT_COLOR = "accent_color";
 
     private Listener listener;
     private BackgroundAppManager appManager;
 
     public static LogAppOptionsBottomSheet newInstance(String appName, String packageName,
-                                                         long windowMs, boolean bgRestrictionSupported) {
+                                                         long windowMs, boolean bgRestrictionSupported,
+                                                         int accentColor) {
         LogAppOptionsBottomSheet sheet = new LogAppOptionsBottomSheet();
         Bundle args = new Bundle();
         args.putString(ARG_APP_NAME, appName);
         args.putString(ARG_PACKAGE, packageName);
         args.putLong(ARG_WINDOW_MS, windowMs);
         args.putBoolean(ARG_BG_SUPPORTED, bgRestrictionSupported);
+        args.putInt(ARG_ACCENT_COLOR, accentColor);
         sheet.setArguments(args);
         return sheet;
     }
@@ -109,6 +113,7 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
         String pkg          = args.getString(ARG_PACKAGE, "");
         long windowMs        = args.getLong(ARG_WINDOW_MS, -1L);
         boolean bgSupported = args.getBoolean(ARG_BG_SUPPORTED, false);
+        int accentColor      = args.getInt(ARG_ACCENT_COLOR);
 
         AppDebugManager.d(Category.STATISTICS_PAGE, "LogAppOptionsBottomSheet: opened for pkg=" + pkg);
 
@@ -138,14 +143,29 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
         CheckBox checkHard   = view.findViewById(R.id.log_sheet_check_hard);
         CheckBox checkManual = view.findViewById(R.id.log_sheet_check_manual);
 
+        if (accentColor != 0) {
+            ColorStateList accentTint = buildCheckboxTint(accentColor);
+            checkSoft.setButtonTintList(accentTint);
+            checkMedium.setButtonTintList(accentTint);
+            checkHard.setButtonTintList(accentTint);
+            checkManual.setButtonTintList(accentTint);
+        }
+
         if (bgSupported && appManager != null) {
             bgHeader.setVisibility(View.VISIBLE);
 
+            if (accentColor != 0) {
+                TextView bgTitle = view.findViewById(R.id.log_sheet_bg_restriction_title);
+                bgTitle.setTextColor(accentColor);
+                bgArrow.setImageTintList(ColorStateList.valueOf(accentColor));
+            }
+
+            boolean isRestricted = appManager.getBackgroundRestrictedApps().contains(pkg);
             BackgroundAppManager.RestrictionType current = appManager.getRestrictionType(pkg);
-            checkSoft.setChecked(current == BackgroundAppManager.RestrictionType.SOFT);
-            checkMedium.setChecked(current == BackgroundAppManager.RestrictionType.MEDIUM);
-            checkHard.setChecked(current == BackgroundAppManager.RestrictionType.HARD);
-            checkManual.setChecked(current == BackgroundAppManager.RestrictionType.MANUAL);
+            checkSoft.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.SOFT);
+            checkMedium.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.MEDIUM);
+            checkHard.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.HARD);
+            checkManual.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.MANUAL);
 
             bgHeader.setOnClickListener(v -> {
                 boolean expanded = bgContainer.getVisibility() == View.VISIBLE;
@@ -182,5 +202,14 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
                 + type + " for pkg=" + pkg);
 
         if (listener != null) listener.onRestrictionTypeChanged(pkg, type);
+    }
+
+    private ColorStateList buildCheckboxTint(int color) {
+        int[][] states = new int[][] {
+            new int[] { android.R.attr.state_checked },
+            new int[] { -android.R.attr.state_checked }
+        };
+        int[] colors = new int[] { color, color };
+        return new ColorStateList(states, colors);
     }
 }

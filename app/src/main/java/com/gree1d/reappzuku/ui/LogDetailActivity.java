@@ -121,6 +121,7 @@ public class LogDetailActivity extends BaseActivity {
         listView.setEmptyView(emptyView);
 
         setupToolbar();
+        applyStatusBarInsets();
 
         switch (logType) {
             case AUTO_KILL:               setupAutoKill();               break;
@@ -178,6 +179,14 @@ public class LogDetailActivity extends BaseActivity {
                     accent == ACCENT_POWDER || accent == ACCENT_FOG);
             toolbar.setTitleTextColor(isLightAccent ? Color.BLACK : Color.WHITE);
         }
+    }
+
+    private void applyStatusBarInsets() {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
+            int topInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).top;
+            v.setPadding(v.getPaddingLeft(), topInset, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
     }
 
     private String titleForLogType(LogType type) {
@@ -769,8 +778,12 @@ public class LogDetailActivity extends BaseActivity {
     // ---------- Shared: log item bottom sheet ----------
 
     private void showLogAppOptions(String appName, String packageName, long windowMs) {
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        int accentColor = accent == ACCENT_CUSTOM
+                ? sharedPreferences.getInt(KEY_ACCENT_CUSTOM_COLOR, ACCENT_CUSTOM_DEFAULT_COLOR)
+                : 0;
         LogAppOptionsBottomSheet sheet = LogAppOptionsBottomSheet.newInstance(
-                appName, packageName, windowMs, appManager.supportsBackgroundRestriction());
+                appName, packageName, windowMs, appManager.supportsBackgroundRestriction(), accentColor);
         sheet.setAppManager(appManager);
         sheet.setListener(new LogAppOptionsBottomSheet.Listener() {
             @Override
