@@ -121,7 +121,6 @@ public class LogDetailActivity extends BaseActivity {
         listView.setEmptyView(emptyView);
 
         setupToolbar();
-        applyStatusBarInsets();
 
         switch (logType) {
             case AUTO_KILL:               setupAutoKill();               break;
@@ -179,14 +178,6 @@ public class LogDetailActivity extends BaseActivity {
                     accent == ACCENT_POWDER || accent == ACCENT_FOG);
             toolbar.setTitleTextColor(isLightAccent ? Color.BLACK : Color.WHITE);
         }
-    }
-
-    private void applyStatusBarInsets() {
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
-            int topInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).top;
-            v.setPadding(v.getPaddingLeft(), topInset, v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
     }
 
     private String titleForLogType(LogType type) {

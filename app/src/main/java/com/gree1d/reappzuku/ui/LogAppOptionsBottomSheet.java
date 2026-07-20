@@ -1,7 +1,11 @@
 package com.gree1d.reappzuku.ui;
 
 import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +42,8 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
 
     private Listener listener;
     private BackgroundAppManager appManager;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final java.util.concurrent.ExecutorService iconExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     public static LogAppOptionsBottomSheet newInstance(String appName, String packageName,
                                                          long windowMs, boolean bgRestrictionSupported,
@@ -119,8 +125,10 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
 
         TextView nameView = view.findViewById(R.id.log_sheet_app_name);
         TextView pkgView  = view.findViewById(R.id.log_sheet_package_name);
+        ImageView iconView = view.findViewById(R.id.log_sheet_app_icon);
         nameView.setText(appName);
         pkgView.setText(pkg);
+        loadAppIcon(pkg, iconView);
 
         TextView btnKillDetail = view.findViewById(R.id.log_sheet_btn_kill_detail);
         btnKillDetail.setOnClickListener(v -> {
@@ -188,6 +196,34 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
         } else {
             bgHeader.setVisibility(View.GONE);
         }
+    }
+
+    private void loadAppIcon(String packageName, ImageView iconView) {
+        if (packageName == null || !packageName.contains(".")) {
+            iconView.setImageDrawable(null);
+            return;
+        }
+        iconExecutor.execute(() -> {
+            Drawable icon = null;
+            try {
+                PackageManager pm = requireContext().getPackageManager();
+                icon = pm.getApplicationIcon(packageName);
+            } catch (PackageManager.NameNotFoundException e) {
+                AppDebugManager.w(Category.STATISTICS_PAGE,
+                        "LogAppOptionsBottomSheet: icon not found for pkg=" + packageName, e);
+            }
+            Drawable finalIcon = icon;
+            handler.post(() -> {
+                if (!isAdded()) return;
+                iconView.setImageDrawable(finalIcon);
+            });
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        iconExecutor.shutdownNow();
     }
 
     private void selectRestrictionType(String pkg, BackgroundAppManager.RestrictionType type,
