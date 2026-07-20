@@ -12,36 +12,43 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="12dp">
+        android:paddingBottom="16dp">
 
-        <TextView
-            android:id="@+id/log_sheet_app_name"
+        <ImageView
+            android:id="@+id/log_sheet_app_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@null" />
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:ellipsize="end"
-            android:maxLines="1" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/log_sheet_app_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/log_sheet_package_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+        </LinearLayout>
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/log_sheet_package_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="20dp"
-        android:paddingBottom="12dp"
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp"
-        android:ellipsize="end"
-        android:maxLines="1" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="?attr/colorOutline" />
 
     <TextView
         android:id="@+id/log_sheet_btn_kill_detail"
@@ -74,13 +81,15 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/settings_background_restriction_title"
-            android:textSize="15sp" />
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="normal" />
 
         <ImageView
             android:id="@+id/log_sheet_bg_restriction_arrow"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:src="@drawable/ic_arrow_down"
+            android:src="@drawable/ic_arrow_drop_down"
             android:contentDescription="@null" />
 
     </LinearLayout>
@@ -110,6 +119,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/restriction_badge_soft"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
             <CheckBox
@@ -139,6 +149,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/restriction_badge_medium"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
             <CheckBox
@@ -168,6 +179,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/restriction_badge_hard"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
             <CheckBox
@@ -197,6 +209,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/restriction_badge_manual"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
             <CheckBox
