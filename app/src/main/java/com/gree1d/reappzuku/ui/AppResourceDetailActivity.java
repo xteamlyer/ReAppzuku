@@ -131,9 +131,9 @@ public class AppResourceDetailActivity extends BaseActivity {
                 "", 
                 0L, 
                 icon, 
-                isSystem, 
+                isSystem,
                 false, 
-                isSystem
+                false  
             );
             
             app.setWhitelisted(isWhitelisted);
@@ -150,6 +150,15 @@ public class AppResourceDetailActivity extends BaseActivity {
         }
     
         binding.sheetAddToTitle.setVisibility(View.VISIBLE);
+    
+        int accent = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT, AppConstants.ACCENT_SYSTEM);
+        int accentColor;
+        if (accent == AppConstants.ACCENT_CUSTOM) {
+            accentColor = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT_CUSTOM_COLOR, AppConstants.ACCENT_CUSTOM_DEFAULT_COLOR);
+        } else {
+            accentColor = ContextCompat.getColor(this, R.color.toolbar_navy);
+        }
+        binding.sheetAddToTitle.setTextColor(accentColor);
         
         final AppModel finalApp = app;
         binding.sheetAddToTitle.setOnClickListener(v -> showStatsAppOptionsSheet(finalApp));
@@ -171,48 +180,57 @@ public class AppResourceDetailActivity extends BaseActivity {
 
 
     private void showStatsAppOptionsSheet(AppModel app) {
-        String pkg = app.getPackageName();
-
-        int accent = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT, AppConstants.ACCENT_SYSTEM);
-        int accentColor = accent == AppConstants.ACCENT_CUSTOM
-                ? sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT_CUSTOM_COLOR, AppConstants.ACCENT_CUSTOM_DEFAULT_COLOR)
-                : ContextCompat.getColor(this, R.color.toolbar_navy);
-
-        StatsAppOptionsBottomSheet sheet = StatsAppOptionsBottomSheet.newInstance(
-                app,
-                appManager.getWhitelistedApps().contains(pkg),
-                autoKillManager.getBlacklistedApps().contains(pkg),
-                appManager.supportsBackgroundRestriction(),
-                getBackgroundRestrictionMenuTitle(app),
-                accentColor
-        );
-
-        try {
-            android.graphics.drawable.Drawable icon = getPackageManager().getApplicationIcon(pkg);
-            sheet.setAppIcon(icon);
-        } catch (PackageManager.NameNotFoundException e) {
-            AppDebugManager.w(Category.STATISTICS_PAGE, TAG + ": showStatsAppOptionsSheet failed to load icon for " + pkg, e);
+        String pkg = app.getPackageName(); 
+    
+        int accent = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT, AppConstants.ACCENT_SYSTEM); 
+        int accentColor;
+    
+        if (accent == AppConstants.ACCENT_CUSTOM) { 
+            accentColor = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT_CUSTOM_COLOR, AppConstants.ACCENT_CUSTOM_DEFAULT_COLOR); 
+        } else if (accent == AppConstants.ACCENT_SYSTEM) { 
+            accentColor = ContextCompat.getColor(this, R.color.toolbar_navy); 
+        } else {
+            android.util.TypedValue typedValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+            accentColor = typedValue.data;
         }
-
-        sheet.setListener(new StatsAppOptionsBottomSheet.Listener() {
-            @Override
+    
+        StatsAppOptionsBottomSheet sheet = StatsAppOptionsBottomSheet.newInstance(
+                app, 
+                appManager.getWhitelistedApps().contains(pkg), 
+                autoKillManager.getBlacklistedApps().contains(pkg), 
+                appManager.supportsBackgroundRestriction(), 
+                getBackgroundRestrictionMenuTitle(app), 
+                accentColor 
+        );
+    
+        try { 
+            android.graphics.drawable.Drawable icon = getPackageManager().getApplicationIcon(pkg); 
+            sheet.setAppIcon(icon); 
+        } catch (PackageManager.NameNotFoundException e) { 
+            AppDebugManager.w(Category.STATISTICS_PAGE, TAG + ": showStatsAppOptionsSheet failed to load icon for " + pkg, e); 
+        }
+    
+        sheet.setListener(new StatsAppOptionsBottomSheet.Listener() { 
+            @Override 
             public void onToggleWhitelist(boolean nowChecked) {
-                toggleListMembership(app, "whitelist");
+                toggleListMembership(app, "whitelist"); 
             }
-
-            @Override
-            public void onToggleBlacklist(boolean nowChecked) {
-                toggleListMembership(app, "blacklist");
+    
+            @Override 
+            public void onToggleBlacklist(boolean nowChecked) { 
+                toggleListMembership(app, "blacklist"); 
             }
-
+    
             @Override
-            public void onToggleBackgroundRestriction(boolean nowChecked) {
+            public void onToggleBackgroundRestriction(boolean nowChecked) { 
                 toggleBackgroundRestriction(app);
             }
         });
-
-        sheet.show(getSupportFragmentManager(), "stats_app_options");
+    
+        sheet.show(getSupportFragmentManager(), "stats_app_options"); 
     }
+
 
     private void toggleListMembership(AppModel app, String listType) {
         if (app.isProtected()) {
