@@ -156,7 +156,9 @@ public class AppResourceDetailActivity extends BaseActivity {
         if (accent == AppConstants.ACCENT_CUSTOM) {
             accentColor = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT_CUSTOM_COLOR, AppConstants.ACCENT_CUSTOM_DEFAULT_COLOR);
         } else {
-            accentColor = ContextCompat.getColor(this, R.color.toolbar_navy);
+            android.util.TypedValue typedValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
+            accentColor = typedValue.data;
         }
         binding.sheetAddToTitle.setTextColor(accentColor);
         
@@ -187,8 +189,6 @@ public class AppResourceDetailActivity extends BaseActivity {
     
         if (accent == AppConstants.ACCENT_CUSTOM) { 
             accentColor = sharedPreferences.getInt(PreferenceKeys.KEY_ACCENT_CUSTOM_COLOR, AppConstants.ACCENT_CUSTOM_DEFAULT_COLOR); 
-        } else if (accent == AppConstants.ACCENT_SYSTEM) { 
-            accentColor = ContextCompat.getColor(this, R.color.toolbar_navy); 
         } else {
             android.util.TypedValue typedValue = new android.util.TypedValue();
             getTheme().resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true);
