@@ -191,36 +191,6 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/log_sheet_item_manual"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="32dp"
-            android:paddingEnd="16dp"
-            android:paddingVertical="12dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/restriction_badge_manual"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
-
-            <CheckBox
-                android:id="@+id/log_sheet_check_manual"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="false"
-                android:focusable="false" />
-
-        </LinearLayout>
-
     </LinearLayout>
 
 </LinearLayout>
