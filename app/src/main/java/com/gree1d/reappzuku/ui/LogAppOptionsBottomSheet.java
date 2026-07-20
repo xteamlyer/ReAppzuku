@@ -144,19 +144,16 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
         LinearLayout itemSoft   = view.findViewById(R.id.log_sheet_item_soft);
         LinearLayout itemMedium = view.findViewById(R.id.log_sheet_item_medium);
         LinearLayout itemHard   = view.findViewById(R.id.log_sheet_item_hard);
-        LinearLayout itemManual = view.findViewById(R.id.log_sheet_item_manual);
 
         CheckBox checkSoft   = view.findViewById(R.id.log_sheet_check_soft);
         CheckBox checkMedium = view.findViewById(R.id.log_sheet_check_medium);
         CheckBox checkHard   = view.findViewById(R.id.log_sheet_check_hard);
-        CheckBox checkManual = view.findViewById(R.id.log_sheet_check_manual);
 
         if (accentColor != 0) {
             ColorStateList accentTint = buildCheckboxTint(accentColor);
             checkSoft.setButtonTintList(accentTint);
             checkMedium.setButtonTintList(accentTint);
             checkHard.setButtonTintList(accentTint);
-            checkManual.setButtonTintList(accentTint);
         }
 
         if (bgSupported && appManager != null) {
@@ -173,7 +170,6 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
             checkSoft.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.SOFT);
             checkMedium.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.MEDIUM);
             checkHard.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.HARD);
-            checkManual.setChecked(isRestricted && current == BackgroundAppManager.RestrictionType.MANUAL);
 
             bgHeader.setOnClickListener(v -> {
                 boolean expanded = bgContainer.getVisibility() == View.VISIBLE;
@@ -183,16 +179,13 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
 
             itemSoft.setOnClickListener(v -> selectRestrictionType(pkg,
                     BackgroundAppManager.RestrictionType.SOFT,
-                    checkSoft, checkMedium, checkHard, checkManual));
+                    checkSoft, checkMedium, checkHard));
             itemMedium.setOnClickListener(v -> selectRestrictionType(pkg,
                     BackgroundAppManager.RestrictionType.MEDIUM,
-                    checkSoft, checkMedium, checkHard, checkManual));
+                    checkSoft, checkMedium, checkHard));
             itemHard.setOnClickListener(v -> selectRestrictionType(pkg,
                     BackgroundAppManager.RestrictionType.HARD,
-                    checkSoft, checkMedium, checkHard, checkManual));
-            itemManual.setOnClickListener(v -> selectRestrictionType(pkg,
-                    BackgroundAppManager.RestrictionType.MANUAL,
-                    checkSoft, checkMedium, checkHard, checkManual));
+                    checkSoft, checkMedium, checkHard));
         } else {
             bgHeader.setVisibility(View.GONE);
         }
@@ -228,11 +221,10 @@ public class LogAppOptionsBottomSheet extends BottomSheetDialogFragment {
 
     private void selectRestrictionType(String pkg, BackgroundAppManager.RestrictionType type,
                                         CheckBox checkSoft, CheckBox checkMedium,
-                                        CheckBox checkHard, CheckBox checkManual) {
+                                        CheckBox checkHard) {
         checkSoft.setChecked(type == BackgroundAppManager.RestrictionType.SOFT);
         checkMedium.setChecked(type == BackgroundAppManager.RestrictionType.MEDIUM);
         checkHard.setChecked(type == BackgroundAppManager.RestrictionType.HARD);
-        checkManual.setChecked(type == BackgroundAppManager.RestrictionType.MANUAL);
 
         AppDebugManager.d(Category.STATISTICS_PAGE, "LogAppOptionsBottomSheet: restriction type set to "
                 + type + " for pkg=" + pkg);
