@@ -111,16 +111,35 @@ public class AppResourceDetailActivity extends BaseActivity {
         AppModel app = findAppModel(packageName);
         
         if (app == null) {
-            app = new AppModel(packageName, appName != null ? appName : packageName);
-            app.setWhitelisted(appManager.getWhitelistedApps().contains(packageName));
-            boolean isBlacklisted = autoKillManager.getBlacklistedApps().contains(packageName);
+            Drawable icon;
+            boolean isSystem = false;
             
             try {
+                icon = getPackageManager().getApplicationIcon(packageName);
                 int flags = getPackageManager().getApplicationInfo(packageName, 0).flags;
-                boolean isSystem = (flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0;
-                app.setProtected(isSystem); 
+                isSystem = (flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0;
             } catch (PackageManager.NameNotFoundException e) {
-                app.setProtected(false);
+                icon = ContextCompat.getDrawable(this, android.R.drawable.sym_def_app_icon);
+            }
+    
+            boolean isWhitelisted = appManager.getWhitelistedApps().contains(packageName);
+            String finalAppName = appName != null ? appName : packageName;
+    
+            app = new AppModel(
+                finalAppName, 
+                packageName, 
+                "", 
+                0L, 
+                icon, 
+                isSystem, 
+                false, 
+                isSystem
+            );
+            
+            app.setWhitelisted(isWhitelisted);
+            
+            if (appManager.getCurrentAppsList() != null) {
+                appManager.getCurrentAppsList().add(app);
             }
         }
     
@@ -135,6 +154,7 @@ public class AppResourceDetailActivity extends BaseActivity {
         final AppModel finalApp = app;
         binding.sheetAddToTitle.setOnClickListener(v -> showStatsAppOptionsSheet(finalApp));
     }
+
     
     private AppModel findAppModel(String pkg) {
         if (pkg == null) return null;
