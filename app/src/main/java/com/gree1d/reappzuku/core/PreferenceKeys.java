@@ -69,7 +69,9 @@ public final class PreferenceKeys {
     // Notifications
     public static final String KEY_NOTIFICATION_MODE = "notificationMode";
     public static final int NOTIFICATION_MODE_ALL = 0;
-    public static final int NOTIFICATION_MODE_IMPORTANT_ONLY = 1;
+    public static final int NOTIFICATION_MODE_IMPORTANT_ONLY = 1; 
+    public static final int NOTIFICATION_MODE_RAM_MONITOR = 2;
+    public static final int NOTIFICATION_MODE_AUTO_KILL = 4;
 
     // Sleep Mode
     public static final String KEY_SLEEP_MODE_ENABLED = "sleepModeEnabled";
