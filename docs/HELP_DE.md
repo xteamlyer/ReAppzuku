@@ -658,6 +658,8 @@ Nur relevant, wenn ReAppzuku mit Ihrer Firmware in Konflikt gerät. Wenn Sie ung
 Bestimmt, **welche** Apps von Auto-Kill anvisiert werden.
 
 - **🛡️ Whitelist** — Beendet alle Hintergrund-Apps **außer** denen auf der Whitelist. Verwenden Sie dies für maximale Bereinigung.
+> [!WARNING]
+> Bei Verwendung der Whitelist wird dringend empfohlen, die meisten Systemanwendungen hinzuzufügen, um Geräteprobleme zu vermeiden
 
 - **🎯 Blacklist (Standard)** — Beendet **nur** Apps auf der Blacklist. Verwenden Sie dies, um bestimmte Apps zu stoppen, ohne alles andere anzurühren.
 
