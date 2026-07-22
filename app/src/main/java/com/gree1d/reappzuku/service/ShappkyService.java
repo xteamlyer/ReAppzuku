@@ -124,12 +124,26 @@ public class ShappkyService extends Service {
         }
     }
 
+    private PendingIntent getOpenAppPendingIntent() {
+        return getOpenAppPendingIntent(this);
+    }
+
+    private static PendingIntent getOpenAppPendingIntent(Context context) {
+        Intent intent = new Intent(context, com.gree1d.reappzuku.ui.MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
     private void updateRamMonitorNotification(long usedMb, long totalMb) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
                 .setContentTitle(getString(R.string.ram_usage, usedMb, totalMb))
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
-                .setSilent(true);
+                .setSilent(true)
+                .setContentIntent(getOpenAppPendingIntent());
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID_RAM_MONITOR, builder.build());
@@ -177,7 +191,8 @@ public class ShappkyService extends Service {
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
-                .setSilent(true);
+                .setSilent(true)
+                .setContentIntent(getOpenAppPendingIntent(context));
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID_SERVICE, builder.build());
@@ -217,6 +232,7 @@ public class ShappkyService extends Service {
                 .setContentText(getString(R.string.service_notification_text))
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
+                .setContentIntent(getOpenAppPendingIntent())
                 .build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -363,6 +379,15 @@ public class ShappkyService extends Service {
                 additionalScenariosManager.updateHardwareReceiverState();
                 break;
 
+            case "UPDATE_NOTIFICATION_MODE":
+                AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": UPDATE_NOTIFICATION_MODE received, re-evaluating RAM monitor notification");
+                if (isRamMonitorNotificationEnabled()) {
+                    startRamMonitorNotification();
+                } else {
+                    stopRamMonitorNotification();
+                }
+                break;
+
             case "TAKE_SNAPSHOT":
                 AppDebugManager.d(Category.UTILS, FILE_NAME + ": TAKE_SNAPSHOT received");
                 collectStatsManager.takeSnapshotAsync(() -> {
@@ -418,7 +443,8 @@ public class ShappkyService extends Service {
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(false);
+                .setAutoCancel(false)
+                .setContentIntent(getOpenAppPendingIntent());
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID_SHIZUKU_LOST, builder.build());
