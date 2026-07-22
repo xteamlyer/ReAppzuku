@@ -633,6 +633,15 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                 });
     }
 
+    protected void notifyServiceNotificationModeChanged() {
+        if (!com.gree1d.reappzuku.service.ShappkyService.isRunning()) {
+            return;
+        }
+        android.content.Intent intent = new android.content.Intent(this, com.gree1d.reappzuku.service.ShappkyService.class);
+        intent.setAction("UPDATE_NOTIFICATION_MODE");
+        androidx.core.content.ContextCompat.startForegroundService(this, intent);
+    }
+
     protected void showNotificationModeDialog() {
         int current = getSharedPreferences().getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
 
@@ -717,6 +726,7 @@ abstract class SettingsActivityDialogs extends BaseActivity {
             }
             getSharedPreferences().edit().putInt(KEY_NOTIFICATION_MODE, result).apply();
             updateNotificationModeText(result);
+            notifyServiceNotificationModeChanged();
         });
         dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (d, w) -> d.dismiss());
         dialog.show();
