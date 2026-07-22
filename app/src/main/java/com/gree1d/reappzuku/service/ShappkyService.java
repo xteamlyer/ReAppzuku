@@ -50,12 +50,12 @@ public class ShappkyService extends Service {
     private static final String FILE_NAME = "ShappkyService";
     static final String ACTION_IDLE_FREEZE = "com.gree1d.reappzuku.IDLE_FREEZE";
     static final String ACTION_HEARTBEAT_CHECK = "com.gree1d.reappzuku.HEARTBEAT_CHECK";
-    public static final String ACTION_RESCHEDULE_PERIODIC_KILL = "com.gree1d.reappzuku.RESCHEDULE_PERIODIC_KILL";
     private static final int FREEZE_ALARM_REQUEST_CODE = 1001;
     private static final int RESTART_ALARM_REQUEST_CODE = 1002;
     private static final int HEARTBEAT_ALARM_REQUEST_CODE = 1003;
     private static final int SNAPSHOT_ALARM_REQUEST_CODE = 1004;
     private static final long HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000L;
+    private static final long RAM_NOTIFICATION_UPDATE_INTERVAL_MS = 15 * 1000L;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -74,21 +74,103 @@ public class ShappkyService extends Service {
 
     private boolean isFrozen = false;
     private boolean shizukuLostNotificationShown = false;
+    private Runnable ramNotificationRunnable;
 
     public static boolean isRunning() {
         return isRunning;
     }
 
-    private boolean isAllNotificationsEnabled() {
+    private boolean isRamMonitorNotificationEnabled() {
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         int mode = prefs.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
-        return mode == NOTIFICATION_MODE_ALL;
+        return mode == NOTIFICATION_MODE_ALL || (mode & NOTIFICATION_MODE_RAM_MONITOR) != 0;
+    }
+
+    private void startRamMonitorNotification() {
+        if (!isRamMonitorNotificationEnabled()) {
+            AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": startRamMonitorNotification: skipped, notification mode disabled");
+            return;
+        }
+        if (ramNotificationRunnable != null) {
+            return;
+        }
+        AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": startRamMonitorNotification: starting");
+        ramNotificationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (ramNotificationRunnable != this) {
+                    return;
+                }
+                executor.execute(() -> {
+                    long[] ram = readRamUsageMb();
+                    if (ram != null) {
+                        updateRamMonitorNotification(ram[0], ram[1]);
+                    }
+                    handler.postDelayed(this, RAM_NOTIFICATION_UPDATE_INTERVAL_MS);
+                });
+            }
+        };
+        handler.post(ramNotificationRunnable);
+    }
+
+    private void stopRamMonitorNotification() {
+        if (ramNotificationRunnable != null) {
+            handler.removeCallbacks(ramNotificationRunnable);
+            ramNotificationRunnable = null;
+        }
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(NOTIFICATION_ID_RAM_MONITOR);
+        }
+    }
+
+    private void updateRamMonitorNotification(long usedMb, long totalMb) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
+                .setContentTitle(getString(R.string.ram_usage, usedMb, totalMb))
+                .setSmallIcon(R.drawable.ic_shappky)
+                .setOngoing(true)
+                .setSilent(true);
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.notify(NOTIFICATION_ID_RAM_MONITOR, builder.build());
+        }
+    }
+
+    private long[] readRamUsageMb() {
+        try (java.io.RandomAccessFile reader = new java.io.RandomAccessFile("/proc/meminfo", "r")) {
+            String line;
+            long memTotal = 0;
+            long memAvailable = 0;
+            for (int i = 0; i < 3 && (line = reader.readLine()) != null; i++) {
+                if (line.startsWith("MemTotal")) {
+                    memTotal = parseMemValue(line);
+                } else if (line.startsWith("MemAvailable")) {
+                    memAvailable = parseMemValue(line);
+                }
+            }
+            if (memTotal > 0) {
+                long memUsed = memTotal - memAvailable;
+                return new long[] { memUsed / 1024, memTotal / 1024 };
+            }
+            AppDebugManager.w(Category.FOREGROUND_SERVICE, FILE_NAME + ": readRamUsageMb: MemTotal not found or zero");
+        } catch (IOException | NumberFormatException e) {
+            AppDebugManager.w(Category.FOREGROUND_SERVICE, FILE_NAME + ": readRamUsageMb: failed to read RAM usage", e);
+        }
+        return null;
+    }
+
+    private long parseMemValue(String line) {
+        String[] parts = line.split("\\s+");
+        if (parts.length >= 2) {
+            return Long.parseLong(parts[1]);
+        }
+        return 0;
     }
 
     public static void updateNotification(Context context, String title, String text) {
         SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         int mode = prefs.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
-        if (mode != NOTIFICATION_MODE_ALL) return;
+        if (mode != NOTIFICATION_MODE_ALL && (mode & NOTIFICATION_MODE_AUTO_KILL) == 0) return;
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_SERVICE)
                 .setContentTitle(title)
@@ -107,6 +189,27 @@ public class ShappkyService extends Service {
         super.onCreate();
         AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": onCreate started");
 
+        shellManager = new ShellManager(this, handler, executor);
+
+        boolean hasShell = shellManager.resolveAnyShellPermissionBlocking();
+        if (!hasShell) {
+            AppDebugManager.w(Category.CORE, FILE_NAME + ": No shell/root access available, stopping service");
+            stopSelf();
+            return;
+        }
+        AppDebugManager.d(Category.CORE, FILE_NAME + ": Shell/root access confirmed, proceeding with service init");
+
+        appManager = new BackgroundAppManager(this, handler, executor, shellManager);
+        AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": BackgroundAppManager initialized");
+        autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
+        sleepModeManager = new SleepModeManager(this, handler, executor, shellManager);
+        collectStatsManager = new CollectStatsManager(this, shellManager);
+        scheduler = new RestrictionsScheduler(this, handler, executor, shellManager, appManager, sleepModeManager);
+        autoKillManager.setScheduler(scheduler);
+        sleepModeManager.setScheduler(scheduler);
+        appManager.setScheduler(scheduler);
+        AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": BackgroundAppManager scheduler attached");
+        watchdog = new RestrictionsWatchdogManager(this, handler, appManager, shellManager, scheduler);
         createNotificationChannel();
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
@@ -124,32 +227,6 @@ public class ShappkyService extends Service {
             startForeground(NOTIFICATION_ID_SERVICE, notification);
             AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": startForeground called (legacy, API " + Build.VERSION.SDK_INT + ")");
         }
-
-        shellManager = new ShellManager(this, handler, executor);
-
-        boolean hasShell = shellManager.resolveAnyShellPermissionBlocking();
-        if (!hasShell) {
-            AppDebugManager.w(Category.CORE, FILE_NAME + ": No shell/root access available, stopping service");
-            stopForeground(STOP_FOREGROUND_REMOVE);
-            stopSelf();
-            return;
-        }
-        AppDebugManager.d(Category.CORE, FILE_NAME + ": Shell/root access confirmed, proceeding with service init");
-
-        appManager = new BackgroundAppManager(this, handler, executor, shellManager);
-        AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": BackgroundAppManager initialized");
-        autoKillManager = new AutoKillManager(this, handler, executor, shellManager, appManager.getCurrentAppsList());
-        appManager.setAutoKillManager(autoKillManager);
-        AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": AutoKillManager attached to BackgroundAppManager");
-        sleepModeManager = new SleepModeManager(this, handler, executor, shellManager);
-        collectStatsManager = new CollectStatsManager(this, shellManager);
-        scheduler = new RestrictionsScheduler(this, handler, executor, shellManager, appManager, sleepModeManager);
-        autoKillManager.setScheduler(scheduler);
-        sleepModeManager.setScheduler(scheduler);
-        appManager.setScheduler(scheduler);
-        AppDebugManager.d(Category.BACKGROUND_RESTRICTIONS, FILE_NAME + ": BackgroundAppManager scheduler attached");
-        watchdog = new RestrictionsWatchdogManager(this, handler, appManager, shellManager, scheduler);
-
         isRunning = true;
         AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": Service is now running (isRunning=true)");
 
@@ -180,6 +257,8 @@ public class ShappkyService extends Service {
 
         UpdateChecker.schedulePeriodicCheck(getApplicationContext());
         AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": onCreate completed");
+
+        startRamMonitorNotification();
     }
 
     @Override
@@ -290,11 +369,6 @@ public class ShappkyService extends Service {
                     releaseSnapshotWakeLock();
                     scheduleSnapshotAlarm();
                 });
-                break;
-
-            case ACTION_RESCHEDULE_PERIODIC_KILL:
-                AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": ACTION_RESCHEDULE_PERIODIC_KILL received, waking scheduleNextKill loop");
-                scheduleNextKill();
                 break;
         }
 
@@ -550,12 +624,6 @@ public class ShappkyService extends Service {
             return;
 
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
-
-        if (!prefs.getBoolean(KEY_PERIODIC_KILL_ENABLED, false)) {
-            AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": scheduleNextKill: periodic kill disabled, loop stopped (waiting for ACTION_RESCHEDULE_PERIODIC_KILL)");
-            return;
-        }
-
         int killInterval = prefs.getInt(KEY_KILL_INTERVAL, DEFAULT_KILL_INTERVAL_MS);
 
         handler.postDelayed(() -> {
@@ -584,7 +652,8 @@ public class ShappkyService extends Service {
                         autoKillManager.performAutoKill(() -> handler.post(this::scheduleNextKill), resolveKillSource("Service Periodic Kill"));
                     }
                 } else {
-                    AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": scheduleNextKill: stopped (autoKill=" + autoKillEnabled + " periodic=" + periodicKillEnabled + ")");
+                    AppDebugManager.d(Category.AUTO_KILL_BASE, FILE_NAME + ": scheduleNextKill: skipped (autoKill=" + autoKillEnabled + " periodic=" + periodicKillEnabled + ")");
+                    handler.post(this::scheduleNextKill);
                 }
             });
         }, killInterval);
@@ -623,6 +692,7 @@ public class ShappkyService extends Service {
         cancelSnapshotAlarm();
         cancelShizukuLostNotification();
         AppDebugManager.d(Category.CORE, FILE_NAME + ": Shizuku-lost notification cancelled on service destroy");
+        stopRamMonitorNotification();
         if (screenOffReceiver != null) {
             unregisterReceiver(screenOffReceiver);
         }
