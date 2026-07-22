@@ -658,6 +658,8 @@ Only relevant if ReAppzuku conflicts with your firmware. If you notice unusual b
 Determines **which** apps get targeted by Auto-Kill.
 
 - **🛡️ Whitelist** — kills all background apps **except** those on whitelist. Use for maximum cleanup.
+> [!WARNING]
+> When using the Whitelist, it is strongly recommended to add most system apps to it, to avoid device issues
 
 - **🎯 Blacklist (default)** — kills **only** apps on blacklist. Use to stop specific apps without touching everything else.
 
