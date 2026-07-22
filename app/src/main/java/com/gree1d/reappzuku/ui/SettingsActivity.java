@@ -596,9 +596,26 @@ public class SettingsActivity extends SettingsActivityDialogs
 
     @Override
     protected void updateNotificationModeText(int mode) {
-        binding.textNotificationMode.setText(mode == NOTIFICATION_MODE_IMPORTANT_ONLY
-                ? getString(R.string.settings_notification_mode_important_only)
-                : getString(R.string.settings_notification_mode_all));
+        if (mode == NOTIFICATION_MODE_ALL) {
+            binding.textNotificationMode.setText(R.string.settings_notification_mode_all);
+            return;
+        }
+        boolean isRussian = getResources().getConfiguration().locale.getLanguage().equals("ru");
+        String ramLabel = isRussian ? "ОЗУ" : "RAM";
+
+        java.util.List<String> selected = new java.util.ArrayList<>();
+        if ((mode & NOTIFICATION_MODE_IMPORTANT_ONLY) != 0) {
+            selected.add(getString(R.string.settings_notification_mode_important_only));
+        }
+        if ((mode & NOTIFICATION_MODE_RAM_MONITOR) != 0) {
+            selected.add(ramLabel);
+        }
+        if ((mode & NOTIFICATION_MODE_AUTO_KILL) != 0) {
+            selected.add("Auto-Kill");
+        }
+        binding.textNotificationMode.setText(selected.isEmpty()
+                ? getString(R.string.settings_notification_mode_all)
+                : String.join(", ", selected));
     }
 
     @Override

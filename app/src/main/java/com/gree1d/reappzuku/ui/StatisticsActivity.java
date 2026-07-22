@@ -57,7 +57,6 @@ public class StatisticsActivity extends BaseActivity {
         0xFF3949AB, 0xFF7CB342, 0xFFBDBDBD,
     };
 
-    private String[] topOffenderFilterLabels;
     private String[] chartPeriodLabels;
     private int selectedPeriodIdx = 0;
     private int currentChartIdx   = CHART_BATTERY;
@@ -71,8 +70,6 @@ public class StatisticsActivity extends BaseActivity {
     private CollectStatsManager collectStatsManager;
     final Handler handler = new Handler(Looper.getMainLooper());
     final ExecutorService executor = Executors.newCachedThreadPool();
-
-    private StatisticsActivityDialogs dialogs;
 
     @SuppressWarnings("unchecked")
     private List<PieEntry>[] chartEntries = new List[CHART_COUNT];
@@ -93,14 +90,11 @@ public class StatisticsActivity extends BaseActivity {
         binding = ActivityStatisticsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        topOffenderFilterLabels = getResources().getStringArray(R.array.settings_top_offender_filter_labels);
-        chartPeriodLabels       = getResources().getStringArray(R.array.chart_period_labels);
+        chartPeriodLabels = getResources().getStringArray(R.array.chart_period_labels);
 
         shellManager        = new ShellManager(getApplicationContext(), handler, executor);
         appManager          = new BackgroundAppManager(getApplicationContext(), handler, executor, shellManager);
         collectStatsManager = new CollectStatsManager(getApplicationContext(), handler, executor, shellManager);
-
-        dialogs = new StatisticsActivityDialogs(this, appManager, topOffenderFilterLabels);
 
         setupToolbar();
         setupBottomNavigation();
@@ -193,13 +187,19 @@ public class StatisticsActivity extends BaseActivity {
     }
 
     private void setupListeners() {
-        binding.layoutStats.setOnClickListener(v -> dialogs.showStatsDialog());
-        binding.layoutTopOffenders.setOnClickListener(v -> dialogs.showTopOffendersDialog());
+        binding.layoutStats.setOnClickListener(v -> openLogDetail(LogDetailActivity.LogType.AUTO_KILL));
+        binding.layoutTopOffenders.setOnClickListener(v -> openLogDetail(LogDetailActivity.LogType.TOP_OFFENDERS));
         binding.layoutRestrictionLog.setVisibility(
                 appManager.supportsBackgroundRestriction() ? View.VISIBLE : View.GONE);
-        binding.layoutRestrictionLog.setOnClickListener(v -> dialogs.showBackgroundRestrictionLogDialog());
-        binding.layoutSleepModeLog.setOnClickListener(v -> dialogs.showSleepModeLogDialog());
-        binding.layoutSchedulerLog.setOnClickListener(v -> dialogs.showSchedulerLogDialog());
+        binding.layoutRestrictionLog.setOnClickListener(v -> openLogDetail(LogDetailActivity.LogType.BACKGROUND_RESTRICTIONS));
+        binding.layoutSleepModeLog.setOnClickListener(v -> openLogDetail(LogDetailActivity.LogType.SLEEP_MODE));
+        binding.layoutSchedulerLog.setOnClickListener(v -> openLogDetail(LogDetailActivity.LogType.SCHEDULER));
+    }
+
+    private void openLogDetail(LogDetailActivity.LogType type) {
+        Intent intent = new Intent(this, LogDetailActivity.class);
+        intent.putExtra(LogDetailActivity.EXTRA_LOG_TYPE, type);
+        startActivity(intent);
     }
 
 
@@ -471,7 +471,7 @@ public class StatisticsActivity extends BaseActivity {
             row.setClickable(true);
             row.setFocusable(true);
             row.setOnClickListener(v -> {
-                if (isOthers) dialogs.showOthersDialog(finalOthers, metric, finalTotal);
+                if (isOthers) showOthersDialog(finalOthers, metric, finalTotal);
                 else          openAppDetail(pkg, finalName);
             });
 
@@ -557,6 +557,33 @@ public class StatisticsActivity extends BaseActivity {
         tabs.setTabTextColors(
                 ContextCompat.getColor(this, R.color.text_secondary),
                 color);
+    }
+
+    private void showOthersDialog(List<CollectStatsManager.AppResourceStats> others,
+                                   ChartMetric metric, double total) {
+        StringBuilder sb = new StringBuilder();
+        for (CollectStatsManager.AppResourceStats s : others) {
+            sb.append(String.format(Locale.US, "• %s  %.1f%%\n",
+                    s.appName, metricValue(s, metric) / total * 100));
+        }
+        applyCustomAccentToDialogButtons(new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.chart_others_dialog_title))
+                .setMessage(sb.toString().trim())
+                .setPositiveButton(android.R.string.ok, null)
+                .show());
+    }
+
+    private void applyCustomAccentToDialogButtons(AlertDialog dialog) {
+        int accent = sharedPreferences.getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        if (accent != ACCENT_CUSTOM) return;
+        int nightMode = getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        int color = nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+                ? Color.WHITE : Color.BLACK;
+        for (int which : new int[]{AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL}) {
+            android.widget.Button btn = dialog.getButton(which);
+            if (btn != null) btn.setTextColor(color);
+        }
     }
 
     private String formatRamMb(double mb) {

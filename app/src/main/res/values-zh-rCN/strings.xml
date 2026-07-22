@@ -33,6 +33,7 @@
          COMMON / SHARED
          ══════════════════════════════════════════════ -->
     <string name="url_open_failed">无法打开链接</string>
+    <string name="kill_history_detail">详细 Kill 日志</string>
 
     <!-- Common dialog buttons -->
     <string name="stats_top_offenders_reset">重置</string>

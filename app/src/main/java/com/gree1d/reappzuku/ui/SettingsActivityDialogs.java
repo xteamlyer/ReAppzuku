@@ -633,17 +633,104 @@ abstract class SettingsActivityDialogs extends BaseActivity {
                 });
     }
 
+    protected void notifyServiceNotificationModeChanged() {
+        if (!com.gree1d.reappzuku.service.ShappkyService.isRunning()) {
+            return;
+        }
+        android.content.Intent intent = new android.content.Intent(this, com.gree1d.reappzuku.service.ShappkyService.class);
+        intent.setAction("UPDATE_NOTIFICATION_MODE");
+        androidx.core.content.ContextCompat.startForegroundService(this, intent);
+    }
+
     protected void showNotificationModeDialog() {
         int current = getSharedPreferences().getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
-        String[] options = {
-                getString(R.string.settings_notification_mode_all),
-                getString(R.string.settings_notification_mode_important_only)
+
+        boolean isRussian = getResources().getConfiguration().locale.getLanguage().equals("ru");
+        String ramLabel = isRussian ? "ОЗУ" : "RAM";
+
+        int[] flags = {
+                NOTIFICATION_MODE_IMPORTANT_ONLY,
+                NOTIFICATION_MODE_RAM_MONITOR,
+                NOTIFICATION_MODE_AUTO_KILL
         };
-        showSingleChoiceDialog(getString(R.string.settings_notification_mode_title),
-                options, current, which -> {
-                    getSharedPreferences().edit().putInt(KEY_NOTIFICATION_MODE, which).apply();
-                    updateNotificationModeText(which);
-                });
+        String[] labels = {
+                getString(R.string.settings_notification_mode_important_only),
+                ramLabel,
+                "Auto-Kill"
+        };
+
+        int accent = getSharedPreferences().getInt(KEY_ACCENT, ACCENT_SYSTEM);
+        android.content.res.ColorStateList tint = (accent == ACCENT_CUSTOM)
+                ? android.content.res.ColorStateList.valueOf(getDialogAccentColor())
+                : null;
+
+        int dp8 = (int) (getResources().getDisplayMetrics().density * 8);
+        int dp12 = (int) (getResources().getDisplayMetrics().density * 12);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(0, dp8, 0, dp8);
+
+        CheckBox allBox = new CheckBox(this);
+        allBox.setText(getString(R.string.settings_notification_mode_all));
+        allBox.setChecked(current == NOTIFICATION_MODE_ALL);
+        allBox.setPadding(dp12, dp12, dp12, dp12);
+        if (tint != null) allBox.setButtonTintList(tint);
+        root.addView(allBox);
+
+        CheckBox[] boxes = new CheckBox[flags.length];
+        for (int i = 0; i < flags.length; i++) {
+            CheckBox cb = new CheckBox(this);
+            cb.setText(labels[i]);
+            cb.setChecked((current & flags[i]) != 0);
+            cb.setPadding(dp12, dp12, dp12, dp12);
+            if (tint != null) cb.setButtonTintList(tint);
+            boxes[i] = cb;
+            root.addView(cb);
+        }
+
+        Runnable syncEnabled = () -> {
+            boolean allChecked = allBox.isChecked();
+            boolean anyOtherChecked = false;
+            for (CheckBox cb : boxes) {
+                if (cb.isChecked()) { anyOtherChecked = true; break; }
+            }
+            allBox.setEnabled(!anyOtherChecked);
+            for (CheckBox cb : boxes) {
+                cb.setEnabled(!allChecked);
+            }
+        };
+        allBox.setOnCheckedChangeListener((buttonView, isChecked) -> syncEnabled.run());
+        for (CheckBox cb : boxes) {
+            cb.setOnCheckedChangeListener((buttonView, isChecked) -> syncEnabled.run());
+        }
+        syncEnabled.run();
+
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.addView(root);
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.settings_notification_mode_title))
+                .setView(scrollView)
+                .create();
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(android.R.string.ok), (d, w) -> {
+            int result;
+            if (allBox.isChecked()) {
+                result = NOTIFICATION_MODE_ALL;
+            } else {
+                result = 0;
+                for (int i = 0; i < flags.length; i++) {
+                    if (boxes[i].isChecked()) result |= flags[i];
+                }
+                if (result == 0) result = NOTIFICATION_MODE_ALL;
+            }
+            getSharedPreferences().edit().putInt(KEY_NOTIFICATION_MODE, result).apply();
+            updateNotificationModeText(result);
+            notifyServiceNotificationModeChanged();
+        });
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dialog_cancel), (d, w) -> d.dismiss());
+        dialog.show();
+        resetDialogButtonColors(dialog);
     }
 
     protected void showThemeDialog() {

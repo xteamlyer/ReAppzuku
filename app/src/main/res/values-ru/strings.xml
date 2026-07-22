@@ -33,6 +33,7 @@
          ОБЩЕЕ
          ══════════════════════════════════════════════ -->
     <string name="url_open_failed">Не удалось открыть ссылку</string>
+    <string name="kill_history_detail">Детальный журнал Kill</string>
 
     <!-- Кнопки диалогов -->
     <string name="stats_top_offenders_reset">Сброс</string>

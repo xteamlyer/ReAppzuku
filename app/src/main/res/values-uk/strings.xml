@@ -33,6 +33,7 @@
          ЗАГАЛЬНЕ
          ══════════════════════════════════════════════ -->
     <string name="url_open_failed">Не вдалося відкрити посилання</string>
+    <string name="kill_history_detail">Детальний Kill-журнал</string>
 
     <!-- Кнопки діалогів -->
     <string name="stats_top_offenders_reset">Скидання</string>

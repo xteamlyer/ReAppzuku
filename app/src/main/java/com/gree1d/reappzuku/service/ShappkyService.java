@@ -55,6 +55,7 @@ public class ShappkyService extends Service {
     private static final int HEARTBEAT_ALARM_REQUEST_CODE = 1003;
     private static final int SNAPSHOT_ALARM_REQUEST_CODE = 1004;
     private static final long HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000L;
+    private static final long RAM_NOTIFICATION_UPDATE_INTERVAL_MS = 15 * 1000L;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -73,28 +74,125 @@ public class ShappkyService extends Service {
 
     private boolean isFrozen = false;
     private boolean shizukuLostNotificationShown = false;
+    private Runnable ramNotificationRunnable;
 
     public static boolean isRunning() {
         return isRunning;
     }
 
-    private boolean isAllNotificationsEnabled() {
+    private boolean isRamMonitorNotificationEnabled() {
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         int mode = prefs.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
-        return mode == NOTIFICATION_MODE_ALL;
+        return mode == NOTIFICATION_MODE_ALL || (mode & NOTIFICATION_MODE_RAM_MONITOR) != 0;
+    }
+
+    private void startRamMonitorNotification() {
+        if (!isRamMonitorNotificationEnabled()) {
+            AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": startRamMonitorNotification: skipped, notification mode disabled");
+            return;
+        }
+        if (ramNotificationRunnable != null) {
+            return;
+        }
+        AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": startRamMonitorNotification: starting");
+        ramNotificationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (ramNotificationRunnable != this) {
+                    return;
+                }
+                executor.execute(() -> {
+                    long[] ram = readRamUsageMb();
+                    if (ram != null) {
+                        updateRamMonitorNotification(ram[0], ram[1]);
+                    }
+                    handler.postDelayed(this, RAM_NOTIFICATION_UPDATE_INTERVAL_MS);
+                });
+            }
+        };
+        handler.post(ramNotificationRunnable);
+    }
+
+    private void stopRamMonitorNotification() {
+        if (ramNotificationRunnable != null) {
+            handler.removeCallbacks(ramNotificationRunnable);
+            ramNotificationRunnable = null;
+        }
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.cancel(NOTIFICATION_ID_RAM_MONITOR);
+        }
+    }
+
+    private PendingIntent getOpenAppPendingIntent() {
+        return getOpenAppPendingIntent(this);
+    }
+
+    private static PendingIntent getOpenAppPendingIntent(Context context) {
+        Intent intent = new Intent(context, com.gree1d.reappzuku.ui.MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
+    private void updateRamMonitorNotification(long usedMb, long totalMb) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
+                .setContentTitle(getString(R.string.ram_usage, usedMb, totalMb))
+                .setSmallIcon(R.drawable.ic_shappky)
+                .setOngoing(true)
+                .setSilent(true)
+                .setContentIntent(getOpenAppPendingIntent());
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.notify(NOTIFICATION_ID_RAM_MONITOR, builder.build());
+        }
+    }
+
+    private long[] readRamUsageMb() {
+        try (java.io.RandomAccessFile reader = new java.io.RandomAccessFile("/proc/meminfo", "r")) {
+            String line;
+            long memTotal = 0;
+            long memAvailable = 0;
+            for (int i = 0; i < 3 && (line = reader.readLine()) != null; i++) {
+                if (line.startsWith("MemTotal")) {
+                    memTotal = parseMemValue(line);
+                } else if (line.startsWith("MemAvailable")) {
+                    memAvailable = parseMemValue(line);
+                }
+            }
+            if (memTotal > 0) {
+                long memUsed = memTotal - memAvailable;
+                return new long[] { memUsed / 1024, memTotal / 1024 };
+            }
+            AppDebugManager.w(Category.FOREGROUND_SERVICE, FILE_NAME + ": readRamUsageMb: MemTotal not found or zero");
+        } catch (IOException | NumberFormatException e) {
+            AppDebugManager.w(Category.FOREGROUND_SERVICE, FILE_NAME + ": readRamUsageMb: failed to read RAM usage", e);
+        }
+        return null;
+    }
+
+    private long parseMemValue(String line) {
+        String[] parts = line.split("\\s+");
+        if (parts.length >= 2) {
+            return Long.parseLong(parts[1]);
+        }
+        return 0;
     }
 
     public static void updateNotification(Context context, String title, String text) {
         SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         int mode = prefs.getInt(KEY_NOTIFICATION_MODE, NOTIFICATION_MODE_ALL);
-        if (mode != NOTIFICATION_MODE_ALL) return;
+        if (mode != NOTIFICATION_MODE_ALL && (mode & NOTIFICATION_MODE_AUTO_KILL) == 0) return;
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_SERVICE)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
-                .setSilent(true);
+                .setSilent(true)
+                .setContentIntent(getOpenAppPendingIntent(context));
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID_SERVICE, builder.build());
@@ -134,6 +232,7 @@ public class ShappkyService extends Service {
                 .setContentText(getString(R.string.service_notification_text))
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
+                .setContentIntent(getOpenAppPendingIntent())
                 .build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -174,6 +273,8 @@ public class ShappkyService extends Service {
 
         UpdateChecker.schedulePeriodicCheck(getApplicationContext());
         AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": onCreate completed");
+
+        startRamMonitorNotification();
     }
 
     @Override
@@ -278,6 +379,15 @@ public class ShappkyService extends Service {
                 additionalScenariosManager.updateHardwareReceiverState();
                 break;
 
+            case "UPDATE_NOTIFICATION_MODE":
+                AppDebugManager.d(Category.FOREGROUND_SERVICE, FILE_NAME + ": UPDATE_NOTIFICATION_MODE received, re-evaluating RAM monitor notification");
+                if (isRamMonitorNotificationEnabled()) {
+                    startRamMonitorNotification();
+                } else {
+                    stopRamMonitorNotification();
+                }
+                break;
+
             case "TAKE_SNAPSHOT":
                 AppDebugManager.d(Category.UTILS, FILE_NAME + ": TAKE_SNAPSHOT received");
                 collectStatsManager.takeSnapshotAsync(() -> {
@@ -333,7 +443,8 @@ public class ShappkyService extends Service {
                 .setSmallIcon(R.drawable.ic_shappky)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(false);
+                .setAutoCancel(false)
+                .setContentIntent(getOpenAppPendingIntent());
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIFICATION_ID_SHIZUKU_LOST, builder.build());
@@ -607,6 +718,7 @@ public class ShappkyService extends Service {
         cancelSnapshotAlarm();
         cancelShizukuLostNotification();
         AppDebugManager.d(Category.CORE, FILE_NAME + ": Shizuku-lost notification cancelled on service destroy");
+        stopRamMonitorNotification();
         if (screenOffReceiver != null) {
             unregisterReceiver(screenOffReceiver);
         }
