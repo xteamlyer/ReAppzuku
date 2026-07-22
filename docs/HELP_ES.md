@@ -658,6 +658,8 @@ Solo es relevante si ReAppzuku tiene conflictos con tu firmware. Si notas un com
 Determina **cuáles** apps serán el objetivo de Auto-Kill.
 
 - **🛡️ Lista blanca** — cierra todas las apps en segundo plano **excepto** las que están en la lista blanca. Úsalo para una limpieza máxima.
+> [!WARNING]
+> Al usar la Lista Blanca, se recomienda encarecidamente agregar la mayoría de las aplicaciones del sistema para evitar problemas con el dispositivo
 
 - **🎯 Lista negra (predeterminado)** — cierra **solo** las apps que están en la lista negra. Úsalo para detener apps específicas sin tocar todo lo demás.
 
